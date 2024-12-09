@@ -1,0 +1,30 @@
+{
+  "version": "0.1.0",
+  "description": "COTI Snap",
+  "proposedName": "COTI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+  },
+  "source": {
+    "shasum": "hPCOZOxq5tVEowVPXpimDE2s4f3f/eWIa6qyJWwixhI=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "packageName": "snap",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "snap_dialog": {},
+    "endowment:page-home": {},
+    "snap_manageState": {},
+    "endowment:ethereum-provider": {},
+    "endowment:rpc": {
+      "dapps": true,
+      "snaps": false
+    }
+  },
+  "manifestVersion": "0.1"
+}
