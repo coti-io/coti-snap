@@ -42,34 +42,33 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#FFFFFF',
-      alternative: '#F2F4F6',
-      inverse: '#141618',
+      default: '#F8F8FA',
+      content: '#FFFFFF',
     },
     icon: {
       default: '#141618',
       alternative: '#BBC0C5',
     },
     text: {
-      default: '#24272A',
-      muted: '#6A737D',
-      alternative: '#535A61',
-      inverse: '#FFFFFF',
-    },
-    border: {
-      default: '#BBC0C5',
+      default: '#131313',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
+      hover: '#0C8A6F',
       inverse: '#FFFFFF',
+    },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
     },
     card: {
       default: '#FFFFFF',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
@@ -81,9 +80,8 @@ export const light: DefaultTheme = {
 export const dark: DefaultTheme = {
   colors: {
     background: {
-      default: '#24272A',
-      alternative: '#141618',
-      inverse: '#FFFFFF',
+      default: '#041C41',
+      content: '#11284B',
     },
     icon: {
       default: '#FFFFFF',
@@ -91,24 +89,23 @@ export const dark: DefaultTheme = {
     },
     text: {
       default: '#FFFFFF',
-      muted: '#FFFFFF',
-      alternative: '#D6D9DC',
-      inverse: '#24272A',
-    },
-    border: {
-      default: '#848C96',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
       inverse: '#FFFFFF',
     },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
+    },
     card: {
-      default: '#141618',
+      default: '#11284B',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
