@@ -8,21 +8,20 @@ const breakpoints = ['600px', '768px', '992px'];
  */
 const theme = {
   fonts: {
-    default:
-      '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+    default: 'Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
     code: 'ui-monospace,Menlo,Monaco,"Cascadia Mono","Segoe UI Mono","Roboto Mono","Oxygen Mono","Ubuntu Monospace","Source Code Pro","Fira Mono","Droid Sans Mono","Courier New", monospace',
   },
   fontSizes: {
-    heading: '5.2rem',
-    mobileHeading: '3.6rem',
+    heading: '18px',
     title: '2.4rem',
     large: '2rem',
-    text: '1.6rem',
-    small: '1.4rem',
+    text: '14px',
+    small: '12px',
   },
   radii: {
-    default: '24px',
-    button: '8px',
+    default: '10px',
+    buttonSmall: '16px',
+    button: '48px',
   },
   breakpoints,
   mediaQueries: {
@@ -31,8 +30,7 @@ const theme = {
     large: `@media screen and (min-width: ${breakpoints[2] as string})`,
   },
   shadows: {
-    default: '0px 7px 42px rgba(0, 0, 0, 0.1)',
-    button: '0px 0px 16.1786px rgba(0, 0, 0, 0.15);',
+    default: '0px 0px 0px rgba(0, 0, 0, 0.08)',
   },
 };
 
@@ -42,34 +40,33 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#FFFFFF',
-      alternative: '#F2F4F6',
-      inverse: '#141618',
+      default: '#F8F8FA',
+      content: '#FFFFFF',
     },
     icon: {
       default: '#141618',
       alternative: '#BBC0C5',
     },
     text: {
-      default: '#24272A',
-      muted: '#6A737D',
-      alternative: '#535A61',
-      inverse: '#FFFFFF',
-    },
-    border: {
-      default: '#BBC0C5',
+      default: '#131313',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
+      hover: '#0C8A6F',
       inverse: '#FFFFFF',
+    },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
     },
     card: {
       default: '#FFFFFF',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
@@ -81,9 +78,8 @@ export const light: DefaultTheme = {
 export const dark: DefaultTheme = {
   colors: {
     background: {
-      default: '#24272A',
-      alternative: '#141618',
-      inverse: '#FFFFFF',
+      default: '#041C41',
+      content: '#11284B',
     },
     icon: {
       default: '#FFFFFF',
@@ -91,24 +87,23 @@ export const dark: DefaultTheme = {
     },
     text: {
       default: '#FFFFFF',
-      muted: '#FFFFFF',
-      alternative: '#D6D9DC',
-      inverse: '#24272A',
-    },
-    border: {
-      default: '#848C96',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
       inverse: '#FFFFFF',
     },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
+    },
     card: {
-      default: '#141618',
+      default: '#11284B',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
@@ -159,7 +154,7 @@ export const GlobalStyle = createGlobalStyle`
     background-color: ${(props) => props.theme.colors.background?.inverse};
     color: ${(props) => props.theme.colors.text?.inverse};
     border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-    font-weight: bold;
+    font-weight:semi-bold;
     padding: 1rem;
     min-height: 4.2rem;
     cursor: pointer;

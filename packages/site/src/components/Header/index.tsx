@@ -1,17 +1,19 @@
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 
-import { getThemePreference } from '../utils';
+import { getThemePreference } from '../../utils';
+import { Toggle } from '../Generals/Toggle';
 import { HeaderButtons } from './Buttons';
-import { SnapLogo } from './SnapLogo';
-import { Toggle } from './Toggle';
 
 const HeaderWrapper = styled.header`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 2.4rem;
-  border-bottom: 1px solid ${(props) => props.theme.colors.border?.default};
+  padding: 24px;
+  width: 100%;
+  background-color: ${(props) => props.theme.colors.background?.content};
+  box-shadow: ${({ theme }) => theme.shadows.default};
+  border-radius: ${({ theme }) => theme.radii.default};
 `;
 
 const Title = styled.p`
@@ -24,12 +26,6 @@ const Title = styled.p`
   }
 `;
 
-const LogoWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-`;
-
 const RightContainer = styled.div`
   display: flex;
   flex-direction: row;
@@ -39,21 +35,18 @@ const RightContainer = styled.div`
 export const Header = ({
   handleToggleClick,
 }: {
-  handleToggleClick(): void;
+  handleToggleClick?: () => void;
 }) => {
-  const theme = useTheme();
-
   return (
     <HeaderWrapper>
-      <LogoWrapper>
-        <SnapLogo color={theme.colors.icon?.default} size={36} />
-        <Title>coti-snap</Title>
-      </LogoWrapper>
+      <Title>COTI</Title>
       <RightContainer>
-        <Toggle
-          onToggle={handleToggleClick}
-          defaultChecked={getThemePreference()}
-        />
+        {handleToggleClick && (
+          <Toggle
+            onToggle={handleToggleClick}
+            defaultChecked={getThemePreference()}
+          />
+        )}
         <HeaderButtons />
       </RightContainer>
     </HeaderWrapper>
