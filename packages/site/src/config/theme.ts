@@ -15,13 +15,14 @@ const theme = {
   fontSizes: {
     heading: '5.2rem',
     mobileHeading: '3.6rem',
-    title: '2.4rem',
-    large: '2rem',
+    title: '1.8rem',
+    large: '1.7rem',
     text: '1.6rem',
     small: '1.4rem',
   },
   radii: {
-    default: '24px',
+    default: '10px',
+    small: '16px',
     button: '48px',
   },
   breakpoints,
@@ -130,6 +131,7 @@ export const GlobalStyle = createGlobalStyle`
     font-family: ${(props) => props.theme.fonts.default};
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
+    display: flex;
   }
 
   * {
