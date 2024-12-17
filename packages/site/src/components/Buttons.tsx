@@ -1,7 +1,6 @@
 import type { ComponentProps } from 'react';
 import styled from 'styled-components';
 
-import { ReactComponent as FlaskFox } from '../assets/flask_fox.svg';
 import { useMetaMask, useRequestSnap } from '../hooks';
 import { shouldDisplayReconnectButton } from '../utils';
 
@@ -33,14 +32,58 @@ const Link = styled.a`
   }
 `;
 
-const Button = styled.button`
-  display: flex;
-  align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  margin-top: auto;
-  ${({ theme }) => theme.mediaQueries.small} {
-    width: 100%;
+const Button = styled.button<{ $primary?: boolean }>`
+  font-size: ${(props) => props.theme.fontSizes.small};
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: ${(props) =>
+    props.$primary
+      ? props.theme.colors.primary?.default
+      : props.theme.colors.background?.content};
+  color: ${(props) =>
+    props.$primary
+      ? props.theme.colors.primary?.inverse
+      : props.theme.colors.primary?.default};
+  border: ${(props) => (props.$primary ? 'none' : `1px solid #0EB592`)};
+  font-weight: bold;
+  padding: 12px;
+  min-height: 4.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: ${(props) =>
+      props.$primary
+        ? props.theme.colors.primary?.hover
+        : props.theme.colors.secondary?.default10};
+    border: ${(props) => (props.$primary ? 'none' : `1px solid #0EB592`)};
+    color: ${(props) =>
+      props.$primary
+        ? props.theme.colors.primary?.inverse
+        : props.theme.colors.primary?.default};
+  }
+
+  &:disabled,
+  &[disabled] {
+    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
+    cursor: not-allowed;
+  }
+
+  &:disabled:hover,
+  &[disabled]:hover {
+    background-color: ${(props) => props.theme.colors.background?.inverse};
+    color: ${(props) => props.theme.colors.text?.inverse};
+    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
+  }
+`;
+
+const ErrorButton = styled(Button)`
+  color: ${(props) => props.theme.colors.error?.default};
+  background-color: ${(props) => props.theme.colors.error?.default10};
+  border: ${(props) => (props.$primary ? 'none' : `none`)};
+  &:hover {
+    background-color: ${(props) => props.theme.colors.error?.hover};
+    color: ${(props) => props.theme.colors.error?.default};
+    border: ${(props) => (props.$primary ? 'none' : `none`)};
   }
 `;
 
@@ -62,36 +105,38 @@ const ConnectedContainer = styled.div`
   padding: 1.2rem;
 `;
 
-const ConnectedIndicator = styled.div`
-  content: ' ';
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: green;
-`;
-
 export const InstallFlaskButton = () => (
   <Link href="https://metamask.io/flask/" target="_blank">
-    <FlaskFox />
     <ButtonText>Install MetaMask Flask</ButtonText>
   </Link>
 );
 
 export const ConnectButton = (props: ComponentProps<typeof Button>) => {
   return (
-    <Button {...props}>
-      <FlaskFox />
-      <ButtonText>Connect</ButtonText>
-    </Button>
+    <>
+      <ErrorButton {...props}>
+        <ButtonText>Connect</ButtonText>
+      </ErrorButton>
+      <Button $primary {...props}>
+        <ButtonText>Connect</ButtonText>
+      </Button>
+      <Button {...props}>
+        <ButtonText>Connect</ButtonText>
+      </Button>
+    </>
   );
 };
 
 export const ReconnectButton = (props: ComponentProps<typeof Button>) => {
   return (
-    <Button {...props}>
-      <FlaskFox />
-      <ButtonText>Reconnect</ButtonText>
-    </Button>
+    <>
+      <Button {...props}>
+        <ButtonText>Reconnect</ButtonText>
+      </Button>
+      <Button $primary {...props}>
+        <ButtonText>Reconnect</ButtonText>
+      </Button>
+    </>
   );
 };
 
@@ -117,7 +162,6 @@ export const HeaderButtons = () => {
 
   return (
     <ConnectedContainer>
-      <ConnectedIndicator />
       <ButtonText>Connected</ButtonText>
     </ConnectedContainer>
   );

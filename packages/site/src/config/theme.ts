@@ -22,7 +22,7 @@ const theme = {
   },
   radii: {
     default: '24px',
-    button: '8px',
+    button: '48px',
   },
   breakpoints,
   mediaQueries: {
@@ -93,6 +93,7 @@ export const dark: DefaultTheme = {
     },
     primary: {
       default: '#0EB592',
+      hover: '#0C8A6F',
       inverse: '#FFFFFF',
     },
     secondary: {
@@ -157,7 +158,7 @@ export const GlobalStyle = createGlobalStyle`
     color: ${(props) => props.theme.colors.text?.inverse};
     border: 1px solid ${(props) => props.theme.colors.background?.inverse};
     font-weight: bold;
-    padding: 1rem;
+    padding: 12px;
     min-height: 4.2rem;
     cursor: pointer;
     transition: all .2s ease-in-out;

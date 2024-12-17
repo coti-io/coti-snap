@@ -12,6 +12,7 @@ const HeaderWrapper = styled.header`
   align-items: center;
   padding: 2.4rem;
   border-bottom: 1px solid ${(props) => props.theme.colors.border?.default};
+  background-color: ${(props) => props.theme.colors.background?.content};
 `;
 
 const Title = styled.p`
