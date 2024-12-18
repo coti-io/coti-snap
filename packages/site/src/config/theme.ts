@@ -1,6 +1,11 @@
 import type { DefaultTheme } from 'styled-components';
 import { createGlobalStyle } from 'styled-components';
 
+import SofiaProBold from '../fonts/SofiaProBold.otf';
+import SofiaProMedium from '../fonts/SofiaProMedium.otf';
+import SofiaProRegular from '../fonts/SofiaProRegular.otf';
+import SofiaProSemiBold from '../fonts/SofiaProSemiBold.otf';
+
 const breakpoints = ['600px', '768px', '992px'];
 
 /**
@@ -120,6 +125,14 @@ export const dark: DefaultTheme = {
  * @returns Global style React component.
  */
 export const GlobalStyle = createGlobalStyle`
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url(${SofiaProRegular}) format('opentype'), url(${SofiaProMedium}) format('opentype'), local('Sofia Pro'), url(${SofiaProSemiBold}) format('opentype'), url(${SofiaProBold}) format('opentype');
+  font-weight: 400,500,600,700;
+  font-style: normal;
+}
+
   html {
     /* 62.5% of the base size of 16px = 10px.*/
     font-size: 62.5%;
@@ -128,7 +141,8 @@ export const GlobalStyle = createGlobalStyle`
   body {
     background-color: ${(props) => props.theme.colors.background?.default};
     color: ${(props) => props.theme.colors.text?.default};
-    font-family: ${(props) => props.theme.fonts.default};
+    //font-family: ${(props) => props.theme.fonts.default};
+    font-family: "Sofia Pro";
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
     display: flex;
@@ -154,34 +168,6 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   button {
-    font-size: ${(props) => props.theme.fontSizes.small};
-    border-radius: ${(props) => props.theme.radii.button};
-    background-color: ${(props) => props.theme.colors.background?.inverse};
-    color: ${(props) => props.theme.colors.text?.inverse};
-    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-    font-weight: bold;
-    padding: 12px;
-    min-height: 4.2rem;
-    cursor: pointer;
-    transition: all .2s ease-in-out;
-
-    &:hover {
-      background-color: transparent;
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-      color: ${(props) => props.theme.colors.text?.default};
-    }
-
-    &:disabled,
-    &[disabled] {
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-      cursor: not-allowed;
-    }
-
-    &:disabled:hover,
-    &[disabled]:hover {
-      background-color: ${(props) => props.theme.colors.background?.inverse};
-      color: ${(props) => props.theme.colors.text?.inverse};
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-    }
+    font-family: "Sofia Pro";
   }
 `;

@@ -74,7 +74,8 @@ const ButtonStyle = styled.button<{
   background-color: ${getBackgroundColor};
   color: ${getColor};
   border: ${getBorder};
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 'Sofia Pro';
   flex: ${(props) => (props.$fullWith ? '1' : 'none')};
   padding: 12px 40px;
   min-height: 4.2rem;

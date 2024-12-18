@@ -11,7 +11,7 @@ const ContentTitle = styled.p`
 
 const ContentText = styled.p`
   font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: medium;
+  font-weight: 400;
   margin: 0;
 `;
 

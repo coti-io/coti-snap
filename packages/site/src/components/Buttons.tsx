@@ -55,7 +55,7 @@ const ConnectedDetails = styled.div`
   height: 31px;
   gap: 4px;
   font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: 500;
+  font-weight: 400;
   border-radius: ${(props) => props.theme.radii.small};
   background-color: ${(props) => props.theme.colors.secondary?.default10};
 `;
