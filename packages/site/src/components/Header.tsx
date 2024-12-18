@@ -13,6 +13,12 @@ const HeaderWrapper = styled.header`
   box-shadow: ${({ theme }) => theme.shadows.default};
   border-radius: ${({ theme }) => theme.radii.default};
   width: auto;
+  ${({ theme }) => theme.mediaQueries.small} {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+  }
 `;
 
 const Title = styled.p`

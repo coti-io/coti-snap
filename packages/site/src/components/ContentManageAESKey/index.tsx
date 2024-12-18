@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { DeleteAESKey } from './DeleteAESKey';
+import { OnboardAccount } from './OnboardAccount';
 
 const ContentContainer = styled.div`
   display: flex;
@@ -14,16 +14,21 @@ const ContentContainer = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.default};
   border-radius: ${({ theme }) => theme.radii.default};
   width: auto;
+  ${({ theme }) => theme.mediaQueries.small} {
+    flex-direction: column;
+    gap: 16px;
+    padding: 40px 24px;
+  }
 `;
 
 export const ContentManageAESKey = () => {
   return (
     <ContentContainer>
       {/*
-      <OnboardAccount />
-      <ManageAESKey />
-       */}
       <DeleteAESKey />
+      <ManageAESKey />
+      */}
+      <OnboardAccount />
     </ContentContainer>
   );
 };

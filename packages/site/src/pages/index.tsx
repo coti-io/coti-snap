@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import { ContentManageAESKey, Header } from '../components';
+import { ContentConnectYourWallet, Header } from '../components';
 // import { defaultSnapOrigin } from '../config';
 // import {
 //   useMetaMask,
@@ -17,6 +17,14 @@ const Container = styled.div`
   width: 564px;
   height: 100%;
   gap: 24px;
+  box-sizing: border-box;
+  ${({ theme }) => theme.mediaQueries.small} {
+    width: 100%;
+    padding: 1.6rem;
+    margin: 0;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
 `;
 
 const Index = () => {
@@ -44,10 +52,10 @@ const Index = () => {
 
       <Header />
       {/* 
-      <ContentConnectYourWallet />
+      <ContentManageAESKey />
       <ContentSwitchNetwork />
       */}
-      <ContentManageAESKey />
+      <ContentConnectYourWallet />
       {/* {error && (
         <ErrorMessage>
           <b>An error happened:</b> {error.message}

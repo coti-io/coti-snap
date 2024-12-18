@@ -1,5 +1,13 @@
 import styled from 'styled-components';
 
+// import { defaultSnapOrigin } from '../config';
+// import {
+//   useMetaMask,
+//   useInvokeSnap,
+//   useMetaMaskContext,
+//   useRequestSnap,
+// } from '../hooks';
+// import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
 import { Button } from './Button';
 
 const Link = styled.a`

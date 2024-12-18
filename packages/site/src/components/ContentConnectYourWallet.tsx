@@ -12,6 +12,11 @@ const ContentContainer = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.default};
   border-radius: ${({ theme }) => theme.radii.default};
   width: auto;
+  ${({ theme }) => theme.mediaQueries.small} {
+    flex-direction: column;
+    gap: 16px;
+    padding: 40px 24px;
+  }
 `;
 
 const ContentTitle = styled.p`
