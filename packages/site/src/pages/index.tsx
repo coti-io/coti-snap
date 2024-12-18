@@ -1,6 +1,11 @@
+import { ToggleThemeContext } from 'src/Root';
 import styled from 'styled-components';
 
-import { ContentConnectYourWallet, Header } from '../components';
+import {
+  ContentConnectYourWallet,
+  ContentManageAESKey,
+  Header,
+} from '../components';
 // import { defaultSnapOrigin } from '../config';
 // import {
 //   useMetaMask,
@@ -52,10 +57,11 @@ const Index = () => {
 
       <Header />
       {/* 
-      <ContentManageAESKey />
       <ContentSwitchNetwork />
-      */}
       <ContentConnectYourWallet />
+      */}
+      <ContentManageAESKey />
+
       {/* {error && (
         <ErrorMessage>
           <b>An error happened:</b> {error.message}

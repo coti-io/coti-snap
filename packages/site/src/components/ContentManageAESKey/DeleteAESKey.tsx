@@ -27,7 +27,11 @@ const ContentButtons = styled.div`
   width: 100%;
 `;
 
-export const DeleteAESKey = () => {
+export const DeleteAESKey = ({
+  handleShowDelete,
+}: {
+  handleShowDelete: () => void;
+}) => {
   return (
     <>
       <ContentTitle>Delete your AES Key</ContentTitle>
@@ -39,8 +43,13 @@ export const DeleteAESKey = () => {
         you can also create another one to see your encrypted data.
       </ContentText>
       <ContentButtons>
-        <Button text="Cancel" fullWith />
-        <Button error text="Delete" fullWith />
+        <Button text="Cancel" fullWith onClick={handleShowDelete} />
+        <Button
+          error
+          text="Delete"
+          fullWith
+          onClick={() => console.log('delete')}
+        />
       </ContentButtons>
     </>
   );

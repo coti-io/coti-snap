@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
-import { OnboardAccount } from './OnboardAccount';
+import { DeleteAESKey } from './DeleteAESKey';
+import { ManageAESKey } from './ManageAESKey';
 
 const ContentContainer = styled.div`
   display: flex;
@@ -22,13 +23,22 @@ const ContentContainer = styled.div`
 `;
 
 export const ContentManageAESKey = () => {
+  const [showDelete, setShowDelete] = useState(false);
+
+  const handleShowDelete = () => {
+    setShowDelete(!showDelete);
+  };
+
   return (
     <ContentContainer>
       {/*
-      <DeleteAESKey />
-      <ManageAESKey />
-      */}
       <OnboardAccount />
+      */}
+      {showDelete ? (
+        <DeleteAESKey handleShowDelete={handleShowDelete} />
+      ) : (
+        <ManageAESKey handleShowDelete={handleShowDelete} />
+      )}
     </ContentContainer>
   );
 };

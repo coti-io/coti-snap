@@ -90,7 +90,7 @@ export const HeaderButtons = () => {
     <ConnectedContainer>
       <ConnectedDetails>0xc7386...4D894</ConnectedDetails>
       <ConnectedDetails>
-        COTI Network
+        Network
         <svg
           width="24"
           height="24"
