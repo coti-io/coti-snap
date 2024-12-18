@@ -1,11 +1,6 @@
-import { ToggleThemeContext } from 'src/Root';
 import styled from 'styled-components';
 
-import {
-  ContentConnectYourWallet,
-  ContentManageAESKey,
-  Header,
-} from '../components';
+import { ContentManageAESKey, Header } from '../components';
 // import { defaultSnapOrigin } from '../config';
 // import {
 //   useMetaMask,

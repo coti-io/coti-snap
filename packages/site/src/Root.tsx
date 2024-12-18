@@ -26,7 +26,7 @@ export const Root: FunctionComponent<RootProps> = ({ children }) => {
 
   return (
     <ToggleThemeContext.Provider value={toggleTheme}>
-      <ThemeProvider theme={dark}>
+      <ThemeProvider theme={darkTheme ? dark : light}>
         <MetaMaskProvider>{children}</MetaMaskProvider>
       </ThemeProvider>
     </ToggleThemeContext.Provider>
