@@ -113,10 +113,10 @@ export const HeaderButtons = () => {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g clip-path="url(#clip0_608_2076)">
+              <g clipPath="url(#clip0_608_2076)">
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M16.6 8.59961L12 13.1996L7.4 8.59961L6 9.99961L12 15.9996L18 9.99961L16.6 8.59961Z"
                   fill="#11DEB3"
                 />
