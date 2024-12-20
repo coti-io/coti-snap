@@ -50,7 +50,7 @@ const Index = () => {
         Get started by editing <code>src/index.tsx</code>
       </Subtitle> */}
 
-      {/* <Header /> */}
+      <Header />
       {/* 
       <ContentSwitchNetwork />
       <ContentConnectYourWallet />
