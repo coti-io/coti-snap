@@ -1,5 +1,3 @@
-import styled from 'styled-components';
-
 // import { defaultSnapOrigin } from '../config';
 // import {
 //   useMetaMask,
@@ -8,7 +6,12 @@ import styled from 'styled-components';
 //   useRequestSnap,
 // } from '../hooks';
 // import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
-import { Button } from './Button';
+import { useEffect, useState } from 'react';
+import { truncateString } from 'src/utils';
+import styled from 'styled-components';
+import { useAccount, useConnect } from 'wagmi';
+
+import { Button } from '../Button';
 
 const Link = styled.a`
   display: flex;
@@ -86,9 +89,38 @@ export const HeaderButtons = () => {
   //   return <Button text="Reconnect" primary onClick={requestSnap} />;
   // }
 
+  const { address } = useAccount();
+  const { connectors, connect } = useConnect();
+
+  const [truncateAddress, setTruncateAddress] = useState<string>('');
+
+  useEffect(() => {
+    if (address) {
+      const tAddress = truncateString(address);
+      setTruncateAddress(tAddress);
+    }
+  }, [address]);
+
+  if (!address) {
+    return (
+      <ConnectedContainer>
+        <ConnectedDetails>{address ?? 'no address'}</ConnectedDetails>
+        {connectors.map((connector) => (
+          <Button
+            text={connector.name}
+            primary
+            onClick={() => connect({ connector })}
+          />
+        ))}
+      </ConnectedContainer>
+    );
+  }
+
   return (
     <ConnectedContainer>
-      <ConnectedDetails>0xc7386...4D894</ConnectedDetails>
+      <ConnectedDetails>
+        {address ? truncateAddress : 'no address'}
+      </ConnectedDetails>
       <ConnectedDetails>
         Network
         <svg

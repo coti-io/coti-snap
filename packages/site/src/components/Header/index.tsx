@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
-import { ReactComponent as COTILogo } from '../assets/logo.svg';
-import { HeaderButtons } from './Buttons';
+import { ReactComponent as COTILogo } from '../../assets/logo.svg';
+import { HeaderButtons } from './HeaderButtons';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -34,7 +34,7 @@ const LogoWrapper = styled.div`
   gap: 8px;
 `;
 
-const RightContainer = styled.div`
+const ButtonsContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -48,9 +48,9 @@ export const Header = () => {
         <COTILogo />
         <Title>COTI</Title>
       </LogoWrapper>
-      <RightContainer>
+      <ButtonsContainer>
         <HeaderButtons />
-      </RightContainer>
+      </ButtonsContainer>
     </HeaderWrapper>
   );
 };

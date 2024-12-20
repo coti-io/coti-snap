@@ -1,4 +1,4 @@
-export * from './Buttons';
+export * from './Header/HeaderButtons';
 export * from './Button';
 export * from './Card';
 export * from './Footer';
