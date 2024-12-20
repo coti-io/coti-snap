@@ -1,53 +1,25 @@
-import { type OnHomePageHandler, OnUpdateHandler, type OnUserInputHandler, UserInputEventType } from '@metamask/snaps-sdk';
-import { Box, Text, Bold, Button, Row, Form, Input, Container, Footer, Field, Section, Selector, SelectorOption, Card } from '@metamask/snaps-sdk/jsx';
+import { type OnHomePageHandler, OnRpcRequestHandler, OnUpdateHandler, type OnUserInputHandler, UserInputEventType } from '@metamask/snaps-sdk';
+import { Box, Text, Bold, Button, Row, Form, Input, Container, Footer, Field, Section, Selector, SelectorOption, Card, Heading } from '@metamask/snaps-sdk/jsx';
 import {
   encodeString,
   decryptUint,
   encrypt,
-  encodeKey
+  encodeKey,
+  decrypt,
+  decryptString,
+  ctUint
 } from "@coti-io/coti-sdk-typescript"
-import { Contract, BrowserProvider, formatEther } from 'ethers';
 
 import { Tokens, State, TokenViewSelector } from './types';
 import { Home } from './components/Home';
+import { Settings } from './components/Settings';
 import { ImportToken } from './components/ImportToken';
-import erc20Abi from './abis/ERC20.json';
 import { getStateData, setStateData } from './utils/snap'
+import { getTokenType, importToken, recalculateBalances } from './utils/token'
+import { TokenDetails } from './components/TokenDetails';
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '50764f856be3f636c09faf092be20d0c';
-
-export const recalculateBalances = async () => {
-  const state = await getStateData<State>();
-  const tokens = state?.tokenBalances || [];
-
-  const provider = new BrowserProvider(ethereum);
-  // TODO: check if chain id is correct
-  const signer = await provider.getSigner();
-  const signerAddress = await signer.getAddress();
-  const balance = await provider.getBalance(signerAddress);
-
-  const tokenBalances = await Promise.all(tokens.map(async (token) => {
-    const tokenContract = new Contract(token.address, erc20Abi, signer);
-    const tok = (tokenContract.connect(signer) as Contract)
-    const tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
-    const decryptedBalance = tokenBalance ? decryptUint(tokenBalance, testAESKey) : null;
-    return { ...token, balance: decryptedBalance?.toString() || null };
-  }));
-  
-  await setStateData<State>({ ...state, balance: balance.toString(), tokenBalances });
-  
-  return { balance, tokenBalances };
-}
-
-export const importToken = async (address: string, name: string, symbol: string) => {
-  const oldState = await getStateData<State>();
-  const tokens = oldState.tokenBalances;
-  // TODO: check supportsInterface of the contract to check if it is ERC20 or NFT or Confidential Token etc
-  // TODO: determine token type
-  tokens.push({ address, name, symbol, balance: null, type: TokenViewSelector.ERC20 });
-  await setStateData<State>({ ...oldState, tokenBalances: tokens });
-}
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView } = await getStateData<State>();
@@ -72,12 +44,28 @@ export const onUpdate: OnUpdateHandler = async () => {
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
-  await setStateData<State>({ ...state, tokenView: TokenViewSelector.ERC20 });
-  return { content: <Home balance={balance} tokenBalances={tokenBalances} tokenView={TokenViewSelector.ERC20}  /> };
+  await setStateData<State>({ ...state, tokenView: TokenViewSelector.ERC20, AESKey: testAESKey }); // remove aes key setting after onboarding impolimented
+  return { content: <Home balance={balance} tokenBalances={tokenBalances} tokenView={TokenViewSelector.ERC20} /> };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
+  console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
+    if (event.name?.startsWith('token-details-')) {
+      const tokenAddress = event.name.slice('token-details-'.length);
+      const state = await getStateData<State>();
+      const token = state.tokenBalances.find(token => token.address === tokenAddress);
+      if (token) {
+        await snap.request({
+          method: "snap_updateInterface",
+          params: {
+            id,
+            ui: <TokenDetails tokenName={token.name} tokenBalance={token.balance || 'N/A'} tokenAddress={token.address} />,
+          },
+        });
+      }
+      return;
+    }
     switch (event.name) {
       case 'import-token-button':
         await snap.request({
@@ -87,10 +75,24 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             ui: <ImportToken />,
           },
         });
-        break;
+        return;
+      case 'settings-button':
+        console.log('Settings');
+        try {
+          await snap.request({
+            method: "snap_updateInterface",
+            params: {
+              id,
+              ui: <Settings />,
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+        return;
       case 'token-cancel':
         await returnToHomePage(id);
-        break;
+        return;
       case 'token-submit':
         const state = await snap.request({
           method: "snap_getInterfaceState",
@@ -99,10 +101,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           },
         })
         const formState = state['form-to-fill'] as Record<string, string | boolean | null>;
-        if (formState && formState['token-address'] && formState['token-name']) {
+        if (formState && formState['token-address'] && formState['token-name'] && formState['token-symbol']) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
-          const symbol = name.slice(0, 3).toUpperCase();
+          const symbol = formState['token-symbol'] as string;
           await importToken(address, name, symbol);
         } else {
           //TODO: add validation
@@ -110,7 +112,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         }
         await recalculateBalances();
         await returnToHomePage(id);
-        break;
+        return;
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
@@ -121,7 +123,102 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         await setStateData<State>({ ...state, tokenView: selectedTokenView });
         await recalculateBalances();
         await returnToHomePage(id);
-        break;
+        return;
     }
+  }
+}
+
+export const onRpcRequest: OnRpcRequestHandler = async ({
+  origin,
+  request,
+}) => {
+  switch (request.method) {
+    case "encrypt":
+      if (!request.params) return null;
+      const { value: textToEncrypt } = request.params as Record<string, string>;
+      if (!textToEncrypt) return null;
+
+      const onEncryptState = await getStateData<State>();
+      if (!onEncryptState.AESKey) {
+        await snap.request({
+          method: "snap_dialog",
+          params: {
+            type: "alert",
+            content: (
+              <Box>
+                <Heading>Warning</Heading>
+                <Text>Cannot encrypt value. AES key not found.</Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
+      let encryptResult = await snap.request({
+        method: "snap_dialog",
+        params: {
+          type: "confirmation",
+          content: (
+            <Box>
+              <Heading>Would you like to encrypt this value?</Heading>
+              <Text>Value to encrypt: "{String(textToEncrypt)}"</Text>
+            </Box>
+          ),
+        },
+      });
+
+      if (encryptResult) {
+        return JSON.stringify(encrypt(encodeKey(onEncryptState.AESKey), encodeString(textToEncrypt)));
+      }
+      return null
+    case "decrypt":
+      if (!request.params) return null;
+      const { value: encryptedValue } = request.params as Record<string, string>;
+      if (!encryptedValue) return null;
+      const { ciphertext, r } = JSON.parse(encryptedValue) as {
+        ciphertext: { [key: string]: number },
+        r: { [key: string]: number },
+      };
+
+      const onDecryptState = await getStateData<State>();
+      if (!onDecryptState.AESKey) {
+        await snap.request({
+          method: "snap_dialog",
+          params: {
+            type: "alert",
+            content: (
+              <Box>
+                <Heading>Warning</Heading>
+                <Text>Cannot decrypt value. AES key not found.</Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
+      const decryptResult = await snap.request({
+        method: "snap_dialog",
+        params: {
+          type: "confirmation",
+          content: (
+            <Box>
+              <Heading>Would you like to decrypt this value?</Heading>
+              <Text>Value to decrypt: "{encryptedValue}"</Text>
+            </Box>
+          ),
+        },
+      });
+      if (decryptResult) {
+        return JSON.stringify(decrypt(
+          encodeKey(onDecryptState.AESKey),
+          new Uint8Array([...Object.values(r)]),
+          new Uint8Array([...Object.values(ciphertext)])
+        ));
+      }
+      return null;
+    default:
+      throw new Error("Method not found.")
   }
 }

@@ -110,8 +110,32 @@ const Index = () => {
     ? isFlask
     : snapsDetected;
 
-  const handleSendHelloClick = async () => {
-    await invokeSnap({ method: 'hello' });
+  const handleEncryptClick = async () => {
+    const result = await invokeSnap({ method: 'encrypt', params: { value: 'hello' } });
+    if (result) {
+      alert(result);
+    }
+  };
+
+  const handleDecryptClick = async () => {
+    const result = await invokeSnap({ method: 'decrypt', params: { value: JSON.stringify({
+      ciphertext: new Uint8Array([
+        230, 250, 246, 145, 200,
+         66,  40, 179, 108, 187,
+        128, 135, 216,  44,  32,
+         48
+      ]),
+      r: new Uint8Array([
+        67, 194,  73,  74, 131,
+       182, 125, 200, 112, 210,
+       211, 145, 192, 148, 187,
+        11
+     ]),
+    }) } });
+    console.log('result123', result);
+    if (result) {
+      alert(result);
+    }
   };
 
   return (
@@ -171,14 +195,14 @@ const Index = () => {
             disabled={!installedSnap}
           />
         )}
-        {/* <Card
+        <Card
           content={{
-            title: 'Send Hello message',
+            title: 'Encrypt test',
             description:
-              'Display a custom message within a confirmation screen in MetaMask.',
+              'Initiate encrypt dialog in COTI snap.',
             button: (
               <SendHelloButton
-                onClick={handleSendHelloClick}
+                onClick={handleEncryptClick}
                 disabled={!installedSnap}
               />
             ),
@@ -189,7 +213,26 @@ const Index = () => {
             Boolean(installedSnap) &&
             !shouldDisplayReconnectButton(installedSnap)
           }
-        /> */}
+        />
+        <Card
+          content={{
+            title: 'Decrypt test',
+            description:
+              'Initiate decrypt dialog in COTI snap.',
+            button: (
+              <SendHelloButton
+                onClick={handleDecryptClick}
+                disabled={!installedSnap}
+              />
+            ),
+          }}
+          disabled={!installedSnap}
+          fullWidth={
+            isMetaMaskReady &&
+            Boolean(installedSnap) &&
+            !shouldDisplayReconnectButton(installedSnap)
+          }
+        />
         <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}

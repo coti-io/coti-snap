@@ -1,4 +1,4 @@
-import { Box, Text, Button, Section, Selector, SelectorOption, Card, SnapComponent } from '@metamask/snaps-sdk/jsx';
+import { Box, Text, Button, Section, Selector, SelectorOption, Card, SnapComponent, Divider, Heading, Row } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
 import { Tokens, TokenViewSelector } from '../types';
 
@@ -11,24 +11,31 @@ type HomeProps = {
 export const Home = ({ balance, tokenBalances, tokenView }: HomeProps) => {
   const formatedBalance = parseFloat(formatEther(balance)).toFixed(2);
   return (
-    <Box alignment='center'>
+    <Box>
+      <Box alignment='center' direction='horizontal'>
+        <Heading>{formatedBalance} COTI</Heading>
+      </Box>
       <Section>
-        <Text alignment='center'>{formatedBalance} COTI</Text>
         <Selector name="selector-tokens-nft" title="Select Token type">
           <SelectorOption value={TokenViewSelector.ERC20}>
-            <Card title="Tokens" value="" />
+            <Card title="Tokens" value="ERC20" />
           </SelectorOption>
           <SelectorOption value={TokenViewSelector.NFT}>
-            <Card title="NFT" value="" />
+            <Card title="NFT" value="ERC721/ERC1155"/>
           </SelectorOption>
         </Selector>
-        <Section>
-          {tokenBalances.filter(token => token.type == tokenView).map(token => (
-            <Card title={token.name} value={String(token.balance) || 'N/A'} />
-          ))}
-        </Section>
-        <Button name="import-token-button">Import Token</Button>
+        <Divider />
+        {tokenBalances.filter(token => token.type == tokenView).length ? tokenBalances.filter(token => token.type == tokenView).map(token => (
+          <Box>
+            <Card title={token.name} value={String(token.balance) || 'N/A'} description={`${token.address.substring(0, 7)}...`} />
+            <Button name={`token-details-${token.address}`}>details</Button>
+          </Box>
+        )) : <Text>No tokens was added yet</Text>}
       </Section>
+      <Box alignment='space-between' direction='horizontal'>
+        <Button name="import-token-button">Import Token</Button>
+        <Button name="settings-button">Settings</Button>
+      </Box>
     </Box>
   );
 };
