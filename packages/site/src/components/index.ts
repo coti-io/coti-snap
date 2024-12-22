@@ -7,6 +7,6 @@ export * from './MetaMask';
 export * from './PoweredBy';
 export * from './SnapLogo';
 export * from './Toggle';
-export * from './ContentConnectYourWallet';
-export * from './ContentSwitchNetwork';
+export * from './ContentManageAESKey/ContentConnectYourWallet';
+export * from './ContentManageAESKey/ContentSwitchNetwork';
 export * from './ContentManageAESKey';

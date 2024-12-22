@@ -1,77 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import styled from 'styled-components';
 
 import { ReactComponent as CheckIcon } from '../../assets/check.svg';
 import { ReactComponent as CopyIcon } from '../../assets/copy.svg';
 import { Button } from '../Button';
-
-const ContentTitle = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.title};
-  font-weight: bold;
-  margin: 0;
-`;
-
-const ContentText = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: medium;
-  margin: 0;
-`;
-
-const ContentInput = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 0;
-`;
-
-const AESKeyContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  background-color: ${(props) => props.theme.colors.background?.default};
-  color: ${(props) => props.theme.colors.text?.default};
-  min-height: 46px;
-`;
-
-const EditableInput = styled.input`
-  border: none;
-  outline: none;
-  font-size: 14px;
-  background-color: ${(props) => props.theme.colors.background?.default};
-  color: ${(props) => props.theme.colors.text?.default};
-  width: 100%;
-  cursor: none;
-  &:read-only {
-    pointer-events: none;
-  }
-`;
-
-const IconContainer = styled.button<{ $isCopied?: boolean }>`
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  &:hover {
-    border: none;
-  }
-
-  svg {
-    width: 24px;
-    height: 24px;
-    fill: ${(props) =>
-      props.$isCopied ? props.theme.colors.primary?.default : '#8c8c8c'};
-    transition: fill 0.2s ease-in-out;
-
-    &:hover {
-      fill: ${(props) => props.theme.colors.primary?.default};
-    }
-  }
-`;
+import {
+  AESKeyContainer,
+  ContentInput,
+  ContentText,
+  ContentTitle,
+  EditableInput,
+  IconContainer,
+} from './style';
 
 export const ManageAESKey = ({
   handleShowDelete,
@@ -110,7 +49,12 @@ export const ManageAESKey = ({
         <AESKeyContainer>
           {reveal ? (
             <>
-              <EditableInput type="text" value={value} readOnly={true} />
+              <EditableInput
+                $isEditable={false}
+                type="text"
+                value={value}
+                readOnly={true}
+              />
               <IconContainer onClick={() => copyToClipboard(value)}>
                 {isCopied ? <CheckIcon /> : <CopyIcon />}
               </IconContainer>
