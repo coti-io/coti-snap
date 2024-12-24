@@ -56,5 +56,10 @@
       "@lavamoat/preinstall-always-fail": false,
       "sharp": true
     }
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.9",
+    "viem": "2.x",
+    "wagmi": "^2.14.5"
   }
 }
