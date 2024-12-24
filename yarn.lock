@@ -6110,6 +6110,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wagmi/connectors@npm:5.7.3":
+  version: 5.7.3
+  resolution: "@wagmi/connectors@npm:5.7.3"
+  dependencies:
+    "@coinbase/wallet-sdk": 4.2.3
+    "@metamask/sdk": 0.31.4
+    "@safe-global/safe-apps-provider": 0.18.5
+    "@safe-global/safe-apps-sdk": 9.1.0
+    "@walletconnect/ethereum-provider": 2.17.0
+    cbw-sdk: "npm:@coinbase/wallet-sdk@3.9.3"
+  peerDependencies:
+    "@wagmi/core": 2.16.3
+    typescript: ">=5.0.4"
+    viem: 2.x
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 52886c9dbc86b853c159337bb401346f57bd661a5858783fe9b2a84b248cc40cedeae77eec73c9d8b73a2e3fbfdccd28103362100006a2e6acf4ec0cd8edbde9
+  languageName: node
+  linkType: hard
+
 "@wagmi/core@npm:2.16.2":
   version: 2.16.2
   resolution: "@wagmi/core@npm:2.16.2"
@@ -6127,6 +6148,26 @@ __metadata:
     typescript:
       optional: true
   checksum: 73f5a8f9c521a0d20b5d7cf4db5fba5ad5f62115bee237ed5cf9a747fab69cd79b6a922642b33a4c996ded6737c24c83a206898d5818ea8b11ebb390849e1565
+  languageName: node
+  linkType: hard
+
+"@wagmi/core@npm:2.16.3":
+  version: 2.16.3
+  resolution: "@wagmi/core@npm:2.16.3"
+  dependencies:
+    eventemitter3: 5.0.1
+    mipd: 0.0.7
+    zustand: 5.0.0
+  peerDependencies:
+    "@tanstack/query-core": ">=5.0.0"
+    typescript: ">=5.0.4"
+    viem: 2.x
+  peerDependenciesMeta:
+    "@tanstack/query-core":
+      optional: true
+    typescript:
+      optional: true
+  checksum: d5df7e351dfcf1656a422ac8c2f8847ca25b05a59003b4d68169abfb1b7d8c2feb308b9ddbe2b6040ec6bef959ab2080c63cb1c07c045d74fdfe5793750b7e0f
   languageName: node
   linkType: hard
 
@@ -18953,7 +18994,7 @@ __metadata:
     styled-components: 5.3.3
     typescript: ^4.7.4
     viem: 2.x
-    wagmi: ^2.14.5
+    wagmi: latest
   languageName: unknown
   linkType: soft
 
@@ -20904,6 +20945,25 @@ __metadata:
     typescript:
       optional: true
   checksum: 412922791ab351859a5b2e33af7132e19e27c1af6593842d6601edb42f4f2cc39f10d44b6f09d4b417b52e3742bbdcb6ad293f4d63546fcee0e65431c0b1c529
+  languageName: node
+  linkType: hard
+
+"wagmi@npm:latest":
+  version: 2.14.6
+  resolution: "wagmi@npm:2.14.6"
+  dependencies:
+    "@wagmi/connectors": 5.7.3
+    "@wagmi/core": 2.16.3
+    use-sync-external-store: 1.2.0
+  peerDependencies:
+    "@tanstack/react-query": ">=5.0.0"
+    react: ">=18"
+    typescript: ">=5.0.4"
+    viem: 2.x
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: a1f6c7c23dba2ce3b278831256ebd4ce77df9cbec05c446b36db2584a4769b8d0dd243b9410f16600a4500e0379c2edf22d856419f6335f5a04b127f8dc963ed
   languageName: node
   linkType: hard
 

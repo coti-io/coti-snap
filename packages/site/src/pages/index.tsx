@@ -1,6 +1,17 @@
+/* eslint-disable no-nested-ternary */
+import { useEffect } from 'react';
 import styled from 'styled-components';
 
-import { ContentManageAESKey, Header } from '../components';
+import {
+  Button,
+  ContentConnectYourWallet,
+  ContentManageAESKey,
+  ContentSwitchNetwork,
+  Header,
+} from '../components';
+import { defaultSnapOrigin } from '../config';
+import { useMetaMask, useRequestSnap, useWrongChain } from '../hooks';
+import { isLocalSnap } from '../utils';
 // import { defaultSnapOrigin } from '../config';
 // import {
 //   useMetaMask,
@@ -29,39 +40,39 @@ const Container = styled.div`
 
 const Index = () => {
   // const { error } = useMetaMaskContext();
-  // const { isFlask, snapsDetected, installedSnap } = useMetaMask();
-  // const requestSnap = useRequestSnap();
-  // const invokeSnap = useInvokeSnap();
+  const { isFlask, snapsDetected, installedSnap } = useMetaMask();
 
-  // const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
-  //   ? isFlask
-  //   : snapsDetected;
+  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
+    ? isFlask
+    : snapsDetected;
 
-  // const handleSendHelloClick = async () => {
-  //   await invokeSnap({ method: 'hello' });
-  // };
+  const { wrongChain, account } = useWrongChain();
+  const requestSnap = useRequestSnap();
+
+  useEffect(() => {
+    console.log('isFlask', isFlask);
+    console.log('snapsDetected', snapsDetected);
+  }, [isFlask, snapsDetected]);
+
+  useEffect(() => {
+    console.log('isMetaMaskReady', isMetaMaskReady);
+  }, [isMetaMaskReady]);
 
   return (
     <Container>
-      {/* <Heading>
-        Welcome to <Span>template-snap</Span>
-      </Heading>
-      <Subtitle>
-        Get started by editing <code>src/index.tsx</code>
-      </Subtitle> */}
-
       <Header />
-      {/* 
-      <ContentSwitchNetwork />
-      <ContentConnectYourWallet />
-      */}
-      <ContentManageAESKey />
 
-      {/* {error && (
-        <ErrorMessage>
-          <b>An error happened:</b> {error.message}
-        </ErrorMessage>
-      )} */}
+      {account.isConnected ? (
+        wrongChain ? (
+          <ContentSwitchNetwork />
+        ) : installedSnap ? (
+          <ContentManageAESKey />
+        ) : (
+          <Button text="Install snap" primary onClick={requestSnap} />
+        )
+      ) : (
+        <ContentConnectYourWallet />
+      )}
       {/* {!isMetaMaskReady && (
         <Card
           content={{

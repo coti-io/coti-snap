@@ -33,7 +33,7 @@
     "react-is": "^18.2.0",
     "styled-components": "5.3.3",
     "viem": "2.x",
-    "wagmi": "^2.14.5"
+    "wagmi": "latest"
   },
   "devDependencies": {
     "@metamask/eslint-config": "^12.2.0",

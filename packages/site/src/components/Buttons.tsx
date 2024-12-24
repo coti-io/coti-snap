@@ -88,7 +88,7 @@ export const HeaderButtons = () => {
   //   return <Button text="Reconnect" primary onClick={requestSnap} />;
   // }
 
-  const { connect } = useConnect();
+  const { connect, connectors } = useConnect();
 
   const { isConnected } = useAccount();
 
@@ -123,7 +123,17 @@ export const HeaderButtons = () => {
           </ConnectedDetails>
         </>
       ) : (
-        <Button text="Connect" primary onClick={connect} />
+        connectors.map(
+          (connector) =>
+            connector.id === 'io.metamask.flask' && (
+              <Button
+                key={connector.id}
+                text="Connect wallet"
+                primary
+                onClick={() => connect({ connector })}
+              />
+            ),
+        )
       )}
     </ConnectedContainer>
   );

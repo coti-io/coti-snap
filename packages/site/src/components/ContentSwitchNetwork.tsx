@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useSwitchChain } from 'wagmi';
 
 import { Button } from './Button';
 
@@ -34,6 +35,11 @@ const ContentText = styled.p`
 `;
 
 export const ContentSwitchNetwork = () => {
+  const { switchChain } = useSwitchChain();
+  const handleSwitchChain = () => {
+    switchChain({ chainId: 13068200 });
+  };
+
   return (
     <ContentContainer>
       <ContentTitle>Switch Network</ContentTitle>
@@ -41,7 +47,7 @@ export const ContentSwitchNetwork = () => {
         It looks like you are not on the COTI network, please change network to
         continue.
       </ContentText>
-      <Button primary text="Switch Network" />
+      <Button primary text="Switch Network" onClick={handleSwitchChain} />
     </ContentContainer>
   );
 };
