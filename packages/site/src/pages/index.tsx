@@ -8,6 +8,7 @@ import {
   ContentManageAESKey,
   ContentSwitchNetwork,
   Header,
+  TestContent,
 } from '../components';
 import { defaultSnapOrigin } from '../config';
 import { useMetaMask, useRequestSnap, useWrongChain } from '../hooks';
@@ -66,7 +67,10 @@ const Index = () => {
         wrongChain ? (
           <ContentSwitchNetwork />
         ) : installedSnap ? (
-          <ContentManageAESKey />
+          <>
+            <TestContent />
+            <ContentManageAESKey />
+          </>
         ) : (
           <Button text="Install snap" primary onClick={requestSnap} />
         )

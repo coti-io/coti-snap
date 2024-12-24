@@ -10,3 +10,4 @@ export * from './Toggle';
 export * from './ContentConnectYourWallet';
 export * from './ContentSwitchNetwork';
 export * from './ContentManageAESKey';
+export * from './TestContent';
