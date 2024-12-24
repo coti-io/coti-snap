@@ -8,6 +8,8 @@ import styled from 'styled-components';
 //   useRequestSnap,
 // } from '../hooks';
 // import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
+import { useAccount, useConnect } from 'wagmi';
+
 import { Button } from './Button';
 
 const Link = styled.a`
@@ -86,33 +88,43 @@ export const HeaderButtons = () => {
   //   return <Button text="Reconnect" primary onClick={requestSnap} />;
   // }
 
+  const { connect } = useConnect();
+
+  const { isConnected } = useAccount();
+
   return (
     <ConnectedContainer>
-      <ConnectedDetails>0xc7386...4D894</ConnectedDetails>
-      <ConnectedDetails>
-        Network
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g clip-path="url(#clip0_608_2076)">
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M16.6 8.59961L12 13.1996L7.4 8.59961L6 9.99961L12 15.9996L18 9.99961L16.6 8.59961Z"
-              fill="#11DEB3"
-            />
-          </g>
-          <defs>
-            <clipPath id="clip0_608_2076">
-              <rect width="24" height="24" fill="white" />
-            </clipPath>
-          </defs>
-        </svg>
-      </ConnectedDetails>
+      {isConnected ? (
+        <>
+          <ConnectedDetails>0xc7386...4D894</ConnectedDetails>
+          <ConnectedDetails>
+            Network
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clip-path="url(#clip0_608_2076)">
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M16.6 8.59961L12 13.1996L7.4 8.59961L6 9.99961L12 15.9996L18 9.99961L16.6 8.59961Z"
+                  fill="#11DEB3"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_608_2076">
+                  <rect width="24" height="24" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+          </ConnectedDetails>
+        </>
+      ) : (
+        <Button text="Connect" primary onClick={connect} />
+      )}
     </ConnectedContainer>
   );
 };
