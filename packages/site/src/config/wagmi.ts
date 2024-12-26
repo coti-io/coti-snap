@@ -1,26 +1,26 @@
 import { defineChain } from 'viem';
 import { http, createConfig } from 'wagmi';
 
-export const CHAIN_ID = 13068200;
+export const CHAIN_ID = 7082400;
 
 export const COTI = defineChain({
   id: CHAIN_ID,
-  name: 'COTI',
+  name: 'COTI Testnet',
   caipNetworkId: 'eip155:123456789',
   chainNamespace: 'eip155',
   nativeCurrency: {
     decimals: 18,
-    name: 'COTI 2',
-    symbol: 'COTI2',
+    name: 'COTI',
+    symbol: 'COTI',
   },
   rpcUrls: {
     default: {
-      http: ['https://devnet.coti.io/rpc'],
-      webSocket: ['WS_RPC_URLwss://devnet.coti.io/ws'],
+      http: ['https://testnet.coti.io/rpc'],
+      webSocket: ['WS_RPC_URLwss://testnet.coti.io/ws'],
     },
   },
   blockExplorers: {
-    default: { name: 'Explorer', url: 'https://devnet.cotiscan.io' },
+    default: { name: 'Explorer', url: 'https://testnet.cotiscan.io' },
   },
   contracts: {
     // Add the contracts here
