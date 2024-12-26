@@ -19,6 +19,11 @@ yarn install && yarn start
 
 To check/test the last changes to be integrated switch from the `main` branch to the `develop` branch.
 
+```shell
+git fetch 
+git checkout develop
+```
+
 ## Contributing
 
 ### Testing and Linting
@@ -26,4 +31,6 @@ To check/test the last changes to be integrated switch from the `main` branch to
 Run `yarn test` to run the tests once.
 
 Run `yarn lint` to run the linter, or run `yarn lint:fix` to run the linter and
+
 fix any automatically fixable issues.
+
