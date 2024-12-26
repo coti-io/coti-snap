@@ -1,22 +1,30 @@
-import { type OnHomePageHandler, OnRpcRequestHandler, OnUpdateHandler, type OnUserInputHandler, UserInputEventType } from '@metamask/snaps-sdk';
-import { Box, Text, Bold, Button, Row, Form, Input, Container, Footer, Field, Section, Selector, SelectorOption, Card, Heading } from '@metamask/snaps-sdk/jsx';
+/* eslint-disable id-length */
+/* eslint-disable @typescript-eslint/switch-exhaustiveness-check */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
+/* eslint-disable default-case */
+/* eslint-disable no-case-declarations */
 import {
   encodeString,
-  decryptUint,
   encrypt,
   encodeKey,
   decrypt,
-  decryptString,
-  ctUint
-} from "@coti-io/coti-sdk-typescript"
+} from '@coti-io/coti-sdk-typescript';
+import type { OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
+import {
+  type OnHomePageHandler,
+  type OnUserInputHandler,
+  UserInputEventType,
+} from '@metamask/snaps-sdk';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
-import { Tokens, State, TokenViewSelector } from './types';
 import { Home } from './components/Home';
-import { Settings } from './components/Settings';
 import { ImportToken } from './components/ImportToken';
-import { getStateData, setStateData } from './utils/snap'
-import { getTokenType, importToken, recalculateBalances } from './utils/token'
+import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
+import type { State } from './types';
+import { TokenViewSelector } from './types';
+import { getStateData, setStateData } from './utils/snap';
+import { importToken, recalculateBalances } from './utils/token';
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '50764f856be3f636c09faf092be20d0c';
@@ -24,28 +32,46 @@ const testAESKey = '50764f856be3f636c09faf092be20d0c';
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView } = await getStateData<State>();
   await snap.request({
-    method: "snap_updateInterface",
+    method: 'snap_updateInterface',
     params: {
       id,
-      ui: <Home balance={BigInt(balance || 0)} tokenBalances={tokenBalances} tokenView={tokenView || TokenViewSelector.ERC20} />,
+      ui: (
+        <Home
+          balance={BigInt(balance || 0)}
+          tokenBalances={tokenBalances}
+          tokenView={tokenView ?? TokenViewSelector.ERC20}
+        />
+      ),
     },
   });
-}
+};
 
 export const onUpdate: OnUpdateHandler = async () => {
   await snap.request({
-    method: "snap_manageState",
+    method: 'snap_manageState',
     params: {
-      operation: "clear",
+      operation: 'clear',
     },
-  })
-}
+  });
+};
 
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
-  await setStateData<State>({ ...state, tokenView: TokenViewSelector.ERC20, AESKey: testAESKey }); // remove aes key setting after onboarding impolimented
-  return { content: <Home balance={balance} tokenBalances={tokenBalances} tokenView={TokenViewSelector.ERC20} /> };
+  await setStateData<State>({
+    ...state,
+    tokenView: TokenViewSelector.ERC20,
+    AESKey: testAESKey,
+  }); // remove aes key setting after onboarding impolimented
+  return {
+    content: (
+      <Home
+        balance={balance}
+        tokenBalances={tokenBalances}
+        tokenView={TokenViewSelector.ERC20}
+      />
+    ),
+  };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
@@ -54,13 +80,22 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     if (event.name?.startsWith('token-details-')) {
       const tokenAddress = event.name.slice('token-details-'.length);
       const state = await getStateData<State>();
-      const token = state.tokenBalances.find(token => token.address === tokenAddress);
+      const token = state.tokenBalances.find(
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        (token) => token.address === tokenAddress,
+      );
       if (token) {
         await snap.request({
-          method: "snap_updateInterface",
+          method: 'snap_updateInterface',
           params: {
             id,
-            ui: <TokenDetails tokenName={token.name} tokenBalance={token.balance || 'N/A'} tokenAddress={token.address} />,
+            ui: (
+              <TokenDetails
+                tokenName={token.name}
+                tokenBalance={token.balance ?? 'N/A'}
+                tokenAddress={token.address}
+              />
+            ),
           },
         });
       }
@@ -69,7 +104,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     switch (event.name) {
       case 'import-token-button':
         await snap.request({
-          method: "snap_updateInterface",
+          method: 'snap_updateInterface',
           params: {
             id,
             ui: <ImportToken />,
@@ -80,7 +115,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         console.log('Settings');
         try {
           await snap.request({
-            method: "snap_updateInterface",
+            method: 'snap_updateInterface',
             params: {
               id,
               ui: <Settings />,
@@ -95,55 +130,66 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         return;
       case 'token-submit':
         const state = await snap.request({
-          method: "snap_getInterfaceState",
+          method: 'snap_getInterfaceState',
           params: {
             id,
           },
-        })
-        const formState = state['form-to-fill'] as Record<string, string | boolean | null>;
-        if (formState && formState['token-address'] && formState['token-name'] && formState['token-symbol']) {
+        });
+        const formState = state['form-to-fill'] as Record<
+          string,
+          string | boolean | null
+        >;
+        if (
+          formState &&
+          formState['token-address'] &&
+          formState['token-name'] &&
+          formState['token-symbol']
+        ) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
           const symbol = formState['token-symbol'] as string;
           await importToken(address, name, symbol);
         } else {
-          //TODO: add validation
+          // TODO: add validation
           console.log('Invalid form state:', formState);
         }
         await recalculateBalances();
         await returnToHomePage(id);
-        return;
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
       case 'selector-tokens-nft':
         // erc20 or nft
-        const selectedTokenView: TokenViewSelector = event.value as TokenViewSelector;
+        const selectedTokenView: TokenViewSelector =
+          event.value as TokenViewSelector;
         const state = await getStateData<State>();
         await setStateData<State>({ ...state, tokenView: selectedTokenView });
         await recalculateBalances();
         await returnToHomePage(id);
-        return;
     }
   }
-}
+};
 
 export const onRpcRequest: OnRpcRequestHandler = async ({
-  origin,
+  // origin,
   request,
 }) => {
   switch (request.method) {
-    case "encrypt":
-      if (!request.params) return null;
+    case 'encrypt':
+      if (!request.params) {
+        return null;
+      }
       const { value: textToEncrypt } = request.params as Record<string, string>;
-      if (!textToEncrypt) return null;
+      if (!textToEncrypt) {
+        return null;
+      }
 
       const onEncryptState = await getStateData<State>();
       if (!onEncryptState.AESKey) {
         await snap.request({
-          method: "snap_dialog",
+          method: 'snap_dialog',
           params: {
-            type: "alert",
+            type: 'alert',
             content: (
               <Box>
                 <Heading>Warning</Heading>
@@ -155,10 +201,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      let encryptResult = await snap.request({
-        method: "snap_dialog",
+      const encryptResult = await snap.request({
+        method: 'snap_dialog',
         params: {
-          type: "confirmation",
+          type: 'confirmation',
           content: (
             <Box>
               <Heading>Would you like to encrypt this value?</Heading>
@@ -169,24 +215,36 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       });
 
       if (encryptResult) {
-        return JSON.stringify(encrypt(encodeKey(onEncryptState.AESKey), encodeString(textToEncrypt)));
+        return JSON.stringify(
+          encrypt(
+            encodeKey(onEncryptState.AESKey),
+            encodeString(textToEncrypt),
+          ),
+        );
       }
-      return null
-    case "decrypt":
-      if (!request.params) return null;
-      const { value: encryptedValue } = request.params as Record<string, string>;
-      if (!encryptedValue) return null;
+      return null;
+    case 'decrypt':
+      if (!request.params) {
+        return null;
+      }
+      const { value: encryptedValue } = request.params as Record<
+        string,
+        string
+      >;
+      if (!encryptedValue) {
+        return null;
+      }
       const { ciphertext, r } = JSON.parse(encryptedValue) as {
-        ciphertext: { [key: string]: number },
-        r: { [key: string]: number },
+        ciphertext: { [key: string]: number };
+        r: { [key: string]: number };
       };
 
       const onDecryptState = await getStateData<State>();
       if (!onDecryptState.AESKey) {
         await snap.request({
-          method: "snap_dialog",
+          method: 'snap_dialog',
           params: {
-            type: "alert",
+            type: 'alert',
             content: (
               <Box>
                 <Heading>Warning</Heading>
@@ -199,9 +257,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       const decryptResult = await snap.request({
-        method: "snap_dialog",
+        method: 'snap_dialog',
         params: {
-          type: "confirmation",
+          type: 'confirmation',
           content: (
             <Box>
               <Heading>Would you like to decrypt this value?</Heading>
@@ -211,14 +269,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         },
       });
       if (decryptResult) {
-        return JSON.stringify(decrypt(
-          encodeKey(onDecryptState.AESKey),
-          new Uint8Array([...Object.values(r)]),
-          new Uint8Array([...Object.values(ciphertext)])
-        ));
+        return JSON.stringify(
+          decrypt(
+            encodeKey(onDecryptState.AESKey),
+            new Uint8Array([...Object.values(r)]),
+            new Uint8Array([...Object.values(ciphertext)]),
+          ),
+        );
       }
       return null;
     default:
-      throw new Error("Method not found.")
+      throw new Error('Method not found.');
   }
-}
+};
