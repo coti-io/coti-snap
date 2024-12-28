@@ -3,18 +3,15 @@ import {
   Text,
   Button,
   Section,
-  Selector,
-  SelectorOption,
-  Card,
-  SnapComponent,
   Divider,
   Heading,
-  Row,
+  Icon,
+  Image,
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
 
-import type { Tokens } from '../types';
-import { TokenViewSelector } from '../types';
+import defaultToken from '../../images/default-token.svg';
+import type { Tokens, TokenViewSelector } from '../types';
 
 type HomeProps = {
   balance: bigint;
@@ -26,60 +23,56 @@ export const Home = ({ balance, tokenBalances, tokenView }: HomeProps) => {
   const formatedBalance = parseFloat(formatEther(balance)).toFixed(2);
   return (
     <Box>
-      <Box alignment="center" direction="horizontal">
-        <Heading size="lg">{formatedBalance} COTI</Heading>
-      </Box>
       <Section>
-        <Selector name="selector-tokens-nft" title="Select Token type">
-          <SelectorOption value={TokenViewSelector.ERC20}>
-            <Card title="Tokens" value="ERC20" />
-          </SelectorOption>
-          <SelectorOption value={TokenViewSelector.NFT}>
-            <Card title="NFT" value="ERC721/ERC1155" />
-          </SelectorOption>
-        </Selector>
         <Box alignment="center" direction="horizontal">
-          <Button
-            name="view-tokens-tokens"
-            variant={
-              tokenView === TokenViewSelector.ERC20 ? 'destructive' : 'primary'
-            }
-          >
-            Tokens
-          </Button>
-          <Button
-            name="view-tokens-nft"
-            variant={
-              tokenView === TokenViewSelector.NFT ? 'destructive' : 'primary'
-            }
-          >
-            NFT
-          </Button>
+          <Heading size="lg">{formatedBalance} COTI</Heading>
+        </Box>
+        <Box alignment="space-around" direction="horizontal">
+          <Button name="view-tokens-tokens">Tokens</Button>
+          <Button name="view-tokens-nft">NFT</Button>
         </Box>
         <Divider />
-        {tokenBalances.filter((token) => token.type == tokenView).length ? (
+        <Box alignment="end" direction="horizontal">
+          <Button name="import-token-button">Import</Button>
+        </Box>
+        {tokenBalances.filter((token) => token.type === tokenView).length ? (
           tokenBalances
-            .filter((token) => token.type == tokenView)
+            .filter((token) => token.type === tokenView)
             .map((token) => (
-              <Box>
-                <Card
-                  title={token.name}
-                  value={String(token.balance) || 'N/A'}
-                  description={`${token.address.substring(0, 7)}...`}
-                />
-                <Button name={`token-details-${token.address}`}>details</Button>
+              <Box
+                key={token.address}
+                direction="horizontal"
+                alignment="space-between"
+              >
+                <Box alignment="space-between" direction="horizontal">
+                  <Box alignment="center" direction="horizontal">
+                    <Box alignment="center" direction="vertical">
+                      <Image src={defaultToken} />
+                    </Box>
+                    <Box direction="vertical" alignment="center">
+                      <Text>{token.symbol}</Text>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box alignment="space-between" direction="horizontal">
+                  <Box direction="vertical" alignment="end">
+                    <Text>{token.symbol}</Text>
+                    <Text>{token.symbol}</Text>
+                  </Box>
+                  <Box direction="vertical" alignment="center">
+                    <Button name={`token-details-${token.address}`}>
+                      <Icon name="arrow-right" />
+                    </Button>
+                  </Box>
+                </Box>
               </Box>
             ))
         ) : (
           <Text>No tokens was added yet</Text>
         )}
       </Section>
-      {tokenView === TokenViewSelector.ERC20 && (
-        <Heading size="md">ERC20 Tokens</Heading>
-      )}
-      {tokenView === TokenViewSelector.NFT && <Heading size="md">NFT</Heading>}
-      <Box alignment="space-between" direction="horizontal">
-        <Button name="import-token-button">Import Token</Button>
+      <Box alignment="start" direction="horizontal">
         <Button name="settings-button">Settings</Button>
       </Box>
     </Box>
