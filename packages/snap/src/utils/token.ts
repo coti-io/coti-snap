@@ -152,16 +152,16 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
 
 export const getTokenPriceInUSD = async (
   tokenSymbol: string,
-): Promise<number | null> => {
+): Promise<string> => {
   try {
     const response = await fetch(
       `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
     );
     const data = await response.json();
-    return data.USD || null;
+    return data.USD || '';
   } catch (error) {
     console.error(`Error fetching price for ${tokenSymbol}:`, error);
-    return null;
+    return '';
   }
 };
 
@@ -238,4 +238,19 @@ export const importToken = async (
   }
   tokens.push({ address, name, symbol, balance: null, type, confidential });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
+};
+
+export const hideToken = async (address: string) => {
+  const oldState = await getStateData<State>();
+  const tokens = oldState.tokenBalances;
+  console.log(`Hiding token at address ${address}`);
+  const updatedTokens = tokens.filter((token) => token.address !== address);
+  await setStateData<State>({ ...oldState, tokenBalances: updatedTokens });
+};
+
+export const truncateAddress = (address: string, length = 6): string => {
+  if (address.length <= length * 2) {
+    return address;
+  }
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
 };

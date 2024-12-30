@@ -4,12 +4,9 @@
 /* eslint-disable @typescript-eslint/switch-exhaustiveness-check */
 import {
   encodeString,
-  decryptUint,
   encrypt,
   encodeKey,
   decrypt,
-  decryptString,
-  ctUint,
 } from '@coti-io/coti-sdk-typescript';
 import type { OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
 import {
@@ -17,32 +14,17 @@ import {
   type OnUserInputHandler,
   UserInputEventType,
 } from '@metamask/snaps-sdk';
-import {
-  Box,
-  Text,
-  Bold,
-  Button,
-  Row,
-  Form,
-  Input,
-  Container,
-  Footer,
-  Field,
-  Section,
-  Selector,
-  SelectorOption,
-  Card,
-  Heading,
-} from '@metamask/snaps-sdk/jsx';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
+import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
-import { Tokens, TokenViewSelector } from './types';
+import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
-import { getTokenType, importToken, recalculateBalances } from './utils/token';
+import { hideToken, importToken, recalculateBalances } from './utils/token';
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '50764f856be3f636c09faf092be20d0c';
@@ -58,7 +40,24 @@ export const returnToHomePage = async (id: string) => {
         <Home
           balance={BigInt(balance || 0)}
           tokenBalances={tokenBalances}
-          tokenView={tokenView || TokenViewSelector.ERC20}
+          tokenView={tokenView ?? TokenViewSelector.ERC20}
+        />
+      ),
+    },
+  });
+};
+
+export const returnToTokenDetails = async (id: string) => {
+  const { balance, tokenBalances, tokenView } = await getStateData<State>();
+  await snap.request({
+    method: 'snap_updateInterface',
+    params: {
+      id,
+      ui: (
+        <Home
+          balance={BigInt(balance || 0)}
+          tokenBalances={tokenBalances}
+          tokenView={tokenView ?? TokenViewSelector.ERC20}
         />
       ),
     },
@@ -96,14 +95,14 @@ export const onHomePage: OnHomePageHandler = async () => {
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  const { balance, tokenBalances, tokenView } = await getStateData<State>();
+  const { balance, tokenBalances } = await getStateData<State>();
   console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
       const tokenAddress = event.name.slice('token-details-'.length);
       const state = await getStateData<State>();
       const token = state.tokenBalances.find(
-        (token) => token.address === tokenAddress,
+        (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
         await snap.request({
@@ -113,13 +112,41 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             ui: (
               <TokenDetails
                 tokenName={token.name}
-                tokenBalance={token.balance || 'N/A'}
+                tokenBalance={token.balance ?? 'N/A'}
                 tokenAddress={token.address}
               />
             ),
           },
         });
       }
+      return;
+    }
+    if (event.name?.startsWith('confirm-hide-token-')) {
+      const tokenAddress = event.name.slice('confirm-hide-token-'.length);
+      const state = await getStateData<State>();
+      const token = state.tokenBalances.find(
+        (tkn) => tkn.address === tokenAddress,
+      );
+      if (token) {
+        await snap.request({
+          method: 'snap_updateInterface',
+          params: {
+            id,
+            ui: <HideToken tokenAddress={token.address} />,
+          },
+        });
+      }
+      return;
+    }
+    if (event.name?.startsWith('hide-token-confirmed-')) {
+      const tokenAddress = event.name.slice('hide-token-confirmed-'.length);
+
+      if (tokenAddress) {
+        await hideToken(tokenAddress);
+      }
+      await recalculateBalances();
+      await returnToHomePage(id);
+
       return;
     }
     switch (event.name) {
@@ -172,8 +199,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               ui: <Settings />,
             },
           });
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          console.error(error);
         }
         return;
       case 'token-cancel':
@@ -222,7 +249,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 };
 
 export const onRpcRequest: OnRpcRequestHandler = async ({
-  origin,
+  // origin,
   request,
 }) => {
   switch (request.method) {
