@@ -20,6 +20,7 @@ import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
+import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
 import { TokenViewSelector } from './types';
@@ -60,16 +61,28 @@ export const returnToTokenDetails = async (id: string) => {
           tokenView={tokenView ?? TokenViewSelector.ERC20}
         />
       ),
+      ui: (
+        <Home
+          balance={BigInt(balance || 0)}
+          tokenBalances={tokenBalances}
+          tokenView={tokenView ?? TokenViewSelector.ERC20}
+        />
+      ),
     },
   });
+};
 };
 
 export const onUpdate: OnUpdateHandler = async () => {
   await snap.request({
     method: 'snap_manageState',
+    method: 'snap_manageState',
     params: {
       operation: 'clear',
+      operation: 'clear',
     },
+  });
+};
   });
 };
 
@@ -130,6 +143,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
       if (token) {
         await snap.request({
           method: 'snap_updateInterface',
+          method: 'snap_updateInterface',
           params: {
             id,
             ui: <HideToken tokenAddress={token.address} />,
@@ -152,6 +166,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     switch (event.name) {
       case 'import-token-button':
         await snap.request({
+          method: 'snap_updateInterface',
           method: 'snap_updateInterface',
           params: {
             id,
@@ -194,6 +209,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         try {
           await snap.request({
             method: 'snap_updateInterface',
+            method: 'snap_updateInterface',
             params: {
               id,
               ui: <Settings />,
@@ -209,9 +225,21 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
       case 'token-submit':
         const state = await snap.request({
           method: 'snap_getInterfaceState',
+          method: 'snap_getInterfaceState',
           params: {
             id,
           },
+        });
+        const formState = state['form-to-fill'] as Record<
+          string,
+          string | boolean | null
+        >;
+        if (
+          formState &&
+          formState['token-address'] &&
+          formState['token-name'] &&
+          formState['token-symbol']
+        ) {
         });
         const formState = state['form-to-fill'] as Record<
           string,
@@ -229,6 +257,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           await importToken(address, name, symbol);
         } else {
           // TODO: add validation
+          // TODO: add validation
           console.log('Invalid form state:', formState);
         }
         await recalculateBalances();
@@ -240,6 +269,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         // erc20 or nft
         const selectedTokenView: TokenViewSelector =
           event.value as TokenViewSelector;
+        const selectedTokenView: TokenViewSelector =
+          event.value as TokenViewSelector;
         const state = await getStateData<State>();
         await setStateData<State>({ ...state, tokenView: selectedTokenView });
         await recalculateBalances();
@@ -247,8 +278,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     }
   }
 };
+};
 
 export const onRpcRequest: OnRpcRequestHandler = async ({
+  // origin,
   // origin,
   request,
 }) => {
@@ -257,7 +290,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (!request.params) {
         return null;
       }
+    case 'encrypt':
+      if (!request.params) {
+        return null;
+      }
       const { value: textToEncrypt } = request.params as Record<string, string>;
+      if (!textToEncrypt) {
+        return null;
+      }
       if (!textToEncrypt) {
         return null;
       }
@@ -266,7 +306,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (!onEncryptState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
+          method: 'snap_dialog',
           params: {
+            type: 'alert',
             type: 'alert',
             content: (
               <Box>
@@ -281,7 +323,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       const encryptResult = await snap.request({
         method: 'snap_dialog',
+      const encryptResult = await snap.request({
+        method: 'snap_dialog',
         params: {
+          type: 'confirmation',
           type: 'confirmation',
           content: (
             <Box>
@@ -293,6 +338,12 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       });
 
       if (encryptResult) {
+        return JSON.stringify(
+          encrypt(
+            encodeKey(onEncryptState.AESKey),
+            encodeString(textToEncrypt),
+          ),
+        );
         return JSON.stringify(
           encrypt(
             encodeKey(onEncryptState.AESKey),
@@ -312,7 +363,21 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (!encryptedValue) {
         return null;
       }
+      return null;
+    case 'decrypt':
+      if (!request.params) {
+        return null;
+      }
+      const { value: encryptedValue } = request.params as Record<
+        string,
+        string
+      >;
+      if (!encryptedValue) {
+        return null;
+      }
       const { ciphertext, r } = JSON.parse(encryptedValue) as {
+        ciphertext: { [key: string]: number };
+        r: { [key: string]: number };
         ciphertext: { [key: string]: number };
         r: { [key: string]: number };
       };
@@ -321,7 +386,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (!onDecryptState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
+          method: 'snap_dialog',
           params: {
+            type: 'alert',
             type: 'alert',
             content: (
               <Box>
@@ -336,7 +403,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       const decryptResult = await snap.request({
         method: 'snap_dialog',
+        method: 'snap_dialog',
         params: {
+          type: 'confirmation',
           type: 'confirmation',
           content: (
             <Box>
@@ -354,9 +423,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             new Uint8Array([...Object.values(ciphertext)]),
           ),
         );
+        return JSON.stringify(
+          decrypt(
+            encodeKey(onDecryptState.AESKey),
+            new Uint8Array([...Object.values(r)]),
+            new Uint8Array([...Object.values(ciphertext)]),
+          ),
+        );
       }
       return null;
     default:
       throw new Error('Method not found.');
+      throw new Error('Method not found.');
   }
+};
 };

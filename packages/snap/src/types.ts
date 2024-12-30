@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 // tokens with balances and info
 export type Tokens = {
   name: string;
@@ -13,6 +14,7 @@ export type Tokens = {
 export enum TokenViewSelector {
   ERC20 = 'erc20',
   NFT = 'nft',
+  UNKNOWN = 'unknown',
   UNKNOWN = 'unknown',
 }
 

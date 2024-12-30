@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useSwitchChain } from 'wagmi';
 
+import { CHAIN_ID } from '../config/wagmi';
 import { Button } from './Button';
 
 const ContentContainer = styled.div`
@@ -37,7 +38,7 @@ const ContentText = styled.p`
 export const ContentSwitchNetwork = () => {
   const { switchChain } = useSwitchChain();
   const handleSwitchChain = () => {
-    switchChain({ chainId: 13068200 });
+    switchChain({ chainId: CHAIN_ID });
   };
 
   return (
