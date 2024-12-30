@@ -47,23 +47,6 @@ export const returnToHomePage = async (id: string) => {
   });
 };
 
-export const returnToTokenDetails = async (id: string) => {
-  const { balance, tokenBalances, tokenView } = await getStateData<State>();
-  await snap.request({
-    method: 'snap_updateInterface',
-    params: {
-      id,
-      ui: (
-        <Home
-          balance={BigInt(balance || 0)}
-          tokenBalances={tokenBalances}
-          tokenView={tokenView ?? TokenViewSelector.ERC20}
-        />
-      ),
-    },
-  });
-};
-
 export const onUpdate: OnUpdateHandler = async () => {
   await snap.request({
     method: 'snap_manageState',
@@ -76,8 +59,6 @@ export const onUpdate: OnUpdateHandler = async () => {
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
-  console.log('State from HOME:', state);
-
   await setStateData<State>({
     ...state,
     tokenView: TokenViewSelector.ERC20,
