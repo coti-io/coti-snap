@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { defaultSnapOrigin } from '../config';
@@ -30,10 +30,11 @@ const ContentContainer = styled.div`
 `;
 
 export const TestContent = () => {
-  const { error } = useMetaMaskContext();
   const { isFlask, snapsDetected, installedSnap } = useMetaMask();
   const requestSnap = useRequestSnap();
   const invokeSnap = useInvokeSnap();
+
+  const [aesKEY, setAesKEY] = useState<string | null>(null);
 
   const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
     ? isFlask
@@ -70,6 +71,26 @@ export const TestContent = () => {
       alert(result);
     }
   };
+
+  useEffect(() => {
+    const handleAESClick = async () => {
+      console.log('IN HANDLE AES CLICK');
+
+      const result = await invokeSnap({
+        method: 'get-aes-key',
+      });
+
+      console.log('result', result);
+
+      if (result !== null) {
+        setAesKEY(result as string);
+      }
+    };
+    handleAESClick().catch((error) => {
+      console.error('Error setting AES key:', error);
+    });
+  }, [aesKEY]);
+
   return (
     <ContentContainer>
       {shouldDisplayReconnectButton(installedSnap) && (
@@ -77,6 +98,7 @@ export const TestContent = () => {
       )}
       {installedSnap && (
         <>
+          {aesKEY && <p>AES KEY: {aesKEY}</p>}
           <Button primary text="Encrypt" onClick={handleEncryptClick} />
           <Button primary text="Decrypt" onClick={handleDecryptClick} />
         </>

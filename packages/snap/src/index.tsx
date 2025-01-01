@@ -59,6 +59,7 @@ export const onUpdate: OnUpdateHandler = async () => {
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
+
   await setStateData<State>({
     ...state,
     tokenView: TokenViewSelector.ERC20,
@@ -230,7 +231,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 };
 
 export const onRpcRequest: OnRpcRequestHandler = async ({
-  // origin,
+  origin,
   request,
 }) => {
   switch (request.method) {
@@ -238,6 +239,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (!request.params) {
         return null;
       }
+
       const { value: textToEncrypt } = request.params as Record<string, string>;
       if (!textToEncrypt) {
         return null;
@@ -257,6 +259,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             ),
           },
         });
+
         return null;
       }
 
@@ -281,24 +284,30 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           ),
         );
       }
+
       return null;
+
     case 'decrypt':
       if (!request.params) {
         return null;
       }
+
       const { value: encryptedValue } = request.params as Record<
         string,
         string
       >;
+
       if (!encryptedValue) {
         return null;
       }
+
       const { ciphertext, r } = JSON.parse(encryptedValue) as {
         ciphertext: { [key: string]: number };
         r: { [key: string]: number };
       };
 
       const onDecryptState = await getStateData<State>();
+
       if (!onDecryptState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -337,6 +346,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         );
       }
       return null;
+
+    case 'get-aes-key':
+      const onSetAESKeyState = await getStateData<State>();
+
+      if (onSetAESKeyState.AESKey) {
+        return onSetAESKeyState.AESKey;
+      }
+
+      return null;
+
+    // case 'set-aes-key':
+
     default:
       throw new Error('Method not found.');
   }
