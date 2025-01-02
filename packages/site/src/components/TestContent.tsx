@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
-import { defaultSnapOrigin } from '../config';
-import {
-  useInvokeSnap,
-  useMetaMask,
-  useMetaMaskContext,
-  useRequestSnap,
-} from '../hooks';
-import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
+import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
+import { shouldDisplayReconnectButton } from '../utils';
 import { Button } from './Button';
 
 const ContentContainer = styled.div`
@@ -29,16 +23,10 @@ const ContentContainer = styled.div`
   }
 `;
 
-export const TestContent = () => {
-  const { isFlask, snapsDetected, installedSnap } = useMetaMask();
+export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
+  const { installedSnap } = useMetaMask();
   const requestSnap = useRequestSnap();
   const invokeSnap = useInvokeSnap();
-
-  const [aesKEY, setAesKEY] = useState<string | null>(null);
-
-  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
-    ? isFlask
-    : snapsDetected;
 
   const handleEncryptClick = async () => {
     const result = await invokeSnap({
@@ -72,33 +60,14 @@ export const TestContent = () => {
     }
   };
 
-  useEffect(() => {
-    const handleAESClick = async () => {
-      console.log('IN HANDLE AES CLICK');
-
-      const result = await invokeSnap({
-        method: 'get-aes-key',
-      });
-
-      console.log('result', result);
-
-      if (result !== null) {
-        setAesKEY(result as string);
-      }
-    };
-    handleAESClick().catch((error) => {
-      console.error('Error setting AES key:', error);
-    });
-  }, [aesKEY]);
-
   return (
     <ContentContainer>
+      {userAESKey && <div>{userAESKey}</div>}
       {shouldDisplayReconnectButton(installedSnap) && (
         <Button primary text="Reconnect" onClick={requestSnap} />
       )}
       {installedSnap && (
         <>
-          {aesKEY && <p>AES KEY: {aesKEY}</p>}
           <Button primary text="Encrypt" onClick={handleEncryptClick} />
           <Button primary text="Decrypt" onClick={handleDecryptClick} />
         </>
