@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -45,9 +45,17 @@ const Index = () => {
     }
   };
 
-  getAESKey().catch((error) => {
-    console.error('Error in getAESKey', error);
-  });
+  // getAESKey().catch((error) => {
+  //   console.error('Error in getAESKey', error);
+  // });
+
+  useEffect(() => {
+    if (installedSnap) {
+      getAESKey().catch((error) => {
+        console.error('Error in getAESKey', error);
+      });
+    }
+  }, [installedSnap]);
 
   return (
     <Container>
