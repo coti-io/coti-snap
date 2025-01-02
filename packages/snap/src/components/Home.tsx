@@ -5,13 +5,11 @@ import {
   Section,
   Divider,
   Heading,
-  Icon,
-  Image,
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
 
-import defaultToken from '../../images/default-token.svg';
 import type { Tokens, TokenViewSelector } from '../types';
+import { Token } from './Token';
 
 type HomeProps = {
   balance: bigint;
@@ -38,36 +36,7 @@ export const Home = ({ balance, tokenBalances, tokenView }: HomeProps) => {
         {tokenBalances.filter((token) => token.type === tokenView).length ? (
           tokenBalances
             .filter((token) => token.type === tokenView)
-            .map((token) => (
-              <Box
-                key={token.address}
-                direction="horizontal"
-                alignment="space-between"
-              >
-                <Box alignment="space-between" direction="horizontal">
-                  <Box alignment="center" direction="horizontal">
-                    <Box alignment="center" direction="vertical">
-                      <Image src={defaultToken} />
-                    </Box>
-                    <Box direction="vertical" alignment="center">
-                      <Text>{token.symbol}</Text>
-                    </Box>
-                  </Box>
-                </Box>
-
-                <Box alignment="space-between" direction="horizontal">
-                  <Box direction="vertical" alignment="end">
-                    <Text>{token.symbol}</Text>
-                    <Text>{token.symbol}</Text>
-                  </Box>
-                  <Box direction="vertical" alignment="center">
-                    <Button name={`token-details-${token.address}`}>
-                      <Icon name="arrow-right" />
-                    </Button>
-                  </Box>
-                </Box>
-              </Box>
-            ))
+            .map((token) => <Token key={token.address} token={token} />)
         ) : (
           <Text>No tokens was added yet</Text>
         )}

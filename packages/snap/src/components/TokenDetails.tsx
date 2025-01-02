@@ -65,7 +65,7 @@ export const TokenDetails = ({
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
-        <Text>0</Text>
+        <Text>18</Text>
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>

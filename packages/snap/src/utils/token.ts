@@ -150,15 +150,18 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
   }
 };
 
+// FIXME: This function is not working as expected
 export const getTokenPriceInUSD = async (
   tokenSymbol: string,
 ): Promise<string> => {
   try {
     const response = await fetch(
-      `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
+      //  `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
+      `https://min-api.cryptocompare.com/data/price?fsym=ADA&tsyms=USD`,
     );
     const data = await response.json();
-    return data.USD || '';
+    console.log(`Price for ${tokenSymbol}:`, data);
+    return data.USD;
   } catch (error) {
     console.error(`Error fetching price for ${tokenSymbol}:`, error);
     return '';
