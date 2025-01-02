@@ -75,12 +75,11 @@ const IconContainer = styled.button<{ $isCopied?: boolean }>`
 
 export const ManageAESKey = ({
   handleShowDelete,
+  userAESKey,
 }: {
   handleShowDelete: () => void;
+  userAESKey: string | null;
 }) => {
-  const [value] = useState<string>(
-    '0x3A5470Fa1cF02B6f96CB1E678d93B6D63b571444',
-  );
   const [reveal, setReveal] = useState<boolean>(false);
 
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -110,8 +109,12 @@ export const ManageAESKey = ({
         <AESKeyContainer>
           {reveal ? (
             <>
-              <EditableInput type="text" value={value} readOnly={true} />
-              <IconContainer onClick={() => copyToClipboard(value)}>
+              <EditableInput
+                type="text"
+                value={userAESKey ?? ''}
+                readOnly={true}
+              />
+              <IconContainer onClick={() => copyToClipboard(userAESKey ?? '')}>
                 {isCopied ? <CheckIcon /> : <CopyIcon />}
               </IconContainer>
             </>

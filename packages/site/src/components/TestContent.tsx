@@ -1,14 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { defaultSnapOrigin } from '../config';
-import {
-  useInvokeSnap,
-  useMetaMask,
-  useMetaMaskContext,
-  useRequestSnap,
-} from '../hooks';
-import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
+import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
+import { shouldDisplayReconnectButton } from '../utils';
 import { Button } from './Button';
 
 const ContentContainer = styled.div`
@@ -29,15 +23,10 @@ const ContentContainer = styled.div`
   }
 `;
 
-export const TestContent = () => {
-  const { error } = useMetaMaskContext();
-  const { isFlask, snapsDetected, installedSnap } = useMetaMask();
+export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
+  const { installedSnap } = useMetaMask();
   const requestSnap = useRequestSnap();
   const invokeSnap = useInvokeSnap();
-
-  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
-    ? isFlask
-    : snapsDetected;
 
   const handleEncryptClick = async () => {
     const result = await invokeSnap({
@@ -70,8 +59,10 @@ export const TestContent = () => {
       alert(result);
     }
   };
+
   return (
     <ContentContainer>
+      {userAESKey && <div>{userAESKey}</div>}
       {shouldDisplayReconnectButton(installedSnap) && (
         <Button primary text="Reconnect" onClick={requestSnap} />
       )}

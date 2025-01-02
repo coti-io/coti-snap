@@ -1,26 +1,14 @@
 /* eslint-disable no-nested-ternary */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import {
   Button,
-  ContentConnectYourWallet,
   ContentManageAESKey,
-  ContentSwitchNetwork,
   Header,
   TestContent,
 } from '../components';
-import { defaultSnapOrigin } from '../config';
-import { useMetaMask, useRequestSnap, useWrongChain } from '../hooks';
-import { isLocalSnap } from '../utils';
-// import { defaultSnapOrigin } from '../config';
-// import {
-//   useMetaMask,
-//   useInvokeSnap,
-//   useMetaMaskContext,
-//   useRequestSnap,
-// } from '../hooks';
-// import { isLocalSnap, shouldDisplayReconnectButton } from '../utils';
+import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
 
 const Container = styled.div`
   display: flex;
@@ -40,112 +28,46 @@ const Container = styled.div`
 `;
 
 const Index = () => {
-  // const { error } = useMetaMaskContext();
-  const { isFlask, snapsDetected, installedSnap } = useMetaMask();
+  const { installedSnap } = useMetaMask();
 
-  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
-    ? isFlask
-    : snapsDetected;
-
-  const { wrongChain, account } = useWrongChain();
   const requestSnap = useRequestSnap();
+  const invokeSnap = useInvokeSnap();
+
+  const [userAESKey, setUserAesKEY] = useState<string | null>(null);
+
+  const getAESKey = async () => {
+    const result = await invokeSnap({
+      method: 'get-aes-key',
+    });
+
+    if (result !== null) {
+      setUserAesKEY(result as string);
+    }
+  };
+
+  // getAESKey().catch((error) => {
+  //   console.error('Error in getAESKey', error);
+  // });
 
   useEffect(() => {
-    console.log('isFlask', isFlask);
-    console.log('snapsDetected', snapsDetected);
-  }, [isFlask, snapsDetected]);
-
-  useEffect(() => {
-    console.log('isMetaMaskReady', isMetaMaskReady);
-  }, [isMetaMaskReady]);
+    if (installedSnap) {
+      getAESKey().catch((error) => {
+        console.error('Error in getAESKey', error);
+      });
+    }
+  }, [installedSnap]);
 
   return (
     <Container>
       <Header />
-
-      {account.isConnected ? (
-        wrongChain ? (
-          <ContentSwitchNetwork />
-        ) : installedSnap ? (
-          <>
-            <TestContent />
-            <ContentManageAESKey />
-          </>
-        ) : (
-          <Button text="Install snap" primary onClick={requestSnap} />
-        )
+      {installedSnap ? (
+        <>
+          <ContentManageAESKey userAESKey={userAESKey} />
+          <TestContent userAESKey={userAESKey} />
+        </>
       ) : (
-        <ContentConnectYourWallet />
+        <Button text="Install snap" primary onClick={requestSnap} />
       )}
-      {/* {!isMetaMaskReady && (
-        <Card
-          content={{
-            title: 'Install',
-            description:
-              'Snaps is pre-release software only available in MetaMask Flask, a canary distribution for developers with access to upcoming features.',
-            button: <InstallFlaskButton />,
-          }}
-          fullWidth
-        />
-      )} */}
-      {/* {!installedSnap && (
-        <Card
-          content={{
-            title: 'Connect',
-            description:
-              'Get started by connecting to and installing the example snap.',
-            button: (
-              <ConnectButton
-                onClick={requestSnap}
-                disabled={!isMetaMaskReady}
-              />
-            ),
-          }}
-          disabled={!isMetaMaskReady}
-        />
-      )} */}
-      {/* {shouldDisplayReconnectButton(installedSnap) && (
-        <Card
-          content={{
-            title: 'Reconnect',
-            description:
-              'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
-            button: (
-              <ReconnectButton
-                onClick={requestSnap}
-                disabled={!installedSnap}
-              />
-            ),
-          }}
-          disabled={!installedSnap}
-        />
-      )} */}
-      {/* <Card
-          content={{
-            title: 'Decrypt test',
-            description:
-              'Initiate decrypt dialog in COTI snap.',
-            button: (
-              <SendHelloButton
-                onClick={handleDecryptClick}
-                disabled={!installedSnap}
-              />
-            ),
-          }}
-          disabled={!installedSnap}
-          fullWidth={
-            isMetaMaskReady &&
-            Boolean(installedSnap) &&
-            !shouldDisplayReconnectButton(installedSnap)
-          }
-        /> */}
-      {/* <Notice>
-        <p>
-          Please note that the <b>snap.manifest.json</b> and <b>package.json</b>{' '}
-          must be located in the server root directory and the bundle must be
-          hosted at the location specified by the location field.
-        </p>
-      </Notice> */}
     </Container>
   );
 };

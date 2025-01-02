@@ -1,8 +1,10 @@
+/* eslint-disable no-nested-ternary */
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { DeleteAESKey } from './DeleteAESKey';
 import { ManageAESKey } from './ManageAESKey';
+import { OnboardAccount } from './OnboardAccount';
 
 const ContentContainer = styled.div`
   display: flex;
@@ -22,7 +24,11 @@ const ContentContainer = styled.div`
   }
 `;
 
-export const ContentManageAESKey = () => {
+export const ContentManageAESKey = ({
+  userAESKey,
+}: {
+  userAESKey: string | null;
+}) => {
   const [showDelete, setShowDelete] = useState(false);
 
   const handleShowDelete = () => {
@@ -31,13 +37,17 @@ export const ContentManageAESKey = () => {
 
   return (
     <ContentContainer>
-      {/*
-      <OnboardAccount />
-      */}
-      {showDelete ? (
-        <DeleteAESKey handleShowDelete={handleShowDelete} />
+      {userAESKey ? (
+        showDelete ? (
+          <DeleteAESKey handleShowDelete={handleShowDelete} />
+        ) : (
+          <ManageAESKey
+            handleShowDelete={handleShowDelete}
+            userAESKey={userAESKey}
+          />
+        )
       ) : (
-        <ManageAESKey handleShowDelete={handleShowDelete} />
+        <OnboardAccount />
       )}
     </ContentContainer>
   );
