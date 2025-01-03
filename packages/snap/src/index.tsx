@@ -356,6 +356,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       return null;
 
+    case 'delete-aes-key':
+      const state = await getStateData<State>();
+
+      await setStateData<State>({
+        ...state,
+        AESKey: null,
+      });
+
+      return null;
+
     // case 'set-aes-key':
 
     default:
