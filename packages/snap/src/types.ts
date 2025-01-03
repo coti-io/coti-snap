@@ -32,7 +32,7 @@ export enum TokenViewSelector {
 export type State = {
   balance: string;
   tokenBalances: Tokens;
+  AESKey: string | null;
   tokenView?: TokenViewSelector;
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  AESKey?: string;
 };

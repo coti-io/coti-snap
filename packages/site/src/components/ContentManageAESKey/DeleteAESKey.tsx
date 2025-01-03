@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
 
 const ContentTitle = styled.p`
@@ -32,6 +33,8 @@ export const DeleteAESKey = ({
 }: {
   handleShowDelete: () => void;
 }) => {
+  const { deleteAESKey } = useSnap();
+
   return (
     <>
       <ContentTitle>Delete your AES Key</ContentTitle>
@@ -44,12 +47,7 @@ export const DeleteAESKey = ({
       </ContentText>
       <ContentButtons>
         <Button text="Cancel" fullWith onClick={handleShowDelete} />
-        <Button
-          error
-          text="Delete"
-          fullWith
-          onClick={() => console.log('delete')}
-        />
+        <Button error text="Delete" fullWith onClick={deleteAESKey} />
       </ContentButtons>
     </>
   );

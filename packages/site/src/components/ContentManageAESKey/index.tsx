@@ -1,7 +1,8 @@
 /* eslint-disable no-nested-ternary */
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
+import { useSnap } from '../../hooks/SnapContext';
 import { DeleteAESKey } from './DeleteAESKey';
 import { ManageAESKey } from './ManageAESKey';
 import { OnboardAccount } from './OnboardAccount';
@@ -25,26 +26,19 @@ const ContentContainer = styled.div`
 `;
 
 export const ContentManageAESKey = ({
-  userAESKey,
+  userHasAESKey,
 }: {
-  userAESKey: string | null;
+  userHasAESKey: boolean;
 }) => {
-  const [showDelete, setShowDelete] = useState(false);
-
-  const handleShowDelete = () => {
-    setShowDelete(!showDelete);
-  };
+  const { showDelete, handleShowDelete } = useSnap();
 
   return (
     <ContentContainer>
-      {userAESKey ? (
+      {userHasAESKey ? (
         showDelete ? (
           <DeleteAESKey handleShowDelete={handleShowDelete} />
         ) : (
-          <ManageAESKey
-            handleShowDelete={handleShowDelete}
-            userAESKey={userAESKey}
-          />
+          <ManageAESKey handleShowDelete={handleShowDelete} />
         )
       ) : (
         <OnboardAccount />

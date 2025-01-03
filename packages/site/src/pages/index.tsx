@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -8,7 +6,8 @@ import {
   Header,
   TestContent,
 } from '../components';
-import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
+import { useMetaMask, useRequestSnap } from '../hooks';
+import { useSnap } from '../hooks/SnapContext';
 
 const Container = styled.div`
   display: flex;
@@ -31,39 +30,15 @@ const Index = () => {
   const { installedSnap } = useMetaMask();
 
   const requestSnap = useRequestSnap();
-  const invokeSnap = useInvokeSnap();
-
-  const [userAESKey, setUserAesKEY] = useState<string | null>(null);
-
-  const getAESKey = async () => {
-    const result = await invokeSnap({
-      method: 'get-aes-key',
-    });
-
-    if (result !== null) {
-      setUserAesKEY(result as string);
-    }
-  };
-
-  // getAESKey().catch((error) => {
-  //   console.error('Error in getAESKey', error);
-  // });
-
-  useEffect(() => {
-    if (installedSnap) {
-      getAESKey().catch((error) => {
-        console.error('Error in getAESKey', error);
-      });
-    }
-  }, [installedSnap]);
+  const { userHasAESKey } = useSnap();
 
   return (
     <Container>
       <Header />
       {installedSnap ? (
         <>
-          <ContentManageAESKey userAESKey={userAESKey} />
-          <TestContent userAESKey={userAESKey} />
+          <ContentManageAESKey userHasAESKey={userHasAESKey} />
+          {/* <TestContent userAESKey={userAESKey} /> */}
         </>
       ) : (
         <Button text="Install snap" primary onClick={requestSnap} />

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { ReactComponent as CheckIcon } from '../../assets/check.svg';
 import { ReactComponent as CopyIcon } from '../../assets/copy.svg';
+import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
 
 const ContentTitle = styled.p`
@@ -75,12 +76,10 @@ const IconContainer = styled.button<{ $isCopied?: boolean }>`
 
 export const ManageAESKey = ({
   handleShowDelete,
-  userAESKey,
 }: {
   handleShowDelete: () => void;
-  userAESKey: string | null;
 }) => {
-  const [reveal, setReveal] = useState<boolean>(false);
+  const { userAESKey, setUserAesKEY, getAESKey } = useSnap();
 
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -88,7 +87,7 @@ export const ManageAESKey = ({
     navigator.clipboard.writeText(text).then(
       () => {
         setIsCopied(true);
-        setReveal(false);
+        setUserAesKEY(null);
         setTimeout(() => setIsCopied(false), 2000);
       },
       (error) => {
@@ -107,7 +106,7 @@ export const ManageAESKey = ({
       <ContentInput>
         <ContentText>AES Key</ContentText>
         <AESKeyContainer>
-          {reveal ? (
+          {userAESKey ? (
             <>
               <EditableInput
                 type="text"
@@ -123,11 +122,7 @@ export const ManageAESKey = ({
           )}
         </AESKeyContainer>
       </ContentInput>
-      <Button
-        text="Reveal AES Key"
-        primary={true}
-        onClick={() => setReveal(!reveal)}
-      />
+      <Button text="Reveal AES Key" primary={true} onClick={getAESKey} />
       <Button text="Delete" primary={false} onClick={handleShowDelete} />
     </>
   );
