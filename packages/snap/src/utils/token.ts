@@ -1,37 +1,47 @@
+import type { ctUint } from '@coti-io/coti-sdk-typescript';
+import { decryptUint } from '@coti-io/coti-sdk-typescript';
 import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
-import { ctUint, decryptUint } from '@coti-io/coti-sdk-typescript';
 
-import { TokenViewSelector, State } from '../types';
-import { getStateData, setStateData } from './snap';
 import erc20Abi from '../abis/ERC20.json';
 import erc721Abi from '../abis/ERC721.json';
+import type { State } from '../types';
+import { TokenViewSelector } from '../types';
+import { getStateData, setStateData } from './snap';
 
-const ERC165_ABI = ["function supportsInterface(bytes4 interfaceId) external view returns (bool)"];
+const ERC165_ABI = [
+  'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
+];
 const ERC20_ABI = [
-  "function decimals() view returns (uint8)",
-  "function symbol() view returns (string)",
-  "function totalSupply() view returns (uint256)",
-  "function balanceOf(address) view returns (uint256)"
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function totalSupply() view returns (uint256)',
+  'function balanceOf(address) view returns (uint256)',
 ];
 
 // ERC721 and ERC1155 detection uses ERC165:
-const ERC721_INTERFACE_ID = "0x80ac58cd";
-const ERC1155_INTERFACE_ID = "0xd9b67a26";
+const ERC721_INTERFACE_ID = '0x80ac58cd';
+const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
-const CONFIDENTIAL_ERC20_ABI = [{
-  "inputs": [],
-  "name": "balanceOf",
-  "outputs": [
-    {
-      "internalType": "ctUint64",
-      "name": "balance",
-      "type": "uint256"
-    }
-  ],
-  "stateMutability": "view",
-  "type": "function"
-}];
+const CONFIDENTIAL_ERC20_ABI = [
+  {
+    inputs: [],
+    name: 'balanceOf',
+    outputs: [
+      {
+        internalType: 'ctUint64',
+        name: 'balance',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
 
+/**
+ *
+ * @param address
+ */
 export async function getTokenType(address: string): Promise<{
   type: TokenViewSelector;
   confidential: boolean;
@@ -49,14 +59,15 @@ export async function getTokenType(address: string): Promise<{
 
       isERC721 = await erc165Contract.supportsInterface(ERC721_INTERFACE_ID);
       console.log(`isERC721: ${isERC721}`);
-
     } catch (e) {
       console.log(`Error checking for ERC-721 support: ${e}`);
     }
 
     if (!isERC721) {
       try {
-        isERC1155 = await erc165Contract.supportsInterface(ERC1155_INTERFACE_ID);
+        isERC1155 = await erc165Contract.supportsInterface(
+          ERC1155_INTERFACE_ID,
+        );
       } catch (e) {
         console.log(`Error checking for ERC-1155 support: ${e}`);
       }
@@ -64,8 +75,14 @@ export async function getTokenType(address: string): Promise<{
   }
 
   if (isERC721 || isERC1155) {
-    console.log(`Contract ${address} is an NFT contract (likely ERC-${isERC721 ? '721' : '1155'}).`);
-    console.log(`Cannot distinguish ConfidentialERC721 from standard ERC-721 if no unique methods are present.`);
+    console.log(
+      `Contract ${address} is an NFT contract (likely ERC-${
+        isERC721 ? '721' : '1155'
+      }).`,
+    );
+    console.log(
+      `Cannot distinguish ConfidentialERC721 from standard ERC-721 if no unique methods are present.`,
+    );
     return { type: TokenViewSelector.NFT, confidential: false };
   }
 
@@ -74,12 +91,25 @@ export async function getTokenType(address: string): Promise<{
 
   let isStandardERC20 = false;
   try {
-    const decimals = erc20Contract.decimals ? await erc20Contract.decimals() : undefined;
-    const symbol = erc20Contract.symbol ? await erc20Contract.symbol() : undefined;
-    const totalSupply = erc20Contract.totalSupply ? await erc20Contract.totalSupply() : undefined;
+    const decimals = erc20Contract.decimals
+      ? await erc20Contract.decimals()
+      : undefined;
+    const symbol = erc20Contract.symbol
+      ? await erc20Contract.symbol()
+      : undefined;
+    const totalSupply = erc20Contract.totalSupply
+      ? await erc20Contract.totalSupply()
+      : undefined;
     // Also try a known address; if it reverts, it might not be a standard ERC-20
-    const testBalance = erc20Contract.balanceOf ? await erc20Contract.balanceOf(ZeroAddress) : undefined;
-    if (typeof decimals === "number" && typeof symbol === "string" && totalSupply && testBalance !== undefined) {
+    const testBalance = erc20Contract.balanceOf
+      ? await erc20Contract.balanceOf(ZeroAddress)
+      : undefined;
+    if (
+      typeof decimals === 'number' &&
+      typeof symbol === 'string' &&
+      totalSupply &&
+      testBalance !== undefined
+    ) {
       isStandardERC20 = true;
     }
   } catch (e) {
@@ -93,9 +123,15 @@ export async function getTokenType(address: string): Promise<{
 
   // For ConfidentialERC20, calling balanceOf() with no arguments
   // A standard ERC-20 does not have a no-argument balanceOf().
-  const confidentialContract = new ethers.Contract(address, CONFIDENTIAL_ERC20_ABI, provider);
+  const confidentialContract = new ethers.Contract(
+    address,
+    CONFIDENTIAL_ERC20_ABI,
+    provider,
+  );
   try {
-    confidentialContract.balanceOf ? await confidentialContract.balanceOf() : undefined;
+    confidentialContract.balanceOf
+      ? await confidentialContract.balanceOf()
+      : undefined;
     console.log(`Contract ${address} is likely a ConfidentialERC20 token.`);
     return { type: TokenViewSelector.ERC20, confidential: true };
   } catch (err) {
@@ -112,7 +148,22 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
     console.error(e);
     return null;
   }
-}
+};
+
+export const getTokenPriceInUSD = async (
+  tokenSymbol: string,
+): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
+    );
+    const data = await response.json();
+    return data.USD || '';
+  } catch (error) {
+    console.error(`Error fetching price for ${tokenSymbol}:`, error);
+    return '';
+  }
+};
 
 export const recalculateBalances = async () => {
   const state = await getStateData<State>();
@@ -125,44 +176,81 @@ export const recalculateBalances = async () => {
   const signerAddress = await signer.getAddress();
   const balance = await provider.getBalance(signerAddress);
 
-  const tokenBalances = await Promise.all(tokens.map(async (token) => {
-    if (token.type === TokenViewSelector.ERC20) {
-      const tokenContract = new Contract(token.address, erc20Abi, signer);
-      const tok = (tokenContract.connect(signer) as Contract)
-      let tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
-      if (token.confidential && state.AESKey) {
-        tokenBalance = tokenBalance ? decryptBalance(tokenBalance, state.AESKey) : null;
+  const tokenBalances = await Promise.all(
+    tokens.map(async (token) => {
+      if (token.type === TokenViewSelector.ERC20) {
+        const tokenContract = new Contract(token.address, erc20Abi, signer);
+        const tok = tokenContract.connect(signer) as Contract;
+        let tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
+        let tokenPrice;
+        if (token.confidential && state.AESKey) {
+          tokenBalance = tokenBalance
+            ? decryptBalance(tokenBalance, state.AESKey)
+            : null;
+          tokenPrice = await getTokenPriceInUSD(token.symbol);
+        }
+        return {
+          ...token,
+          balance: tokenBalance?.toString() || null,
+          tokenPrice: tokenPrice?.toString() || null,
+        };
       }
-      return { ...token, balance: tokenBalance?.toString() || null };
-    }
 
-    if (token.type === TokenViewSelector.NFT) {
-      const tokenContract = new Contract(token.address, erc721Abi, signer);
-      const tok = (tokenContract.connect(signer) as Contract)
-      let tokenBalance = tok.balanceOf ? await tok.balanceOf(signerAddress) : null;
-      
-      if (token.confidential && state.AESKey) {
-        tokenBalance = tokenBalance ? decryptUint(tokenBalance, state.AESKey) : null;
+      if (token.type === TokenViewSelector.NFT) {
+        const tokenContract = new Contract(token.address, erc721Abi, signer);
+        const tok = tokenContract.connect(signer) as Contract;
+        let tokenBalance = tok.balanceOf
+          ? await tok.balanceOf(signerAddress)
+          : null;
+
+        if (token.confidential && state.AESKey) {
+          tokenBalance = tokenBalance
+            ? decryptUint(tokenBalance, state.AESKey)
+            : null;
+        }
+        return { ...token, balance: tokenBalance?.toString() || null };
       }
-      return { ...token, balance: tokenBalance?.toString() || null };
-    }
-    return { ...token, balance: null };
-  }));
+      return { ...token, balance: null };
+    }),
+  );
 
-  await setStateData<State>({ ...state, balance: balance.toString(), tokenBalances });
+  await setStateData<State>({
+    ...state,
+    balance: balance.toString(),
+    tokenBalances,
+  });
 
   return { balance, tokenBalances };
-}
+};
 
-export const importToken = async (address: string, name: string, symbol: string) => {
+export const importToken = async (
+  address: string,
+  name: string,
+  symbol: string,
+) => {
   const oldState = await getStateData<State>();
   const tokens = oldState.tokenBalances;
   console.log(`Importing token ${name} (${symbol}) at address ${address}`);
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
     console.log(`Token ${name} (${symbol}) at address ${address} is unknown`);
-    return
+    return;
   }
   tokens.push({ address, name, symbol, balance: null, type, confidential });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
-}
+};
+
+export const hideToken = async (address: string) => {
+  const oldState = await getStateData<State>();
+  const tokens = oldState.tokenBalances;
+  console.log(`Hiding token at address ${address}`);
+  const updatedTokens = tokens.filter((token) => token.address !== address);
+  await setStateData<State>({ ...oldState, tokenBalances: updatedTokens });
+};
+
+export const truncateAddress = (address: string, length = 6): string => {
+  if (address.length <= length * 2) {
+    return address;
+  }
+  return `${address.slice(0, length)}...${address.slice(-length)}`;
+};

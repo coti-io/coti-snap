@@ -7,6 +7,8 @@ export type Tokens = {
   type: TokenViewSelector;
   confidential: boolean;
   balance: string | null;
+  tokenImage?: string;
+  tokenPrice?: string;
 }[];
 
 export enum TokenViewSelector {
@@ -19,6 +21,7 @@ export enum TokenViewSelector {
 export type State = {
   balance: string;
   tokenBalances: Tokens;
+  AESKey: string | null;
   tokenView?: TokenViewSelector;
-  AESKey?: string;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
 };
