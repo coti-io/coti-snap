@@ -9,17 +9,20 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
+import send from '../../images/send.svg';
 
 type TokenDetailsProps = {
   tokenName: string;
   tokenBalance: string;
   tokenAddress: string;
+  tokenSymbol: string;
 };
 
 export const TokenDetails = ({
   tokenName,
   tokenBalance,
   tokenAddress,
+  tokenSymbol,
 }: TokenDetailsProps) => {
   return (
     <Box direction="vertical" alignment="start">
@@ -27,7 +30,7 @@ export const TokenDetails = ({
         <Button name="token-cancel">
           <Icon name="arrow-left" />
         </Button>
-        <Text>{tokenName}</Text>
+        <Text>{tokenSymbol}</Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
@@ -42,14 +45,14 @@ export const TokenDetails = ({
               <Image src={defaultToken} />
             </Box>
             <Box direction="vertical" alignment="center">
-              <Text>{tokenName}</Text>
-              <Text>{tokenName}</Text>
+              <Text>{tokenSymbol}</Text>
+              <Text color="muted">{tokenSymbol}</Text>
             </Box>
           </Box>
         </Box>
         <Box direction="vertical" alignment="end">
           <Text>{tokenBalance}</Text>
-          <Text>{tokenBalance}</Text>
+          <Text color="muted">USD</Text>
         </Box>
       </Box>
       <Box direction="horizontal" alignment="start">
@@ -65,7 +68,7 @@ export const TokenDetails = ({
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
-        <Text>0</Text>
+        <Text>18</Text>
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>
@@ -89,19 +92,20 @@ export const TokenDetails = ({
           <Box alignment="space-between" direction="horizontal">
             <Box alignment="center" direction="horizontal">
               <Box alignment="center" direction="vertical">
-                <Image src={defaultToken} />
+                <Image src={send} />
               </Box>
               <Box direction="vertical" alignment="center">
-                <Text>{tokenName}</Text>
-                <Text>Transaction state</Text>
+                <Text>{tokenSymbol}</Text>
+                <Text color="success">Confirmed</Text>
               </Box>
             </Box>
           </Box>
 
           <Box alignment="space-between" direction="horizontal">
             <Box direction="vertical" alignment="end">
-              <Text>TKN</Text>
-              <Text>USD</Text>
+              {/* TODO: Add token balances */}
+              <Text>{tokenSymbol}</Text>
+              <Text color="muted">USD</Text>
             </Box>
           </Box>
         </Box>
