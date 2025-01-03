@@ -6,6 +6,7 @@ import defaultToken from '../../images/default-token.svg';
 
 export const TokenAdded = ({ token }: { token: Token }) => {
   // TODO: Add the token price in USD
+  // TODO: Add the token logo
 
   return (
     <Box key={token.address} direction="horizontal" alignment="space-between">
