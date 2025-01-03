@@ -102,6 +102,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 tokenName={token.name}
                 tokenBalance={token.balance ?? 'N/A'}
                 tokenAddress={token.address}
+                tokenSymbol={token.symbol}
               />
             ),
           },
