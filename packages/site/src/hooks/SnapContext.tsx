@@ -5,8 +5,14 @@ import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 
 type SnapContextProps = {
+  setAESKey: () => Promise<void>;
   deleteAESKey: () => Promise<void>;
+  getAESKey: () => Promise<void>;
   userAESKey: string | null;
+  setUserAesKEY: (key: string | null) => void;
+  userHasAESKey: boolean;
+  handleShowDelete: () => void;
+  showDelete: boolean;
 };
 
 const SnapContext = createContext<SnapContextProps | undefined>(undefined);
@@ -16,6 +22,32 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const { installedSnap } = useMetaMask();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
+  const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
+  const [showDelete, setShowDelete] = useState(false);
+
+  const handleShowDelete = () => {
+    setShowDelete(!showDelete);
+  };
+
+  const setAESKey = async () => {
+    const result = await invokeSnap({
+      method: 'set-aes-key',
+    });
+
+    if (result !== null) {
+      setUserHasAesKEY(result as boolean);
+    }
+  };
+
+  const hasAESKey = async () => {
+    const result = await invokeSnap({
+      method: 'has-aes-key',
+    });
+
+    if (result) {
+      setUserHasAesKEY(result as boolean);
+    }
+  };
 
   const getAESKey = async () => {
     const result = await invokeSnap({
@@ -33,20 +65,32 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (result === null) {
-      setUserAesKEY(null);
+      setUserHasAesKEY(false);
+      setShowDelete(false);
     }
   };
 
   useEffect(() => {
     if (installedSnap) {
-      getAESKey().catch((error) => {
-        console.error('Error in getAESKey', error);
+      hasAESKey().catch((error) => {
+        console.error('Error in hasAESKey', error);
       });
     }
   }, [installedSnap]);
 
   return (
-    <SnapContext.Provider value={{ deleteAESKey, userAESKey }}>
+    <SnapContext.Provider
+      value={{
+        userHasAESKey,
+        setAESKey,
+        getAESKey,
+        deleteAESKey,
+        userAESKey,
+        setUserAesKEY,
+        handleShowDelete,
+        showDelete,
+      }}
+    >
       {children}
     </SnapContext.Provider>
   );

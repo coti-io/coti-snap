@@ -30,15 +30,15 @@ const Index = () => {
   const { installedSnap } = useMetaMask();
 
   const requestSnap = useRequestSnap();
-  const { userAESKey } = useSnap();
+  const { userHasAESKey } = useSnap();
 
   return (
     <Container>
       <Header />
       {installedSnap ? (
         <>
-          <ContentManageAESKey userAESKey={userAESKey} />
-          <TestContent userAESKey={userAESKey} />
+          <ContentManageAESKey userHasAESKey={userHasAESKey} />
+          {/* <TestContent userAESKey={userAESKey} /> */}
         </>
       ) : (
         <Button text="Install snap" primary onClick={requestSnap} />
