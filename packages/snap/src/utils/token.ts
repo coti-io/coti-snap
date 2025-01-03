@@ -39,8 +39,9 @@ const CONFIDENTIAL_ERC20_ABI = [
 ];
 
 /**
- *
- * @param address
+ * Determines the type of token (ERC-20, ConfidentialERC20, or NFT) for a given contract address.
+ * @param address - The contract address of the token.
+ * @returns An object containing the token type and whether it is confidential.
  */
 export async function getTokenType(address: string): Promise<{
   type: TokenViewSelector;
@@ -154,18 +155,24 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
 export const getTokenPriceInUSD = async (
   tokenSymbol: string,
 ): Promise<string> => {
-  try {
-    const response = await fetch(
-      //  `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
-      `https://min-api.cryptocompare.com/data/price?fsym=ADA&tsyms=USD`,
-    );
-    const data = await response.json();
-    console.log(`Price for ${tokenSymbol}:`, data);
-    return data.USD;
-  } catch (error) {
-    console.error(`Error fetching price for ${tokenSymbol}:`, error);
+  const res = await fetch(
+    `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  if (!res.ok) {
+    console.error(`Failed to fetch token price: ${res.statusText}`);
     return '';
   }
+
+  const { result } = (await res.json()) as { result: string };
+
+  return result;
 };
 
 export const recalculateBalances = async () => {
@@ -195,7 +202,7 @@ export const recalculateBalances = async () => {
         return {
           ...token,
           balance: tokenBalance?.toString() || null,
-          tokenPrice: tokenPrice?.toString() || null,
+          tokenPrice: tokenPrice?.toString() ?? null,
         };
       }
 

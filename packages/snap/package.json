@@ -30,6 +30,7 @@
     "@coti-io/coti-ethers": "^1.0.2",
     "@coti-io/coti-sdk-typescript": "^0.6.6",
     "@metamask/snaps-sdk": "^6.13.0",
+    "@metamask/utils": "^11.0.1",
     "@types/node-forge": "^1.3.11",
     "ethers": "^6.13.4",
     "node-forge": "^1.3.1"

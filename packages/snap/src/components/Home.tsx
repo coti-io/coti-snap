@@ -9,7 +9,7 @@ import {
 import { formatEther } from 'ethers';
 
 import type { Tokens, TokenViewSelector } from '../types';
-import { Token } from './Token';
+import { TokenAdded } from './TokenAdded';
 
 type HomeProps = {
   balance: bigint;
@@ -22,24 +22,35 @@ export const Home = ({ balance, tokenBalances, tokenView }: HomeProps) => {
   return (
     <Box>
       <Section>
-        <Box alignment="center" direction="horizontal">
-          <Heading size="lg">{formatedBalance} COTI</Heading>
+        <Box alignment="center" direction="vertical">
+          <Box alignment="center" direction="horizontal">
+            <Heading size="lg">{formatedBalance} COTI</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="start">
+            <Text> </Text>
+          </Box>
+          <Box alignment="space-around" direction="horizontal">
+            <Button name="view-tokens-tokens">Tokens</Button>
+            <Button name="view-tokens-nft">NFT</Button>
+          </Box>
+          <Divider />
+          <Box direction="horizontal" alignment="start">
+            <Text> </Text>
+          </Box>
+          <Box alignment="end" direction="horizontal">
+            <Button name="import-token-button">+ Import</Button>
+          </Box>
+          <Box direction="horizontal" alignment="start">
+            <Text> </Text>
+          </Box>
+          {tokenBalances.filter((token) => token.type === tokenView).length ? (
+            tokenBalances
+              .filter((token) => token.type === tokenView)
+              .map((token) => <TokenAdded key={token.address} token={token} />)
+          ) : (
+            <Text>No tokens was added yet</Text>
+          )}
         </Box>
-        <Box alignment="space-around" direction="horizontal">
-          <Button name="view-tokens-tokens">Tokens</Button>
-          <Button name="view-tokens-nft">NFT</Button>
-        </Box>
-        <Divider />
-        <Box alignment="end" direction="horizontal">
-          <Button name="import-token-button">Import</Button>
-        </Box>
-        {tokenBalances.filter((token) => token.type === tokenView).length ? (
-          tokenBalances
-            .filter((token) => token.type === tokenView)
-            .map((token) => <Token key={token.address} token={token} />)
-        ) : (
-          <Text>No tokens was added yet</Text>
-        )}
       </Section>
       <Box alignment="start" direction="horizontal">
         <Button name="settings-button">Settings</Button>

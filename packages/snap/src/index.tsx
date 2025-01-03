@@ -15,6 +15,7 @@ import {
   UserInputEventType,
 } from '@metamask/snaps-sdk';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
+import { assert } from '@metamask/utils';
 
 import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
@@ -24,7 +25,12 @@ import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
-import { hideToken, importToken, recalculateBalances } from './utils/token';
+import {
+  getTokenPriceInUSD,
+  hideToken,
+  importToken,
+  recalculateBalances,
+} from './utils/token';
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '50764f856be3f636c09faf092be20d0c';
@@ -357,6 +363,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     // case 'set-aes-key':
+    case 'fetch-token-price':
+      const tokenSimbol = request.params as unknown as string;
+      assert(tokenSimbol, 'Token symbol is required');
+      return await getTokenPriceInUSD(tokenSimbol);
 
     default:
       throw new Error('Method not found.');
