@@ -359,10 +359,41 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'delete-aes-key':
       const state = await getStateData<State>();
 
-      await setStateData<State>({
-        ...state,
-        AESKey: null,
+      if (!state.AESKey) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: (
+              <Box>
+                <Heading>Warning</Heading>
+                <Text>AES key not found.</Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
+      const deleteResult = await snap.request({
+        method: 'snap_dialog',
+        params: {
+          type: 'confirmation',
+          content: (
+            <Box>
+              <Heading>Delete AES Key</Heading>
+              <Text>Confirm to delete the AES Key</Text>
+            </Box>
+          ),
+        },
       });
+
+      if (deleteResult) {
+        await setStateData<State>({
+          ...state,
+          AESKey: null,
+        });
+      }
 
       return null;
 

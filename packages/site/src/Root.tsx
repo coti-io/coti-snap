@@ -7,6 +7,7 @@ import { WagmiProvider } from 'wagmi';
 import { config } from './config';
 import { dark, light } from './config/theme';
 import { MetaMaskProvider } from './hooks';
+import { SnapProvider } from './hooks/SnapContext';
 import { getThemePreference, setLocalStorage } from './utils';
 
 export type RootProps = {
@@ -34,7 +35,9 @@ export const Root: FunctionComponent<RootProps> = ({ children }) => {
       <ThemeProvider theme={darkTheme ? dark : light}>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
-            <MetaMaskProvider>{children}</MetaMaskProvider>
+            <MetaMaskProvider>
+              <SnapProvider>{children}</SnapProvider>
+            </MetaMaskProvider>
           </QueryClientProvider>
         </WagmiProvider>
       </ThemeProvider>
