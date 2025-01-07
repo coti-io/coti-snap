@@ -33,7 +33,7 @@ import {
 } from './utils/token';
 
 // should be stored in a secure storage after onboarding process
-const testAESKey = '50764f856be3f636c09faf092be20d0c';
+const testAESKey = '0f2fc7df7603bd5f7ad2d9817480681f';
 // const testAESKey = '';
 
 export const returnToHomePage = async (id: string) => {

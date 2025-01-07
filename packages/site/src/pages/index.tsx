@@ -1,11 +1,6 @@
 import styled from 'styled-components';
 
-import {
-  Button,
-  ContentManageAESKey,
-  Header,
-  TestContent,
-} from '../components';
+import { Button, ContentManageAESKey, Header } from '../components';
 import { useMetaMask, useRequestSnap } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 
@@ -32,14 +27,15 @@ const Index = () => {
   const requestSnap = useRequestSnap();
   const { userHasAESKey } = useSnap();
 
+  // sc address?
+  // 0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9
+
   return (
     <Container>
       <Header />
+      <ContentManageAESKey userHasAESKey={userHasAESKey} />
       {installedSnap ? (
-        <>
-          <ContentManageAESKey userHasAESKey={userHasAESKey} />
-          {/* <TestContent userAESKey={userAESKey} /> */}
-        </>
+        <>{/* <TestContent userAESKey={userAESKey} /> */}</>
       ) : (
         <Button text="Install snap" primary onClick={requestSnap} />
       )}
