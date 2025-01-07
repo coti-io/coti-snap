@@ -25,19 +25,15 @@ import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
-import {
-  getTokenPriceInUSD,
-  hideToken,
-  importToken,
-  recalculateBalances,
-} from './utils/token';
+import { hideToken, importToken, recalculateBalances } from './utils/token';
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '0f2fc7df7603bd5f7ad2d9817480681f';
 // const testAESKey = '';
 
 export const returnToHomePage = async (id: string) => {
-  const { balance, tokenBalances, tokenView } = await getStateData<State>();
+  const { balance, tokenBalances, tokenView, AESKey } =
+    await getStateData<State>();
   await snap.request({
     method: 'snap_updateInterface',
     params: {
@@ -47,6 +43,7 @@ export const returnToHomePage = async (id: string) => {
           balance={BigInt(balance || 0)}
           tokenBalances={tokenBalances}
           tokenView={tokenView ?? TokenViewSelector.ERC20}
+          AESKey={AESKey}
         />
       ),
     },
@@ -77,13 +74,13 @@ export const onHomePage: OnHomePageHandler = async () => {
         balance={balance}
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
+        AESKey={state.AESKey}
       />
     ),
   };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  const { balance, tokenBalances } = await getStateData<State>();
   console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
@@ -100,7 +97,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             ui: (
               <TokenDetails
                 tokenName={token.name}
-                tokenBalance={token.balance ?? 'N/A'}
+                tokenBalance={token.balance ? token.balance : 'N/A'}
                 tokenAddress={token.address}
                 tokenSymbol={token.symbol}
               />
@@ -138,6 +135,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
       return;
     }
+    const { balance, tokenBalances, AESKey } = await getStateData<State>();
     switch (event.name) {
       case 'import-token-button':
         await snap.request({
@@ -158,6 +156,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 balance={BigInt(balance || 0)}
                 tokenBalances={tokenBalances}
                 tokenView={TokenViewSelector.NFT}
+                AESKey={AESKey}
               />
             ),
           },
@@ -173,6 +172,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 balance={BigInt(balance || 0)}
                 tokenBalances={tokenBalances}
                 tokenView={TokenViewSelector.ERC20}
+                AESKey={AESKey}
               />
             ),
           },
@@ -458,10 +458,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       return null;
-    case 'fetch-token-price':
-      const tokenSimbol = request.params as unknown as string;
-      assert(tokenSimbol, 'Token symbol is required');
-      return await getTokenPriceInUSD(tokenSimbol);
 
     default:
       throw new Error('Method not found.');

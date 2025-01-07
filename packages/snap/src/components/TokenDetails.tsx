@@ -6,6 +6,7 @@ import {
   Copyable,
   Icon,
   Image,
+  Bold,
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
@@ -30,7 +31,9 @@ export const TokenDetails = ({
         <Button name="token-cancel">
           <Icon name="arrow-left" />
         </Button>
-        <Text>{tokenSymbol}</Text>
+        <Text>
+          <Bold>{tokenSymbol}</Bold>
+        </Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
@@ -46,13 +49,15 @@ export const TokenDetails = ({
             </Box>
             <Box direction="vertical" alignment="center">
               <Text>{tokenSymbol}</Text>
-              <Text color="muted">{tokenSymbol}</Text>
+              {/* <Text color="muted">{tokenSymbol}</Text> */}
             </Box>
           </Box>
         </Box>
         <Box direction="vertical" alignment="end">
-          <Text>{tokenBalance}</Text>
-          <Text color="muted">USD</Text>
+          <Text>
+            {tokenBalance} {tokenSymbol}
+          </Text>
+          {/* <Text color="muted">USD</Text> */}
         </Box>
       </Box>
       <Box direction="horizontal" alignment="start">
