@@ -1,3 +1,5 @@
+import type { Eip1193Provider } from '@coti-io/coti-ethers';
+import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
@@ -30,12 +32,24 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setAESKey = async () => {
+    const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
+    const signer = await provider.getSigner();
+    await signer.generateOrRecoverAes();
+    const aesKey = signer.getUserOnboardInfo()?.aesKey;
+
+    if (aesKey === null) {
+      return;
+    }
+
     const result = await invokeSnap({
       method: 'set-aes-key',
+      params: {
+        newUserAesKey: aesKey,
+      },
     });
 
-    if (result !== null) {
-      setUserHasAesKEY(result as boolean);
+    if (result) {
+      setUserHasAesKEY(true);
     }
   };
 

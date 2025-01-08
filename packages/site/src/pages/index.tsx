@@ -27,15 +27,11 @@ const Index = () => {
   const requestSnap = useRequestSnap();
   const { userHasAESKey } = useSnap();
 
-  // sc address?
-  // 0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9
-
   return (
     <Container>
       <Header />
-      <ContentManageAESKey userHasAESKey={userHasAESKey} />
       {installedSnap ? (
-        <>{/* <TestContent userAESKey={userAESKey} /> */}</>
+        <ContentManageAESKey userHasAESKey={userHasAESKey} />
       ) : (
         <Button text="Install snap" primary onClick={requestSnap} />
       )}
