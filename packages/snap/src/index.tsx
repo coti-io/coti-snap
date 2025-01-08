@@ -24,7 +24,12 @@ import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
-import { hideToken, importToken, recalculateBalances } from './utils/token';
+import {
+  checkChainId,
+  hideToken,
+  importToken,
+  recalculateBalances,
+} from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, AESKey } =
@@ -56,6 +61,7 @@ export const onUpdate: OnUpdateHandler = async () => {
 
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
+  const wrongChain = await checkChainId();
   const state = await getStateData<State>();
 
   await setStateData<State>({
@@ -69,6 +75,7 @@ export const onHomePage: OnHomePageHandler = async () => {
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
+        wrongChain={wrongChain}
       />
     ),
   };

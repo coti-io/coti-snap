@@ -4,6 +4,7 @@ import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc721Abi from '../abis/ERC721.json';
+import { CHAIN_ID } from '../config';
 import type { State } from '../types';
 import { TokenViewSelector } from '../types';
 import { getStateData, setStateData } from './snap';
@@ -151,13 +152,23 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
   }
 };
 
+export const checkChainId = async () => {
+  const provider = new BrowserProvider(ethereum);
+
+  const chainId = await provider.getNetwork();
+
+  if (chainId.chainId.toString() !== CHAIN_ID) {
+    return true;
+  }
+  return false;
+};
+
 export const recalculateBalances = async () => {
   const state = await getStateData<State>();
   const tokens = state?.tokenBalances || [];
 
   const provider = new BrowserProvider(ethereum);
 
-  // TODO: check if chain id is correct
   const signer = await provider.getSigner();
   const signerAddress = await signer.getAddress();
   const balance = await provider.getBalance(signerAddress);
