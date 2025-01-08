@@ -15,7 +15,6 @@ import {
   UserInputEventType,
 } from '@metamask/snaps-sdk';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import { assert } from '@metamask/utils';
 
 import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
@@ -25,19 +24,11 @@ import { TokenDetails } from './components/TokenDetails';
 import type { State } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
-import {
-  getTokenPriceInUSD,
-  hideToken,
-  importToken,
-  recalculateBalances,
-} from './utils/token';
-
-// should be stored in a secure storage after onboarding process
-const testAESKey = '50764f856be3f636c09faf092be20d0c';
-// const testAESKey = '';
+import { hideToken, importToken, recalculateBalances } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
-  const { balance, tokenBalances, tokenView } = await getStateData<State>();
+  const { balance, tokenBalances, tokenView, AESKey } =
+    await getStateData<State>();
   await snap.request({
     method: 'snap_updateInterface',
     params: {
@@ -47,6 +38,7 @@ export const returnToHomePage = async (id: string) => {
           balance={BigInt(balance || 0)}
           tokenBalances={tokenBalances}
           tokenView={tokenView ?? TokenViewSelector.ERC20}
+          AESKey={AESKey}
         />
       ),
     },
@@ -69,21 +61,20 @@ export const onHomePage: OnHomePageHandler = async () => {
   await setStateData<State>({
     ...state,
     tokenView: TokenViewSelector.ERC20,
-    // AESKey: testAESKey,
-  }); // remove aes key setting after onboarding impolimented
+  });
   return {
     content: (
       <Home
         balance={balance}
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
+        AESKey={state.AESKey}
       />
     ),
   };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  const { balance, tokenBalances } = await getStateData<State>();
   console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
@@ -100,7 +91,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             ui: (
               <TokenDetails
                 tokenName={token.name}
-                tokenBalance={token.balance ?? 'N/A'}
+                tokenBalance={token.balance ? token.balance : 'N/A'}
                 tokenAddress={token.address}
                 tokenSymbol={token.symbol}
               />
@@ -138,6 +129,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
       return;
     }
+    const { balance, tokenBalances, AESKey } = await getStateData<State>();
     switch (event.name) {
       case 'import-token-button':
         await snap.request({
@@ -158,6 +150,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 balance={BigInt(balance || 0)}
                 tokenBalances={tokenBalances}
                 tokenView={TokenViewSelector.NFT}
+                AESKey={AESKey}
               />
             ),
           },
@@ -173,6 +166,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 balance={BigInt(balance || 0)}
                 tokenBalances={tokenBalances}
                 tokenView={TokenViewSelector.ERC20}
+                AESKey={AESKey}
               />
             ),
           },
@@ -241,6 +235,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
+  const getState = await getStateData<State>();
   switch (request.method) {
     case 'encrypt':
       if (!request.params) {
@@ -252,8 +247,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const onEncryptState = await getStateData<State>();
-      if (!onEncryptState.AESKey) {
+      // const onEncryptState = await getStateData<State>();
+      if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -285,10 +280,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       if (encryptResult) {
         return JSON.stringify(
-          encrypt(
-            encodeKey(onEncryptState.AESKey),
-            encodeString(textToEncrypt),
-          ),
+          encrypt(encodeKey(getState.AESKey), encodeString(textToEncrypt)),
         );
       }
 
@@ -313,9 +305,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         r: { [key: string]: number };
       };
 
-      const onDecryptState = await getStateData<State>();
+      // const onDecryptState = await getStateData<State>();
 
-      if (!onDecryptState.AESKey) {
+      if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -346,7 +338,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (decryptResult) {
         return JSON.stringify(
           decrypt(
-            encodeKey(onDecryptState.AESKey),
+            encodeKey(getState.AESKey),
             new Uint8Array([...Object.values(r)]),
             new Uint8Array([...Object.values(ciphertext)]),
           ),
@@ -355,17 +347,34 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'has-aes-key':
-      const onGetAESKeyState = await getStateData<State>();
+      // const onGetAESKeyState = await getStateData<State>();
 
-      if (onGetAESKeyState.AESKey) {
+      if (getState.AESKey) {
         return true;
       }
 
       return false;
-    case 'get-aes-key':
-      const onSetAESKeyState = await getStateData<State>();
 
-      if (onSetAESKeyState.AESKey) {
+    case 'get-aes-key':
+      // const onSetAESKeyState = await getStateData<State>();
+
+      if (!getState.AESKey) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: (
+              <Box>
+                <Heading>Warning</Heading>
+                <Text>AES key not found.</Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
+      if (getState.AESKey) {
         const revealAESKey = await snap.request({
           method: 'snap_dialog',
           params: {
@@ -380,16 +389,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         });
 
         if (revealAESKey) {
-          return onSetAESKeyState.AESKey;
+          return getState.AESKey;
         }
       }
 
       return null;
 
     case 'delete-aes-key':
-      const state = await getStateData<State>();
+      // const state = await getStateData<State>();
 
-      if (!state.AESKey) {
+      if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -420,7 +429,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       if (deleteResult) {
         await setStateData<State>({
-          ...state,
+          ...getState,
           AESKey: null,
         });
       }
@@ -428,40 +437,34 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'set-aes-key':
-      const getState = await getStateData<State>();
+      const { newUserAesKey } = request.params as { newUserAesKey: string };
 
-      // TODO: receive AES key generated by the contract
-      // and stogare it in a snap storage
-
-      if (!getState.AESKey) {
-        const onboardAccount = await snap.request({
+      if (!newUserAesKey) {
+        await snap.request({
           method: 'snap_dialog',
           params: {
-            type: 'confirmation',
+            type: 'alert',
             content: (
               <Box>
-                <Heading>Onboard Account</Heading>
-                <Text>Approve to onboard account</Text>
+                <Heading>Error</Heading>
+                <Text>New AES key not provided.</Text>
               </Box>
             ),
           },
         });
+        return null;
+      }
 
-        if (onboardAccount) {
-          await setStateData<State>({
-            ...getState,
-            AESKey: testAESKey,
-          });
-        }
+      if (!getState.AESKey) {
+        await setStateData<State>({
+          ...getState,
+          AESKey: newUserAesKey,
+        });
 
         return true;
       }
 
       return null;
-    case 'fetch-token-price':
-      const tokenSimbol = request.params as unknown as string;
-      assert(tokenSimbol, 'Token symbol is required');
-      return await getTokenPriceInUSD(tokenSimbol);
 
     default:
       throw new Error('Method not found.');

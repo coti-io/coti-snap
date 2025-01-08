@@ -151,30 +151,6 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
   }
 };
 
-// FIXME: This function is not working as expected
-export const getTokenPriceInUSD = async (
-  tokenSymbol: string,
-): Promise<string> => {
-  const res = await fetch(
-    `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  );
-
-  if (!res.ok) {
-    console.error(`Failed to fetch token price: ${res.statusText}`);
-    return '';
-  }
-
-  const { result } = (await res.json()) as { result: string };
-
-  return result;
-};
-
 export const recalculateBalances = async () => {
   const state = await getStateData<State>();
   const tokens = state?.tokenBalances || [];
@@ -192,17 +168,14 @@ export const recalculateBalances = async () => {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
         let tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
-        let tokenPrice;
-        if (token.confidential && state.AESKey) {
+        if (token.confidential && state.AESKey !== null) {
           tokenBalance = tokenBalance
             ? decryptBalance(tokenBalance, state.AESKey)
             : null;
-          tokenPrice = await getTokenPriceInUSD(token.symbol);
         }
         return {
           ...token,
           balance: tokenBalance?.toString() || null,
-          tokenPrice: tokenPrice?.toString() ?? null,
         };
       }
 
