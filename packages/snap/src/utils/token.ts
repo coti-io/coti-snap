@@ -169,7 +169,13 @@ export const recalculateBalances = async () => {
         const tok = tokenContract.connect(signer) as Contract;
         let tokenBalance = tok.balanceOf ? await tok.balanceOf() : BigInt(0);
 
-        if (state.AESKey !== null) {
+        if (token.confidential) {
+          if (state.AESKey === null) {
+            return {
+              ...token,
+              balance: null,
+            };
+          }
           tokenBalance = token.confidential
             ? decryptBalance(tokenBalance, state.AESKey)
             : tokenBalance;

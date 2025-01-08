@@ -21,7 +21,7 @@ export const TokenAdded = ({ token }: { token: Token }) => {
       <Box alignment="center" direction="horizontal">
         <Box direction="vertical" alignment="center">
           <Text>
-            {token.balance ? token.balance : 'N/A'} {token.symbol}
+            {token.balance ? token.balance : '(encrypted)'} {token.symbol}
           </Text>
         </Box>
         {/* <Text color="muted">{} USD</Text> */}
