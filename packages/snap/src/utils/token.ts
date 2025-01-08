@@ -167,12 +167,20 @@ export const recalculateBalances = async () => {
       if (token.type === TokenViewSelector.ERC20) {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
-        if (token.confidential && state.AESKey !== null) {
-          tokenBalance = tokenBalance
+        let tokenBalance = tok.balanceOf ? await tok.balanceOf() : BigInt(0);
+
+        if (token.confidential) {
+          if (state.AESKey === null) {
+            return {
+              ...token,
+              balance: null,
+            };
+          }
+          tokenBalance = token.confidential
             ? decryptBalance(tokenBalance, state.AESKey)
-            : null;
+            : tokenBalance;
         }
+
         return {
           ...token,
           balance: tokenBalance?.toString() || null,

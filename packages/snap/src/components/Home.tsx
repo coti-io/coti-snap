@@ -43,7 +43,7 @@ export const Home = ({
               </Box>
               <Box direction="horizontal" alignment="center">
                 <Text color="muted" alignment="center">
-                  Add your AES Key to view your tokens and NFTs{' '}
+                  Add your AES Key to view your encrypted tokens and NFTs{' '}
                 </Text>
               </Box>
             </Box>
