@@ -432,6 +432,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           ...getState,
           AESKey: null,
         });
+        return true;
       }
 
       return null;

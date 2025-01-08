@@ -19,12 +19,6 @@ export const HeaderWrapper = styled.header`
   }
 `;
 
-export const Title = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.title};
-  font-weight: bold;
-  margin: 0;
-`;
-
 export const LogoWrapper = styled.div`
   display: flex;
   flex-direction: row;
