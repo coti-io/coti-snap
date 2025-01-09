@@ -1,39 +1,24 @@
 import React from 'react';
-import styled from 'styled-components';
 
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
-
-const ContentTitle = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.title};
-  font-weight: bold;
-  margin: 0;
-`;
-
-const ContentText = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: 400;
-  margin: 0;
-`;
-
-const ContentBoldText = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: bold;
-  margin: 0;
-`;
-
-const ContentButtons = styled.div`
-  display: flex;
-  gap: 8px;
-  width: 100%;
-`;
+import { Loading } from '../Loading';
+import { ContentText, ContentTitle } from '../styles';
+import { ContentBoldText, ContentButtons } from './styles';
 
 export const DeleteAESKey = ({
   handleShowDelete,
 }: {
   handleShowDelete: () => void;
 }) => {
-  const { deleteAESKey } = useSnap();
+  const { deleteAESKey, loading } = useSnap();
+
+  if (loading) {
+    <Loading
+      title="Delete your AES Key"
+      actionText="Approve in your wallet to delete your AES key"
+    />;
+  }
 
   return (
     <>

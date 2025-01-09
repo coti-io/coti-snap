@@ -1,10 +1,6 @@
 import { useAccount, useConnect } from 'wagmi';
 
-import {
-  useMetaMask,
-  // useInvokeSnap,
-  // useMetaMaskContext,
-} from '../../hooks';
+import { useMetaMask } from '../../hooks';
 import { Button } from '../Button';
 import { ConnectedContainer, Link } from './styles';
 import { WalletManager } from './WalletManager';
@@ -20,14 +16,6 @@ export const HeaderButtons = () => {
 
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect();
-
-  // if (!isFlask && !installedSnap) {
-  //   return <InstallFlaskButton />;
-  // }
-
-  // if (shouldDisplayReconnectButton(installedSnap)) {
-  //   return <Button text="Reconnect" primary onClick={requestSnap} />;
-  // }
 
   return (
     <ConnectedContainer>
