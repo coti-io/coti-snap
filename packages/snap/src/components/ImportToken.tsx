@@ -18,7 +18,7 @@ export const ImportToken = () => {
           <Input name="token-symbol" placeholder="Token Symbol" />
         </Field>
         <Field label="Token Address" error="Token address is required">
-          <Input name="token-address" placeholder="0x123..." />
+          <Input name="token-address" type="text" placeholder="0x123..." />
         </Field>
         {/*
           //TODO: Add token icon
@@ -33,9 +33,7 @@ export const ImportToken = () => {
       </Form>
       <Footer>
         <Button name="token-cancel">Cancel</Button>
-        <Button name="token-submit" type="submit">
-          Submit
-        </Button>
+        <Button name="token-submit">Submit</Button>
       </Footer>
     </Container>
   );
