@@ -14,7 +14,14 @@ import {
   type OnUserInputHandler,
   UserInputEventType,
 } from '@metamask/snaps-sdk';
-import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
+import {
+  Box,
+  Text,
+  Heading,
+  Container,
+  Footer,
+  Button,
+} from '@metamask/snaps-sdk/jsx';
 
 import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
@@ -209,17 +216,40 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         >;
         if (
           formState &&
-          formState['token-address'] &&
+          formState['token-address']?.toString().length === 42 &&
           formState['token-name'] &&
           formState['token-symbol']
         ) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
-          const symbol = formState['token-symbol'] as string;
+          const symbol = (formState['token-symbol'] as string).toUpperCase();
+
           await importToken(address, name, symbol);
         } else {
-          // TODO: add validation
-          console.log('Invalid form state:', formState);
+          await snap.request({
+            method: 'snap_updateInterface',
+            params: {
+              id,
+              ui: (
+                <Container>
+                  <Box>
+                    <Heading size="lg">⚠️ Something went wrong</Heading>
+                    <Text>
+                      Error adding token, please try again and check that:
+                    </Text>
+
+                    <Text>- A name has been entered.</Text>
+                    <Text>- A token has been entered</Text>
+                    <Text>- The address entered is correct.</Text>
+                  </Box>
+                  <Footer>
+                    <Button name="import-token-button">Go back</Button>
+                  </Footer>
+                </Container>
+              ),
+            },
+          });
+          return;
         }
         await recalculateBalances();
         await returnToHomePage(id);
