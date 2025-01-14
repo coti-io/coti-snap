@@ -8,7 +8,11 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
-import type { OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
+import type {
+  OnInstallHandler,
+  OnRpcRequestHandler,
+  OnUpdateHandler,
+} from '@metamask/snaps-sdk';
 import {
   type OnHomePageHandler,
   type OnUserInputHandler,
@@ -64,6 +68,10 @@ export const onUpdate: OnUpdateHandler = async () => {
       operation: 'clear',
     },
   });
+};
+
+export const onInstall: OnInstallHandler = async () => {
+  await ethereum.request({ method: 'eth_requestAccounts' });
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
