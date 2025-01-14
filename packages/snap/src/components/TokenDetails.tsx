@@ -17,6 +17,7 @@ type TokenDetailsProps = {
   tokenBalance: string;
   tokenAddress: string;
   tokenSymbol: string;
+  tokenDecimals: string;
 };
 
 export const TokenDetails = ({
@@ -24,6 +25,7 @@ export const TokenDetails = ({
   tokenBalance,
   tokenAddress,
   tokenSymbol,
+  tokenDecimals,
 }: TokenDetailsProps) => {
   return (
     <Box direction="vertical" alignment="start">
@@ -73,7 +75,7 @@ export const TokenDetails = ({
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
-        <Text>18</Text>
+        <Text>{tokenDecimals}</Text>
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>

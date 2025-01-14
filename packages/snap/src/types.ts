@@ -18,6 +18,7 @@ export type Tokens = {
   type: TokenViewSelector;
   confidential: boolean;
   balance: string | null;
+  decimals: string;
   tokenImage?: string;
   tokenPrice?: string;
 }[];

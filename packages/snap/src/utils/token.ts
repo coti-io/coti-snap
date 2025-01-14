@@ -229,16 +229,29 @@ export const importToken = async (
   address: string,
   name: string,
   symbol: string,
+  decimals: string,
 ) => {
   const oldState = await getStateData<State>();
   const tokens = oldState.tokenBalances;
-  console.log(`Importing token ${name} (${symbol}) at address ${address}`);
+  console.log(
+    `Importing token ${name} (${symbol}) at address ${address} with ${decimals} decimals`,
+  );
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
-    console.log(`Token ${name} (${symbol}) at address ${address} is unknown`);
+    console.log(
+      `Token ${name} (${symbol}) at address ${address} with ${decimals} decimals is unknown`,
+    );
     return;
   }
-  tokens.push({ address, name, symbol, balance: null, type, confidential });
+  tokens.push({
+    address,
+    name,
+    symbol,
+    balance: null,
+    type,
+    confidential,
+    decimals,
+  });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
 };
 

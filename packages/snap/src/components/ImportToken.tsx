@@ -20,6 +20,9 @@ export const ImportToken = () => {
         <Field label="Token Address" error="Token address is required">
           <Input name="token-address" type="text" placeholder="0x123..." />
         </Field>
+        <Field label="Token Decimals" error="Token decimals is required">
+          <Input name="token-decimals" type="text" placeholder="8" />
+        </Field>
         {/*
           //TODO: Add token icon
           <Field label="Token Icon">
