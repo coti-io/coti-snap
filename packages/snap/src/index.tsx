@@ -8,7 +8,7 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
-import type { OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
+import type { OnInstallHandler, OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
 import {
   type OnHomePageHandler,
   type OnUserInputHandler,
@@ -22,7 +22,7 @@ import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
-import type { State } from './types';
+import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
 import {
@@ -30,6 +30,7 @@ import {
   hideToken,
   importToken,
   recalculateBalances,
+  getTokenURI,
 } from './utils/token';
 
 // should be stored in a secure storage after onboarding process
@@ -44,9 +45,9 @@ export const returnToHomePage = async (id: string) => {
       id,
       ui: (
         <Home
-          balance={BigInt(balance || 0)}
+          balance={BigInt(balance ?? 0)}
           tokenBalances={tokenBalances}
-          tokenView={tokenView ?? TokenViewSelector.ERC20}
+          tokenView={tokenView || TokenViewSelector.ERC20}
         />
       ),
     },
@@ -62,15 +63,17 @@ export const onUpdate: OnUpdateHandler = async () => {
   });
 };
 
+export const onInstall: OnInstallHandler = async () => {
+  await ethereum.request({ method: 'eth_requestAccounts' });
+};
+
 export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
-
   await setStateData<State>({
     ...state,
     tokenView: TokenViewSelector.ERC20,
-    // AESKey: testAESKey,
-  }); // remove aes key setting after onboarding impolimented
+  });
   return {
     content: (
       <Home
@@ -83,7 +86,6 @@ export const onHomePage: OnHomePageHandler = async () => {
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  const { balance, tokenBalances } = await getStateData<State>();
   console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
@@ -99,10 +101,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             id,
             ui: (
               <TokenDetails
-                tokenName={token.name}
-                tokenBalance={token.balance ?? 'N/A'}
-                tokenAddress={token.address}
-                tokenSymbol={token.symbol}
+                token={token}
               />
             ),
           },
@@ -140,46 +139,28 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     }
     switch (event.name) {
       case 'import-token-button':
+        const importTokenState = await getStateData<State>();
         await snap.request({
           method: 'snap_updateInterface',
           params: {
             id,
-            ui: <ImportToken />,
+            ui: (<ImportToken tokenType={importTokenState.tokenView || TokenViewSelector.ERC20} />),
           },
         });
         return;
       case 'view-tokens-nft':
-        await snap.request({
-          method: 'snap_updateInterface',
-          params: {
-            id,
-            ui: (
-              <Home
-                balance={BigInt(balance || 0)}
-                tokenBalances={tokenBalances}
-                tokenView={TokenViewSelector.NFT}
-              />
-            ),
-          },
-        });
+        const veiwNFTstate = await getStateData<State>();
+        await setStateData<State>({ ...veiwNFTstate, tokenView: TokenViewSelector.NFT });
+        await recalculateBalances();
+        await returnToHomePage(id);
         return;
-      case 'view-tokens-tokens':
-        await snap.request({
-          method: 'snap_updateInterface',
-          params: {
-            id,
-            ui: (
-              <Home
-                balance={BigInt(balance || 0)}
-                tokenBalances={tokenBalances}
-                tokenView={TokenViewSelector.ERC20}
-              />
-            ),
-          },
-        });
+      case 'view-tokens-erc20':
+        const veiwERC20state = await getStateData<State>();
+        await setStateData<State>({ ...veiwERC20state, tokenView: TokenViewSelector.ERC20 });
+        await recalculateBalances();
+        await returnToHomePage(id);
         return;
       case 'settings-button':
-        console.log('Settings');
         try {
           await snap.request({
             method: 'snap_updateInterface',
@@ -206,22 +187,44 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           string,
           string | boolean | null
         >;
+        let tokenType = TokenViewSelector.ERC20;
+        if (formState['token-id'] || formState['token-id'] === null) { // update this workaround
+          tokenType = TokenViewSelector.NFT;
+        }
         if (
           formState &&
           formState['token-address'] &&
           formState['token-name'] &&
-          formState['token-symbol']
+          formState['token-symbol'] &&
+          (tokenType !== TokenViewSelector.NFT || formState['token-id'])
         ) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
           const symbol = formState['token-symbol'] as string;
-          await importToken(address, name, symbol);
+          if (tokenType === TokenViewSelector.NFT) {
+            const tokenId = formState['token-id'] as string;
+            await importToken(address, name, symbol, tokenId);
+          } else {
+            await importToken(address, name, symbol);
+          }
+          await recalculateBalances();
+          await returnToHomePage(id);
         } else {
-          // TODO: add validation
           console.log('Invalid form state:', formState);
+          try {
+            await snap.request({
+              method: 'snap_updateInterface',
+              params: {
+                id,
+                ui: <ImportToken tokenType={tokenType} errorInForm={true} />,
+              },
+            });
+          } catch (error) {
+            console.error(error);
+            await recalculateBalances();
+            await returnToHomePage(id);
+          }
         }
-        await recalculateBalances();
-        await returnToHomePage(id);
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {

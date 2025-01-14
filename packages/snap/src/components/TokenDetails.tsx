@@ -10,27 +10,18 @@ import {
 
 import defaultToken from '../../images/default-token.svg';
 import send from '../../images/send.svg';
-
-type TokenDetailsProps = {
-  tokenName: string;
-  tokenBalance: string;
-  tokenAddress: string;
-  tokenSymbol: string;
-};
+import { Token } from 'src/types';
 
 export const TokenDetails = ({
-  tokenName,
-  tokenBalance,
-  tokenAddress,
-  tokenSymbol,
-}: TokenDetailsProps) => {
+  token
+}: {token: Token}) => {
   return (
     <Box direction="vertical" alignment="start">
       <Box direction="horizontal" alignment="start">
         <Button name="token-cancel">
           <Icon name="arrow-left" />
         </Button>
-        <Text>{tokenSymbol}</Text>
+        <Text>{token.symbol}</Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
@@ -45,13 +36,13 @@ export const TokenDetails = ({
               <Image src={defaultToken} />
             </Box>
             <Box direction="vertical" alignment="center">
-              <Text>{tokenSymbol}</Text>
-              <Text color="muted">{tokenSymbol}</Text>
+              <Text>{token.symbol}</Text>
+              <Text color="muted">{token.symbol}</Text>
             </Box>
           </Box>
         </Box>
         <Box direction="vertical" alignment="end">
-          <Text>{tokenBalance}</Text>
+          <Text>{token.balance ?? 'N/A'}</Text>
           <Text color="muted">USD</Text>
         </Box>
       </Box>
@@ -63,8 +54,12 @@ export const TokenDetails = ({
       </Box>
       <Box direction="horizontal" alignment="space-between">
         <Text>Contract address</Text>
-        <Copyable value={tokenAddress} />
+        <Copyable value={token.address} />
       </Box>
+      {!!token.uri && (<Box direction="horizontal" alignment="space-between">
+        <Text>Token URI</Text>
+        <Text>{token.uri}</Text>
+      </Box>)}
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
@@ -72,12 +67,12 @@ export const TokenDetails = ({
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>
-        <Text>{tokenName}</Text>
+        <Text>{token.name}</Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
       </Box>
-      <Button variant="destructive" name={`confirm-hide-token-${tokenAddress}`}>
+      <Button variant="destructive" name={`confirm-hide-token-${token.address}`}>
         Hide token
       </Button>
       <Box direction="horizontal" alignment="start">
@@ -95,7 +90,7 @@ export const TokenDetails = ({
                 <Image src={send} />
               </Box>
               <Box direction="vertical" alignment="center">
-                <Text>{tokenSymbol}</Text>
+                <Text>{token.symbol}</Text>
                 <Text color="success">Confirmed</Text>
               </Box>
             </Box>
@@ -104,7 +99,7 @@ export const TokenDetails = ({
           <Box alignment="space-between" direction="horizontal">
             <Box direction="vertical" alignment="end">
               {/* TODO: Add token balances */}
-              <Text>{tokenSymbol}</Text>
+              <Text>{token.symbol}</Text>
               <Text color="muted">USD</Text>
             </Box>
           </Box>

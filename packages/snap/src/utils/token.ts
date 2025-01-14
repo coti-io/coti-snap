@@ -1,12 +1,14 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
-import { decryptUint } from '@coti-io/coti-sdk-typescript';
+import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
 import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc721Abi from '../abis/ERC721.json';
-import type { State } from '../types';
+import erc721AbiConfidential from '../abis/ERC721Confidential.json';
+import type { State, Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import { getStateData, setStateData } from './snap';
+import { ctString } from '@coti-io/coti-ethers';
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -37,6 +39,21 @@ const CONFIDENTIAL_ERC20_ABI = [
     type: 'function',
   },
 ];
+
+
+export const getTokenURI = async (address: string, tokenId: string, AESKey: string): Promise<string | null> => {
+  try {
+    const provider = new BrowserProvider(ethereum);
+    const contract = new ethers.Contract(address, erc721AbiConfidential, provider);
+    const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId)) as ctString;
+    return decryptString(encryptedTokenURI, AESKey);
+  }
+  catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
 
 /**
  * Determines the type of token (ERC-20, ConfidentialERC20, or NFT) for a given contract address.
@@ -77,14 +94,21 @@ export async function getTokenType(address: string): Promise<{
 
   if (isERC721 || isERC1155) {
     console.log(
-      `Contract ${address} is an NFT contract (likely ERC-${
-        isERC721 ? '721' : '1155'
+      `Contract ${address} is an NFT contract (likely ERC-${isERC721 ? '721' : '1155'
       }).`,
     );
-    console.log(
-      `Cannot distinguish ConfidentialERC721 from standard ERC-721 if no unique methods are present.`,
-    );
-    return { type: TokenViewSelector.NFT, confidential: false };
+    try {
+      const contract = new ethers.Contract(address, erc721AbiConfidential, provider);
+      const tokenURI = await contract.tokenURI!(BigInt(0));
+      if (tokenURI) {
+        console.log(`Contract ${address} has tokenURI method`);
+        return { type: TokenViewSelector.NFT, confidential: true };
+      }
+      return { type: TokenViewSelector.NFT, confidential: false };
+    } catch (e) {
+      console.log(`Error checking for tokenURI support: ${e}`);
+      return { type: TokenViewSelector.NFT, confidential: false };
+    }
   }
 
   // likely fungible (ERC-20 or ConfidentialERC20).
@@ -186,12 +210,12 @@ export const recalculateBalances = async () => {
   const signerAddress = await signer.getAddress();
   const balance = await provider.getBalance(signerAddress);
 
-  const tokenBalances = await Promise.all(
+  const tokenBalances: Tokens = await Promise.all(
     tokens.map(async (token) => {
       if (token.type === TokenViewSelector.ERC20) {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf ? await tok.balanceOf() : null;
+        let tokenBalance = tok.balanceOf && !token.confidential ? await tok.balanceOf() : null;
         let tokenPrice;
         if (token.confidential && state.AESKey) {
           tokenBalance = tokenBalance
@@ -202,23 +226,21 @@ export const recalculateBalances = async () => {
         return {
           ...token,
           balance: tokenBalance?.toString() || null,
-          tokenPrice: tokenPrice?.toString() ?? null,
+          tokenPrice: tokenPrice?.toString() || null,
         };
       }
 
       if (token.type === TokenViewSelector.NFT) {
-        const tokenContract = new Contract(token.address, erc721Abi, signer);
+        const tokenContract = new Contract(token.address, erc721AbiConfidential, signer);
         const tok = tokenContract.connect(signer) as Contract;
         let tokenBalance = tok.balanceOf
           ? await tok.balanceOf(signerAddress)
           : null;
-
-        if (token.confidential && state.AESKey) {
-          tokenBalance = tokenBalance
-            ? decryptUint(tokenBalance, state.AESKey)
-            : null;
+        let tokenUri: string | null = token.uri ?? null;
+        if (token.confidential && token.tokenId && state.AESKey) {
+          tokenUri = await getTokenURI(token.address, token.tokenId, state.AESKey);
         }
-        return { ...token, balance: tokenBalance?.toString() || null };
+        return { ...token, balance: tokenBalance?.toString() || null, uri: tokenUri };
       }
       return { ...token, balance: null };
     }),
@@ -237,6 +259,7 @@ export const importToken = async (
   address: string,
   name: string,
   symbol: string,
+  tokenId?: string,
 ) => {
   const oldState = await getStateData<State>();
   const tokens = oldState.tokenBalances;
@@ -246,7 +269,13 @@ export const importToken = async (
     console.log(`Token ${name} (${symbol}) at address ${address} is unknown`);
     return;
   }
-  tokens.push({ address, name, symbol, balance: null, type, confidential });
+  if (type === TokenViewSelector.NFT && !tokenId) {
+    console.error(
+      `Token ${name} (${symbol}) at address ${address} is an NFT but no tokenId was provided`,
+    );
+    return;
+  }
+  tokens.push({ address, name, symbol, balance: null, type, confidential, tokenId: tokenId || null });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
 };
 
