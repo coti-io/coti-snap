@@ -108,6 +108,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 tokenBalance={token.balance ?? '(encrypted)'}
                 tokenAddress={token.address}
                 tokenSymbol={token.symbol}
+                tokenDecimals={token.decimals}
               />
             ),
           },
@@ -218,13 +219,15 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           formState &&
           formState['token-address']?.toString().length === 42 &&
           formState['token-name'] &&
+          formState['token-decimals'] &&
           formState['token-symbol']
         ) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
+          const decimals = formState['token-decimals'] as string;
           const symbol = (formState['token-symbol'] as string).toUpperCase();
 
-          await importToken(address, name, symbol);
+          await importToken(address, name, symbol, decimals);
         } else {
           await snap.request({
             method: 'snap_updateInterface',
@@ -240,6 +243,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
                     <Text>- A name has been entered.</Text>
                     <Text>- A token has been entered</Text>
+                    <Text>- A decimals has been entered</Text>
                     <Text>- The address entered is correct.</Text>
                   </Box>
                   <Footer>
