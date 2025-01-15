@@ -8,21 +8,24 @@ import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 
 type SnapContextProps = {
-  setAESKey: () => Promise<void>;
-  deleteAESKey: () => Promise<void>;
-  getAESKey: () => Promise<void>;
   userAESKey: string | null;
   setUserAesKEY: (key: string | null) => void;
   userHasAESKey: boolean;
-  handleShowDelete: () => void;
   showDelete: boolean;
   loading: boolean;
   settingAESKeyError: boolean;
+  permissionError: boolean;
+  setPermissionError: (error: boolean) => void;
   onboardContractAddress: `0x${string}`;
+  handleShowDelete: () => void;
   handleOnChangeContactAddress: (
     inputEvent: React.ChangeEvent<HTMLInputElement>,
   ) => void;
   handleCancelOnboard: () => void;
+  setAESKey: () => Promise<void>;
+  getAESKey: () => Promise<void>;
+  deleteAESKey: () => Promise<void>;
+  connectSnapToWallet: () => Promise<void>;
 };
 
 const SnapContext = createContext<SnapContextProps | undefined>(undefined);
@@ -36,8 +39,38 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const [showDelete, setShowDelete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [settingAESKeyError, setSettingAESKeyError] = useState<boolean>(false);
+  const [permissionError, setPermissionError] = useState<boolean>(false);
   const [onboardContractAddress, setOnboardContractAddress] =
     useState<`0x${string}`>(ONBOARD_CONTRACT_ADDRESS);
+
+  const getWalletPermissions = async () => {
+    const permissions: any[] = (await invokeSnap({
+      method: 'get-permissions',
+    })) as any[];
+
+    let ethAccountsPermission = null;
+
+    if (permissions && permissions.length > 0) {
+      ethAccountsPermission = permissions.find(
+        (permission: any) => permission.parentCapability === 'eth_accounts',
+      );
+    }
+
+    if (ethAccountsPermission) {
+      const caveat = ethAccountsPermission.caveats?.find(
+        (_caveat: any) => _caveat.type === 'restrictReturnedAccounts',
+      );
+
+      if (caveat?.value?.length > 0) {
+        console.log('eth_accounts address:', caveat.value[0]);
+        return true;
+      }
+    }
+
+    console.log('eth_accounts permission not found or no address available');
+    setPermissionError(true);
+    return false;
+  };
 
   const handleShowDelete = () => {
     setShowDelete(!showDelete);
@@ -56,6 +89,13 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const setAESKey = async () => {
     setLoading(true);
+
+    const hasPermissions = await getWalletPermissions();
+    if (!hasPermissions) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
@@ -122,6 +162,16 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
+  const connectSnapToWallet = async () => {
+    const result = await invokeSnap({
+      method: 'connect-to-wallet',
+    });
+
+    if (result) {
+      setPermissionError(false);
+    }
+  };
+
   useEffect(() => {
     if (installedSnap) {
       hasAESKey().catch((error) => {
@@ -133,19 +183,22 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SnapContext.Provider
       value={{
-        userHasAESKey,
-        setAESKey,
-        getAESKey,
-        deleteAESKey,
         userAESKey,
         setUserAesKEY,
-        handleShowDelete,
+        userHasAESKey,
         showDelete,
         loading,
         settingAESKeyError,
+        permissionError,
+        setPermissionError,
         onboardContractAddress,
+        handleShowDelete,
         handleOnChangeContactAddress,
         handleCancelOnboard,
+        setAESKey,
+        getAESKey,
+        deleteAESKey,
+        connectSnapToWallet,
       }}
     >
       {children}

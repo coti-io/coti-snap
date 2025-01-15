@@ -32,7 +32,7 @@ import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
-import type { State } from './types';
+import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
 import {
@@ -403,6 +403,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       return false;
+
+    case 'get-permissions':
+      const permissions = await ethereum.request({
+        method: 'wallet_getPermissions',
+        params: [],
+      });
+
+      return permissions ?? [];
+
+    case 'connect-to-wallet':
+      await ethereum.request({ method: 'eth_requestAccounts' });
+      return true;
 
     case 'get-aes-key':
       // const onSetAESKeyState = await getStateData<State>();

@@ -28,6 +28,9 @@ export const OnboardAccountWizzard = ({
     onboardContractAddress,
     handleOnChangeContactAddress,
     handleCancelOnboard,
+    permissionError,
+    setPermissionError,
+    connectSnapToWallet,
   } = useSnap();
 
   const [isEditable, setIsEditable] = useState(false);
@@ -43,6 +46,7 @@ export const OnboardAccountWizzard = ({
   const handleCancel = () => {
     handleOnboardAccount();
     handleCancelOnboard();
+    setPermissionError(false);
   };
 
   return loading ? (
@@ -81,6 +85,20 @@ export const OnboardAccountWizzard = ({
         <ContentErrorText>
           Error to onboard account, check the contract address
         </ContentErrorText>
+      )}
+      {permissionError && (
+        <>
+          <ContentErrorText>
+            Error to onboard account, check if the key manager is connected to
+            your wallet.
+          </ContentErrorText>
+          <Button
+            text="Connect to wallet"
+            fullWith={true}
+            primary
+            onClick={connectSnapToWallet}
+          />
+        </>
       )}
     </>
   );
