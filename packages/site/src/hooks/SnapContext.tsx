@@ -2,6 +2,7 @@ import type { Eip1193Provider } from '@coti-io/coti-ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { isAddress } from 'viem';
 
 import { ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
@@ -39,6 +40,40 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const [onboardContractAddress, setOnboardContractAddress] =
     useState<`0x${string}`>(ONBOARD_CONTRACT_ADDRESS);
 
+  const getWalletPermissions = async () => {
+    const permissions: any[] = (await invokeSnap({
+      method: 'get-permissions',
+    })) as any[];
+    let ethAccountsPermission = null;
+    if (permissions && permissions.length > 0) {
+      ethAccountsPermission = permissions.find(
+        (permission: any) => permission.parentCapability === 'eth_accounts',
+      );
+    }
+    if (ethAccountsPermission) {
+      const caveat = ethAccountsPermission.caveats?.find(
+        (_caveat: any) => _caveat.type === 'restrictReturnedAccounts',
+      );
+      if (caveat?.value?.length > 0) {
+        console.log('eth_accounts address:', caveat.value[0]);
+        return true;
+      }
+    }
+    console.log('eth_accounts permission not found or no address available');
+    return false;
+  };
+
+  const connectSnapToWallet = async () => {
+    const result = await invokeSnap({
+      method: 'connect-to-wallet',
+    });
+
+    if (result) {
+      return true;
+    }
+    return false;
+  };
+
   const handleShowDelete = () => {
     setShowDelete(!showDelete);
   };
@@ -56,7 +91,24 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const setAESKey = async () => {
     setLoading(true);
+
+    const hasPermissions = await getWalletPermissions();
+
+    if (!hasPermissions) {
+      const connect = await connectSnapToWallet();
+      if (!connect) {
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
+      if (!isAddress(onboardContractAddress)) {
+        setSettingAESKeyError(true);
+        setLoading(false);
+        return;
+      }
+
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
       await signer.generateOrRecoverAes(onboardContractAddress);
@@ -66,6 +118,9 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         return;
       }
+
+      console.log('aesKey:', aesKey);
+
       const result = await invokeSnap({
         method: 'set-aes-key',
         params: {
@@ -92,9 +147,11 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
     if (result) {
       setUserHasAesKEY(result as boolean);
+      return true;
     }
 
     setLoading(false);
+    return false;
   };
 
   const getAESKey = async () => {

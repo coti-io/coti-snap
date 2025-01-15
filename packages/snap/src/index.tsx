@@ -8,7 +8,11 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
-import type { OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
+import type {
+  OnInstallHandler,
+  OnRpcRequestHandler,
+  OnUpdateHandler,
+} from '@metamask/snaps-sdk';
 import {
   type OnHomePageHandler,
   type OnUserInputHandler,
@@ -64,6 +68,18 @@ export const onUpdate: OnUpdateHandler = async () => {
       operation: 'clear',
     },
   });
+};
+
+export const onInstall: OnInstallHandler = async () => {
+  await Promise.all([
+    ethereum.request({ method: 'eth_requestAccounts' }),
+    setStateData<State>({
+      balance: '0',
+      tokenBalances: [],
+      AESKey: null,
+      tokenView: TokenViewSelector.ERC20,
+    }),
+  ]);
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
@@ -288,7 +304,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      // const onEncryptState = await getStateData<State>();
       if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -346,8 +361,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         r: { [key: string]: number };
       };
 
-      // const onDecryptState = await getStateData<State>();
-
       if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -388,8 +401,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'has-aes-key':
-      // const onGetAESKeyState = await getStateData<State>();
-
       if (getState.AESKey) {
         return true;
       }
@@ -397,8 +408,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return false;
 
     case 'get-aes-key':
-      // const onSetAESKeyState = await getStateData<State>();
-
       if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -437,8 +446,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'delete-aes-key':
-      // const state = await getStateData<State>();
-
       if (!getState.AESKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -507,6 +514,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       return null;
+
+    case 'connect-to-wallet':
+      await ethereum.request({ method: 'eth_requestAccounts' });
+      return true;
+
+    case 'get-permissions':
+      const permissions = await ethereum.request({
+        method: 'wallet_getPermissions',
+        params: [],
+      });
+
+      return permissions ?? [];
 
     default:
       throw new Error('Method not found.');
