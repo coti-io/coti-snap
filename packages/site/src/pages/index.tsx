@@ -1,7 +1,8 @@
 import styled from 'styled-components';
 
-import { Button, ContentManageAESKey, Header } from '../components';
-import { useMetaMask, useRequestSnap } from '../hooks';
+import { ContentManageAESKey, Header } from '../components';
+import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
+import { useMetaMask } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 
 const Container = styled.div`
@@ -24,7 +25,6 @@ const Container = styled.div`
 const Index = () => {
   const { installedSnap } = useMetaMask();
 
-  const requestSnap = useRequestSnap();
   const { userHasAESKey } = useSnap();
 
   return (
@@ -33,7 +33,7 @@ const Index = () => {
       {installedSnap ? (
         <ContentManageAESKey userHasAESKey={userHasAESKey} />
       ) : (
-        <Button text="Install snap" primary onClick={requestSnap} />
+        <ContentInstallAESKeyManager />
       )}
     </Container>
   );
