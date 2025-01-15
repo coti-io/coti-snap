@@ -63,17 +63,6 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const startOnboarding = async () => {
-    const result = await invokeSnap({
-      method: 'confirm-start-onboarding',
-    });
-
-    if (result) {
-      return true;
-    }
-    return false;
-  };
-
   const connectSnapToWallet = async () => {
     const result = await invokeSnap({
       method: 'connect-to-wallet',
@@ -129,6 +118,9 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         return;
       }
+
+      console.log('aesKey:', aesKey);
+
       const result = await invokeSnap({
         method: 'set-aes-key',
         params: {

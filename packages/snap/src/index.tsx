@@ -71,7 +71,15 @@ export const onUpdate: OnUpdateHandler = async () => {
 };
 
 export const onInstall: OnInstallHandler = async () => {
-  await ethereum.request({ method: 'eth_requestAccounts' });
+  await Promise.all([
+    ethereum.request({ method: 'eth_requestAccounts' }),
+    setStateData<State>({
+      balance: '0',
+      tokenBalances: [],
+      AESKey: null,
+      tokenView: TokenViewSelector.ERC20,
+    }),
+  ]);
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
