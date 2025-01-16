@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 // tokens with balances and info
 export type Token = {
   name: string;
@@ -8,20 +7,13 @@ export type Token = {
   confidential: boolean;
   balance: string | null;
   tokenImage?: string;
-  tokenPrice?: string;
+  decimals: string | null;
+  tokenPrice?: string | null;
+  tokenId?: string | null;
+  uri?: string | null;
 };
 
-export type Tokens = {
-  name: string;
-  symbol: string;
-  address: string;
-  type: TokenViewSelector;
-  confidential: boolean;
-  balance: string | null;
-  decimals: string;
-  tokenImage?: string;
-  tokenPrice?: string;
-}[];
+export type Tokens = Token[];
 
 export enum TokenViewSelector {
   ERC20 = 'erc20',
@@ -35,5 +27,4 @@ export type State = {
   tokenBalances: Tokens;
   AESKey: string | null;
   tokenView?: TokenViewSelector;
-  // eslint-disable-next-line @typescript-eslint/naming-convention
 };

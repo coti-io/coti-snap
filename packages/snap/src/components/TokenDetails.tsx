@@ -6,27 +6,17 @@ import {
   Copyable,
   Icon,
   Image,
+  Link,
   Bold,
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
 import send from '../../images/send.svg';
-
-type TokenDetailsProps = {
-  tokenName: string;
-  tokenBalance: string;
-  tokenAddress: string;
-  tokenSymbol: string;
-  tokenDecimals: string;
-};
+import { Token } from 'src/types';
 
 export const TokenDetails = ({
-  tokenName,
-  tokenBalance,
-  tokenAddress,
-  tokenSymbol,
-  tokenDecimals,
-}: TokenDetailsProps) => {
+  token
+}: {token: Token}) => {
   return (
     <Box direction="vertical" alignment="start">
       <Box direction="horizontal" alignment="start">
@@ -34,7 +24,7 @@ export const TokenDetails = ({
           <Icon name="arrow-left" />
         </Button>
         <Text>
-          <Bold>{tokenSymbol}</Bold>
+          <Bold>{token.symbol}</Bold>
         </Text>
       </Box>
       <Box direction="horizontal" alignment="start">
@@ -50,17 +40,14 @@ export const TokenDetails = ({
               <Image src={defaultToken} />
             </Box>
             <Box direction="vertical" alignment="center">
-              <Text>{tokenSymbol}</Text>
+              <Text>{token.symbol}</Text>
               {/* <Text color="muted">{tokenSymbol}</Text> */}
             </Box>
           </Box>
         </Box>
         <Box direction="vertical" alignment="end">
           <Text>
-            {tokenBalance === '(encrypted)'
-              ? tokenBalance
-              : Number(tokenBalance).toFixed(5)}{' '}
-            {tokenSymbol}
+            {token.balance} {token.symbol}
           </Text>
           {/* <Text color="muted">USD</Text> */}
         </Box>
@@ -73,21 +60,25 @@ export const TokenDetails = ({
       </Box>
       <Box direction="horizontal" alignment="space-between">
         <Text>Contract address</Text>
-        <Copyable value={tokenAddress} />
+        <Copyable value={token.address} />
       </Box>
+      {!!token.uri && (<Box direction="horizontal" alignment="space-between">
+        <Text>Token URI</Text>
+        <Link href={token.uri}>Open</Link>
+      </Box>)}
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
-        <Text>{tokenDecimals}</Text>
+        <Text>{token.decimals}</Text>
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>
-        <Text>{tokenName}</Text>
+        <Text>{token.name}</Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
       </Box>
-      <Button variant="destructive" name={`confirm-hide-token-${tokenAddress}`}>
+      <Button variant="destructive" name={`confirm-hide-token-${token.address}`}>
         Hide token
       </Button>
       <Box direction="horizontal" alignment="start">
@@ -105,7 +96,7 @@ export const TokenDetails = ({
                 <Image src={send} />
               </Box>
               <Box direction="vertical" alignment="center">
-                <Text>{tokenSymbol}</Text>
+                <Text>{token.symbol}</Text>
                 <Text color="success">Confirmed</Text>
               </Box>
             </Box>
@@ -114,7 +105,7 @@ export const TokenDetails = ({
           <Box alignment="space-between" direction="horizontal">
             <Box direction="vertical" alignment="end">
               {/* TODO: Add token balances */}
-              <Text>{tokenSymbol}</Text>
+              <Text>{token.symbol}</Text>
               <Text color="muted">USD</Text>
             </Box>
           </Box>
