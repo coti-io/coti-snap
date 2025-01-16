@@ -52,10 +52,23 @@ export const Home = ({
           )}
           <Box direction="horizontal" alignment="start">
             <Text> </Text>
+            <Text> </Text>
           </Box>
-          <Box alignment="space-around" direction="horizontal">
+          {/* <Box alignment="space-around" direction="horizontal">
             <Button name="view-tokens-tokens">Tokens</Button>
             <Button name="view-tokens-nft">NFT</Button>
+          </Box> */}
+          <Box alignment="space-around" direction="horizontal">
+            {tokenView === 'erc20' ? (
+              <Heading>Tokens</Heading>
+            ) : (
+              <Button name="view-tokens-tokens">Tokens</Button>
+            )}
+            {tokenView === 'nft' ? (
+              <Heading>NFT</Heading>
+            ) : (
+              <Button name="view-tokens-nft">NFT</Button>
+            )}
           </Box>
           <Divider />
           <Box direction="horizontal" alignment="start">
@@ -77,10 +90,10 @@ export const Home = ({
             </Box>
           ) : (
             <Box direction="vertical">
-              <Box alignment="space-between" direction="horizontal">
-                <Heading size="sm">
+              <Box alignment="end" direction="horizontal">
+                {/* <Heading size="sm">
                   {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
-                </Heading>
+                </Heading> */}
                 <Button name="import-token-button">+ Import</Button>
               </Box>
               <Box direction="horizontal" alignment="start">

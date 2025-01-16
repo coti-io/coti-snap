@@ -57,7 +57,10 @@ export const TokenDetails = ({
         </Box>
         <Box direction="vertical" alignment="end">
           <Text>
-            {tokenBalance} {tokenSymbol}
+            {tokenBalance === '(encrypted)'
+              ? tokenBalance
+              : Number(tokenBalance).toFixed(5)}{' '}
+            {tokenSymbol}
           </Text>
           {/* <Text color="muted">USD</Text> */}
         </Box>

@@ -111,7 +111,14 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
-      await signer.generateOrRecoverAes(onboardContractAddress);
+
+      await signer
+        .signMessage(
+          'You will be prompted to sign a message to set your AES key.',
+        )
+        .then(async () => {
+          await signer.generateOrRecoverAes(onboardContractAddress);
+        });
       const aesKey = signer.getUserOnboardInfo()?.aesKey;
 
       if (aesKey === null) {
