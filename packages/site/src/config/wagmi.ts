@@ -22,42 +22,12 @@ export const COTI = defineChain({
   blockExplorers: {
     default: { name: 'Explorer', url: 'https://devnet.cotiscan.io' },
   },
-  contracts: {
-    // Add the contracts here
-  },
+  contracts: {},
 });
-
-// export const CHAIN_ID = 7082400;
-
-// export const COTI = defineChain({
-//   id: CHAIN_ID,
-//   name: 'COTI Testnet',
-//   caipNetworkId: 'eip155:123456789',
-//   chainNamespace: 'eip155',
-//   nativeCurrency: {
-//     decimals: 18,
-//     name: 'COTI',
-//     symbol: 'COTI',
-//   },
-//   rpcUrls: {
-//     default: {
-//       http: ['https://testnet.coti.io/rpc'],
-//       webSocket: ['WS_RPC_URLwss://testnet.coti.io/ws'],
-//     },
-//   },
-//   blockExplorers: {
-//     default: { name: 'Explorer', url: 'https://testnet.cotiscan.io' },
-//   },
-//   contracts: {
-//     // Add the contracts here
-//   },
-// });
 
 export const config = createConfig({
   chains: [COTI],
   transports: {
-    // [mainnet.id]: http(),
-    // [sepolia.id]: http(),
     [COTI.id]: http(),
   },
 });

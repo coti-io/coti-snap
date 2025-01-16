@@ -7,6 +7,7 @@ export type Token = {
   confidential: boolean;
   balance: string | null;
   tokenImage?: string;
+  decimals: string | null;
   tokenPrice?: string | null;
   tokenId?: string | null;
   uri?: string | null;

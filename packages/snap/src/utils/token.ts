@@ -1,14 +1,15 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
 import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
+import { ctString } from '@coti-io/coti-ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc721Abi from '../abis/ERC721.json';
 import erc721AbiConfidential from '../abis/ERC721Confidential.json';
 import type { State, Tokens } from '../types';
+import { CHAIN_ID } from '../config';
 import { TokenViewSelector } from '../types';
 import { getStateData, setStateData } from './snap';
-import { ctString } from '@coti-io/coti-ethers';
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -175,28 +176,15 @@ export const decryptBalance = (balance: ctUint, AESkey: string) => {
   }
 };
 
-// FIXME: This function is not working as expected
-export const getTokenPriceInUSD = async (
-  tokenSymbol: string,
-): Promise<string> => {
-  const res = await fetch(
-    `https://min-api.cryptocompare.com/data/price?fsym=${tokenSymbol}&tsyms=USD`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  );
+export const checkChainId = async () => {
+  const provider = new BrowserProvider(ethereum);
 
-  if (!res.ok) {
-    console.error(`Failed to fetch token price: ${res.statusText}`);
-    return '';
+  const chainId = await provider.getNetwork();
+
+  if (chainId.chainId.toString() !== CHAIN_ID) {
+    return true;
   }
-
-  const { result } = (await res.json()) as { result: string };
-
-  return result;
+  return false;
 };
 
 export const recalculateBalances = async () => {
@@ -205,7 +193,6 @@ export const recalculateBalances = async () => {
 
   const provider = new BrowserProvider(ethereum);
 
-  // TODO: check if chain id is correct
   const signer = await provider.getSigner();
   const signerAddress = await signer.getAddress();
   const balance = await provider.getBalance(signerAddress);
@@ -216,17 +203,15 @@ export const recalculateBalances = async () => {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
         let tokenBalance = tok.balanceOf && !token.confidential ? await tok.balanceOf() : null;
-        let tokenPrice;
         if (token.confidential && state.AESKey) {
           tokenBalance = tokenBalance
             ? decryptBalance(tokenBalance, state.AESKey)
-            : null;
-          tokenPrice = await getTokenPriceInUSD(token.symbol);
+            : tokenBalance;
         }
+
         return {
           ...token,
           balance: tokenBalance?.toString() || null,
-          tokenPrice: tokenPrice?.toString() || null,
         };
       }
 
@@ -259,14 +244,19 @@ export const importToken = async (
   address: string,
   name: string,
   symbol: string,
+  decimals: string,
   tokenId?: string,
 ) => {
   const oldState = await getStateData<State>();
   const tokens = oldState.tokenBalances;
-  console.log(`Importing token ${name} (${symbol}) at address ${address}`);
+  console.log(
+    `Importing token ${name} (${symbol}) at address ${address} with ${decimals} decimals`,
+  );
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
-    console.log(`Token ${name} (${symbol}) at address ${address} is unknown`);
+    console.log(
+      `Token ${name} (${symbol}) at address ${address} with ${decimals} decimals is unknown`,
+    );
     return;
   }
   if (type === TokenViewSelector.NFT && !tokenId) {
@@ -275,7 +265,7 @@ export const importToken = async (
     );
     return;
   }
-  tokens.push({ address, name, symbol, balance: null, type, confidential, tokenId: tokenId || null });
+  tokens.push({ address, name, symbol, balance: null, type, confidential, decimals, tokenId: tokenId || null });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
 };
 

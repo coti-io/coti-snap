@@ -60,6 +60,7 @@
   "dependencies": {
     "@metamask/utils": "^11.0.1",
     "@tanstack/react-query": "^5.62.9",
+    "ethers": "^6.13.5",
     "viem": "2.x",
     "wagmi": "^2.14.5"
   }

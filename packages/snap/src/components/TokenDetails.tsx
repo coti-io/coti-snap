@@ -7,6 +7,7 @@ import {
   Icon,
   Image,
   Link,
+  Bold,
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
@@ -22,7 +23,9 @@ export const TokenDetails = ({
         <Button name="token-cancel">
           <Icon name="arrow-left" />
         </Button>
-        <Text>{token.symbol}</Text>
+        <Text>
+          <Bold>{token.symbol}</Bold>
+        </Text>
       </Box>
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
@@ -38,13 +41,15 @@ export const TokenDetails = ({
             </Box>
             <Box direction="vertical" alignment="center">
               <Text>{token.symbol}</Text>
-              <Text color="muted">{token.symbol}</Text>
+              {/* <Text color="muted">{tokenSymbol}</Text> */}
             </Box>
           </Box>
         </Box>
         <Box direction="vertical" alignment="end">
-          <Text>{token.balance ?? 'N/A'}</Text>
-          <Text color="muted">USD</Text>
+          <Text>
+            {token.balance} {token.symbol}
+          </Text>
+          {/* <Text color="muted">USD</Text> */}
         </Box>
       </Box>
       <Box direction="horizontal" alignment="start">
@@ -64,7 +69,7 @@ export const TokenDetails = ({
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
         {/* TODO: Add decimals */}
-        <Text>18</Text>
+        <Text>{token.decimals}</Text>
       </Box>
       <Box direction="vertical">
         <Text>Token list</Text>

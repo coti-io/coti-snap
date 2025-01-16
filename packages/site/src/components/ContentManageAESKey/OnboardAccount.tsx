@@ -1,29 +1,23 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
 
-import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
-
-const ContentTitle = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.title};
-  font-weight: bold;
-  margin: 0;
-`;
-
-const ContentText = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.small};
-  font-weight: medium;
-  margin: 0;
-`;
+import { ContentText, ContentTitle } from '../styles';
+import { OnboardAccountWizzard } from './OnboardAccountWizzard';
 
 export const OnboardAccount = () => {
-  const { setAESKey } = useSnap();
+  const [startOnboarding, setStartOnboarding] = useState<boolean>(false);
 
-  return (
+  const handleOnboardAccount = () => {
+    setStartOnboarding(!startOnboarding);
+  };
+
+  return startOnboarding ? (
+    <OnboardAccountWizzard handleOnboardAccount={handleOnboardAccount} />
+  ) : (
     <>
       <ContentTitle>Manage your AES Key</ContentTitle>
       <ContentText>Start with the onboarding of your account</ContentText>
-      <Button primary text="Onboard account" onClick={setAESKey} />
+      <Button primary text="Onboard account" onClick={handleOnboardAccount} />
     </>
   );
 };

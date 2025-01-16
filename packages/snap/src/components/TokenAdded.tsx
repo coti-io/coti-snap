@@ -18,16 +18,14 @@ export const TokenAdded = ({ token }: { token: Token }) => {
           <Text>{token.symbol}</Text>
         </Box>
       </Box>
-      <Box alignment="space-between" direction="horizontal">
-        <Box direction="vertical" alignment="end">
+      <Box alignment="center" direction="horizontal">
+        <Box direction="vertical" alignment="center">
           <Text>
-            {token.balance?.length === 0 || token.balance === null
-              ? '0.0'
-              : token.balance}{' '}
-            {token.symbol}
+            {token.balance ? token.balance : '(encrypted)'} {token.symbol}
           </Text>
-          <Text color="muted">{} USD</Text>
         </Box>
+        {/* <Text color="muted">{} USD</Text> */}
+
         <Box direction="vertical" alignment="center">
           <Button name={`token-details-${token.address}`}>
             <Icon name="arrow-right" />
