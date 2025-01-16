@@ -54,15 +54,11 @@ export const Home = ({
             <Text> </Text>
             <Text> </Text>
           </Box>
-          {/* <Box alignment="space-around" direction="horizontal">
-            <Button name="view-tokens-tokens">Tokens</Button>
-            <Button name="view-tokens-nft">NFT</Button>
-          </Box> */}
           <Box alignment="space-around" direction="horizontal">
             {tokenView === 'erc20' ? (
               <Heading>Tokens</Heading>
             ) : (
-              <Button name="view-tokens-tokens">Tokens</Button>
+              <Button name="view-tokens-erc20">Tokens</Button>
             )}
             {tokenView === 'nft' ? (
               <Heading>NFT</Heading>
