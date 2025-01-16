@@ -45,7 +45,7 @@ export const getTokenURI = async (address: string, tokenId: string, AESKey: stri
   try {
     const provider = new BrowserProvider(ethereum);
     const contract = new ethers.Contract(address, erc721AbiConfidential, provider);
-    const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId)) as ctString;
+    const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId));
     return decryptString(encryptedTokenURI, AESKey);
   }
   catch (e) {

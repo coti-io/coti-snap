@@ -6,6 +6,7 @@ import {
   Copyable,
   Icon,
   Image,
+  Link,
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
@@ -58,7 +59,7 @@ export const TokenDetails = ({
       </Box>
       {!!token.uri && (<Box direction="horizontal" alignment="space-between">
         <Text>Token URI</Text>
-        <Text>{token.uri}</Text>
+        <Link href={token.uri}>Open</Link>
       </Box>)}
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>

@@ -35,7 +35,6 @@ import {
 
 // should be stored in a secure storage after onboarding process
 const testAESKey = '50764f856be3f636c09faf092be20d0c';
-// const testAESKey = '';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView } = await getStateData<State>();
@@ -95,6 +94,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
+        console.log('Token details:', JSON.stringify(token, null, 2));
+        console.log('token uri:', JSON.stringify(token.uri, null, 2));
         await snap.request({
           method: 'snap_updateInterface',
           params: {
