@@ -8,11 +8,7 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
-import type {
-  OnInstallHandler,
-  OnRpcRequestHandler,
-  OnUpdateHandler,
-} from '@metamask/snaps-sdk';
+import type { OnInstallHandler, OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
 import {
   type OnHomePageHandler,
   type OnUserInputHandler,
@@ -32,7 +28,7 @@ import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
-import type { State } from './types';
+import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
 import { getStateData, setStateData } from './utils/snap';
 import {
@@ -40,6 +36,7 @@ import {
   hideToken,
   importToken,
   recalculateBalances,
+  getTokenURI,
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -51,7 +48,7 @@ export const returnToHomePage = async (id: string) => {
       id,
       ui: (
         <Home
-          balance={BigInt(balance || 0)}
+          balance={BigInt(balance ?? 0)}
           tokenBalances={tokenBalances}
           tokenView={tokenView ?? TokenViewSelector.ERC20}
           AESKey={AESKey}
@@ -86,7 +83,6 @@ export const onHomePage: OnHomePageHandler = async () => {
   const { balance, tokenBalances } = await recalculateBalances();
   // const wrongChain = await checkChainId();
   const state = await getStateData<State>();
-
   await setStateData<State>({
     ...state,
     tokenView: TokenViewSelector.ERC20,
@@ -114,17 +110,15 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
+        console.log('Token details:', JSON.stringify(token, null, 2));
+        console.log('token uri:', JSON.stringify(token.uri, null, 2));
         await snap.request({
           method: 'snap_updateInterface',
           params: {
             id,
             ui: (
               <TokenDetails
-                tokenName={token.name}
-                tokenBalance={token.balance ?? '(encrypted)'}
-                tokenAddress={token.address}
-                tokenSymbol={token.symbol}
-                tokenDecimals={token.decimals}
+                token={token}
               />
             ),
           },
@@ -163,48 +157,28 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     const { balance, tokenBalances, AESKey } = await getStateData<State>();
     switch (event.name) {
       case 'import-token-button':
+        const importTokenState = await getStateData<State>();
         await snap.request({
           method: 'snap_updateInterface',
           params: {
             id,
-            ui: <ImportToken />,
+            ui: (<ImportToken tokenType={importTokenState.tokenView || TokenViewSelector.ERC20} />),
           },
         });
         return;
       case 'view-tokens-nft':
-        await snap.request({
-          method: 'snap_updateInterface',
-          params: {
-            id,
-            ui: (
-              <Home
-                balance={BigInt(balance || 0)}
-                tokenBalances={tokenBalances}
-                tokenView={TokenViewSelector.NFT}
-                AESKey={AESKey}
-              />
-            ),
-          },
-        });
+        const veiwNFTstate = await getStateData<State>();
+        await setStateData<State>({ ...veiwNFTstate, tokenView: TokenViewSelector.NFT });
+        await recalculateBalances();
+        await returnToHomePage(id);
         return;
-      case 'view-tokens-tokens':
-        await snap.request({
-          method: 'snap_updateInterface',
-          params: {
-            id,
-            ui: (
-              <Home
-                balance={BigInt(balance || 0)}
-                tokenBalances={tokenBalances}
-                tokenView={TokenViewSelector.ERC20}
-                AESKey={AESKey}
-              />
-            ),
-          },
-        });
+      case 'view-tokens-erc20':
+        const veiwERC20state = await getStateData<State>();
+        await setStateData<State>({ ...veiwERC20state, tokenView: TokenViewSelector.ERC20 });
+        await recalculateBalances();
+        await returnToHomePage(id);
         return;
       case 'settings-button':
-        console.log('Settings');
         try {
           await snap.request({
             method: 'snap_updateInterface',
@@ -231,48 +205,46 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           string,
           string | boolean | null
         >;
+        let tokenType = TokenViewSelector.ERC20;
+        if (formState['token-id'] || formState['token-id'] === null) { // update this workaround
+          tokenType = TokenViewSelector.NFT;
+        }
         if (
           formState &&
           formState['token-address']?.toString().length === 42 &&
-          formState['token-name'] &&
           formState['token-decimals'] &&
-          formState['token-symbol']
+          formState['token-name'] &&
+          formState['token-symbol'] &&
+          (tokenType !== TokenViewSelector.NFT || formState['token-id'])
         ) {
           const address = formState['token-address'] as string;
           const name = formState['token-name'] as string;
           const decimals = formState['token-decimals'] as string;
-          const symbol = (formState['token-symbol'] as string).toUpperCase();
-
-          await importToken(address, name, symbol, decimals);
+          const symbol = formState['token-symbol'] as string;
+          if (tokenType === TokenViewSelector.NFT) {
+            const tokenId = formState['token-id'] as string;
+            await importToken(address, name, symbol, decimals, tokenId);
+          } else {
+            await importToken(address, name, symbol, decimals);
+          }
+          await recalculateBalances();
+          await returnToHomePage(id);
         } else {
-          await snap.request({
-            method: 'snap_updateInterface',
-            params: {
-              id,
-              ui: (
-                <Container>
-                  <Box>
-                    <Heading size="lg">⚠️ Something went wrong</Heading>
-                    <Text>
-                      Error adding token, please try again and check that:
-                    </Text>
-
-                    <Text>- A name has been entered.</Text>
-                    <Text>- A token has been entered</Text>
-                    <Text>- A decimals has been entered</Text>
-                    <Text>- The address entered is correct.</Text>
-                  </Box>
-                  <Footer>
-                    <Button name="import-token-button">Go back</Button>
-                  </Footer>
-                </Container>
-              ),
-            },
-          });
-          return;
+          console.log('Invalid form state:', formState);
+          try {
+            await snap.request({
+              method: 'snap_updateInterface',
+              params: {
+                id,
+                ui: <ImportToken tokenType={tokenType} errorInForm={true} />,
+              },
+            });
+          } catch (error) {
+            console.error(error);
+            await recalculateBalances();
+            await returnToHomePage(id);
+          }
         }
-        await recalculateBalances();
-        await returnToHomePage(id);
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
