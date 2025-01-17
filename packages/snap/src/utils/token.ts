@@ -1,11 +1,11 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
 import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
-import { ctString } from '@coti-io/coti-ethers';
 
 import erc20Abi from '../abis/ERC20.json';
+import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc721Abi from '../abis/ERC721.json';
-import erc721AbiConfidential from '../abis/ERC721Confidential.json';
+import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
 import type { State, Tokens } from '../types';
 import { CHAIN_ID } from '../config';
 import { TokenViewSelector } from '../types';
@@ -14,38 +14,16 @@ import { getStateData, setStateData } from './snap';
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
 ];
-const ERC20_ABI = [
-  'function decimals() view returns (uint8)',
-  'function symbol() view returns (string)',
-  'function totalSupply() view returns (uint256)',
-  'function balanceOf(address) view returns (uint256)',
-];
 
 // ERC721 and ERC1155 detection uses ERC165:
 const ERC721_INTERFACE_ID = '0x80ac58cd';
 const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
-const CONFIDENTIAL_ERC20_ABI = [
-  {
-    inputs: [],
-    name: 'balanceOf',
-    outputs: [
-      {
-        internalType: 'ctUint64',
-        name: 'balance',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-];
-
 
 export const getTokenURI = async (address: string, tokenId: string, AESKey: string): Promise<string | null> => {
   try {
     const provider = new BrowserProvider(ethereum);
-    const contract = new ethers.Contract(address, erc721AbiConfidential, provider);
+    const contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
     const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId));
     return decryptString(encryptedTokenURI, AESKey);
   }
@@ -99,7 +77,7 @@ export async function getTokenType(address: string): Promise<{
       }).`,
     );
     try {
-      const contract = new ethers.Contract(address, erc721AbiConfidential, provider);
+      const contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
       const tokenURI = await contract.tokenURI!(BigInt(0));
       if (tokenURI) {
         console.log(`Contract ${address} has tokenURI method`);
@@ -113,57 +91,29 @@ export async function getTokenType(address: string): Promise<{
   }
 
   // likely fungible (ERC-20 or ConfidentialERC20).
-  const erc20Contract = new ethers.Contract(address, ERC20_ABI, provider);
+  const erc20Contract = new ethers.Contract(address, erc20Abi, provider);
 
-  let isStandardERC20 = false;
   try {
-    const decimals = erc20Contract.decimals
-      ? await erc20Contract.decimals()
-      : undefined;
-    const symbol = erc20Contract.symbol
-      ? await erc20Contract.symbol()
-      : undefined;
-    const totalSupply = erc20Contract.totalSupply
-      ? await erc20Contract.totalSupply()
-      : undefined;
-    // Also try a known address; if it reverts, it might not be a standard ERC-20
-    const testBalance = erc20Contract.balanceOf
-      ? await erc20Contract.balanceOf(ZeroAddress)
-      : undefined;
-    if (
-      typeof decimals === 'number' &&
-      typeof symbol === 'string' &&
-      totalSupply &&
-      testBalance !== undefined
-    ) {
-      isStandardERC20 = true;
+    await erc20Contract.decimals!()
+    await erc20Contract.symbol!()
+    await erc20Contract.totalSupply!()
+    await erc20Contract.balanceOf!(ZeroAddress)
+
+    try {
+      const erc20ConfidentialContract = new ethers.Contract(address, erc20ConfidentialAbi, provider);
+      await erc20ConfidentialContract.accountEncryptionAddress!(address)
+      console.log(`Contract ${address} is likely a ConfidentialERC20 token.`);
+      return { type: TokenViewSelector.ERC20, confidential: true };
+    } catch (err) {
+      console.log(`Error checking for ConfidentialERC20 support: ${err}`);
     }
+    console.log(`Contract ${address} is a standard ERC-20 token.`);
+
+    return { type: TokenViewSelector.ERC20, confidential: false };
   } catch (e) {
     console.log(`Error checking for standard ERC-20 support: ${e}`);
   }
 
-  if (isStandardERC20) {
-    console.log(`Contract ${address} is a standard ERC-20 token.`);
-    return { type: TokenViewSelector.ERC20, confidential: false };
-  }
-
-  // For ConfidentialERC20, calling balanceOf() with no arguments
-  // A standard ERC-20 does not have a no-argument balanceOf().
-  const confidentialContract = new ethers.Contract(
-    address,
-    CONFIDENTIAL_ERC20_ABI,
-    provider,
-  );
-  try {
-    confidentialContract.balanceOf
-      ? await confidentialContract.balanceOf()
-      : undefined;
-    console.log(`Contract ${address} is likely a ConfidentialERC20 token.`);
-    return { type: TokenViewSelector.ERC20, confidential: true };
-  } catch (err) {
-    console.log(`Contract ${address} does not match standard ERC-20 or ConfidentialERC20 interfaces. 
-It might be a non-standard token or require further inspection.`);
-  }
   return { type: TokenViewSelector.UNKNOWN, confidential: false };
 }
 
@@ -202,11 +152,11 @@ export const recalculateBalances = async () => {
       if (token.type === TokenViewSelector.ERC20) {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf && !token.confidential ? await tok.balanceOf() : null;
-        if (token.confidential && state.AESKey) {
-          tokenBalance = tokenBalance
-            ? decryptBalance(tokenBalance, state.AESKey)
-            : tokenBalance;
+        let tokenBalance = tok.balanceOf ? await tok.balanceOf(signerAddress) : null;
+        if (token.confidential && state.AESKey && tokenBalance) {
+          tokenBalance = decryptBalance(tokenBalance, state.AESKey);
+        } else if (token.confidential && !state.AESKey) {
+          tokenBalance = null;
         }
 
         return {
@@ -216,7 +166,7 @@ export const recalculateBalances = async () => {
       }
 
       if (token.type === TokenViewSelector.NFT) {
-        const tokenContract = new Contract(token.address, erc721AbiConfidential, signer);
+        const tokenContract = new Contract(token.address, erc721ConfidentialAbi, signer);
         const tok = tokenContract.connect(signer) as Contract;
         let tokenBalance = tok.balanceOf
           ? await tok.balanceOf(signerAddress)

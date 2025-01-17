@@ -68,9 +68,10 @@ export const onUpdate: OnUpdateHandler = async () => {
 };
 
 export const onInstall: OnInstallHandler = async () => {
+  const state = await getStateData<State>();
   await Promise.all([
     ethereum.request({ method: 'eth_requestAccounts' }),
-    setStateData<State>({
+    !state.balance && setStateData<State>({
       balance: '0',
       tokenBalances: [],
       AESKey: null,
