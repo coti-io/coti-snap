@@ -3,8 +3,10 @@ import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { isAddress } from 'viem';
+import { useAccount, useConnect, useSwitchChain } from 'wagmi';
 
 import { ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
+import { config } from '../config/wagmi';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 
@@ -110,6 +112,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
+
       const signer = await provider.getSigner();
 
       await signer
