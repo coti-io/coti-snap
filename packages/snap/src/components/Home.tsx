@@ -54,22 +54,7 @@ export const Home = ({
             <Text> </Text>
             <Text> </Text>
           </Box>
-          <Box alignment="space-around" direction="horizontal">
-            {tokenView === 'erc20' ? (
-              <Heading>Tokens</Heading>
-            ) : (
-              <Button name="view-tokens-erc20">Tokens</Button>
-            )}
-            {tokenView === 'nft' ? (
-              <Heading>NFT</Heading>
-            ) : (
-              <Button name="view-tokens-nft">NFT</Button>
-            )}
-          </Box>
-          <Divider />
-          <Box direction="horizontal" alignment="start">
-            <Text> </Text>
-          </Box>
+
           {wrongChain ? (
             <Box direction="vertical" alignment="center">
               <Box direction="horizontal" alignment="center">
@@ -86,25 +71,43 @@ export const Home = ({
             </Box>
           ) : (
             <Box direction="vertical">
-              <Box alignment="end" direction="horizontal">
-                {/* <Heading size="sm">
-                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
-                </Heading> */}
-                <Button name="import-token-button">+ Import</Button>
+              <Box alignment="space-around" direction="horizontal">
+                {tokenView === 'erc20' ? (
+                  <Heading>Tokens</Heading>
+                ) : (
+                  <Button name="view-tokens-erc20">Tokens</Button>
+                )}
+                {tokenView === 'nft' ? (
+                  <Heading>NFT</Heading>
+                ) : (
+                  <Button name="view-tokens-nft">NFT</Button>
+                )}
               </Box>
+              <Divider />
               <Box direction="horizontal" alignment="start">
                 <Text> </Text>
               </Box>
-              {tokenBalances.filter((token) => token.type === tokenView)
-                .length ? (
-                tokenBalances
-                  .filter((token) => token.type === tokenView)
-                  .map((token) => (
-                    <TokenAdded key={token.address} token={token} />
-                  ))
-              ) : (
-                <Text>No tokens was added yet</Text>
-              )}
+              <Box direction="vertical">
+                <Box alignment="end" direction="horizontal">
+                  {/* <Heading size="sm">
+                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
+                </Heading> */}
+                  <Button name="import-token-button">+ Import</Button>
+                </Box>
+                <Box direction="horizontal" alignment="start">
+                  <Text> </Text>
+                </Box>
+                {tokenBalances.filter((token) => token.type === tokenView)
+                  .length ? (
+                  tokenBalances
+                    .filter((token) => token.type === tokenView)
+                    .map((token) => (
+                      <TokenAdded key={token.address} token={token} />
+                    ))
+                ) : (
+                  <Text>No tokens was added yet</Text>
+                )}
+              </Box>
             </Box>
           )}
         </Box>

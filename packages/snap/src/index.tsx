@@ -86,8 +86,29 @@ export const onInstall: OnInstallHandler = async () => {
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-  const { balance, tokenBalances } = await recalculateBalances();
   const wrongChain = await checkChainId();
+
+  if (wrongChain) {
+    return {
+      content: (
+        <Box direction="vertical" alignment="center">
+          <Box direction="horizontal" alignment="center">
+            <Heading size="lg">⚠️</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="center">
+            <Heading size="sm">Wrong chain</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="center">
+            <Text color="warning" alignment="center">
+              Please switch to COTI Testnet chain to view your tokens.
+            </Text>
+          </Box>
+        </Box>
+      ),
+    };
+  }
+
+  const { balance, tokenBalances } = await recalculateBalances();
   const state = await getStateData<State>();
   await setStateData<State>({
     ...state,
@@ -96,8 +117,8 @@ export const onHomePage: OnHomePageHandler = async () => {
   return {
     content: (
       <Home
-        balance={balance}
-        tokenBalances={tokenBalances}
+        balance={wrongChain ? BigInt(0) : balance}
+        tokenBalances={wrongChain ? [] : tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
         wrongChain={wrongChain}
