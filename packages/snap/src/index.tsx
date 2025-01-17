@@ -42,6 +42,7 @@ import {
   recalculateBalances,
   getTokenURI,
 } from './utils/token';
+import { getSVGfromMetadata } from './utils/image';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, AESKey } =
@@ -137,8 +138,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
-        console.log('Token details:', JSON.stringify(token, null, 2));
-        console.log('token uri:', JSON.stringify(token.uri, null, 2));
+        if (token.uri){
+          const tokenImageBase64 = await getSVGfromMetadata(token.uri);
+          token.image = tokenImageBase64;
+        }
         await snap.request({
           method: 'snap_updateInterface',
           params: {

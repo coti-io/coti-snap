@@ -11,6 +11,7 @@ export type Token = {
   tokenPrice?: string | null;
   tokenId?: string | null;
   uri?: string | null;
+  image?: string | null;
 };
 
 export type Tokens = Token[];
