@@ -16,7 +16,7 @@ import { Token } from 'src/types';
 
 export const TokenDetails = ({
   token
-}: {token: Token}) => {
+}: { token: Token }) => {
   return (
     <Box direction="vertical" alignment="start">
       <Box direction="horizontal" alignment="start">
@@ -65,6 +65,9 @@ export const TokenDetails = ({
       {!!token.uri && (<Box direction="horizontal" alignment="space-between">
         <Text>Token URI</Text>
         <Link href={token.uri}>Open</Link>
+      </Box>)}
+      {!!token.image && (<Box direction="horizontal" alignment="space-between">
+        <Image src={token.image} />
       </Box>)}
       <Box direction="horizontal" alignment="space-between">
         <Text>Token decimals</Text>
