@@ -13,6 +13,7 @@ import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import { TokenAdded } from './TokenAdded';
+import { WrongChain } from './WrongChain';
 
 type HomeProps = {
   balance: bigint;
@@ -53,29 +54,11 @@ export const Home = ({
           )}
           <Box direction="horizontal" alignment="start">
             <Text> </Text>
-          </Box>
-          <Box alignment="space-around" direction="horizontal">
-            <Button name="view-tokens-erc20">Tokens</Button>
-            <Button name="view-tokens-nft">NFT</Button>
-          </Box>
-          <Divider />
-          <Box direction="horizontal" alignment="start">
             <Text> </Text>
           </Box>
+
           {wrongChain ? (
-            <Box direction="vertical" alignment="center">
-              <Box direction="horizontal" alignment="center">
-                <Heading size="lg">⚠️</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Heading size="sm">Wrong chain</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Text color="warning" alignment="center">
-                  Please switch to COTI Testnet chain to view your tokens.
-                </Text>
-              </Box>
-            </Box>
+            <WrongChain />
           ) : (
             <Box direction="vertical">
               <Box alignment="space-between" direction="horizontal">
