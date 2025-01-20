@@ -77,33 +77,34 @@ export const Home = ({
                 <Text> </Text>
               </Box>
               <Box direction="vertical">
-                <Box alignment="end" direction="horizontal">
-                  {/* <Heading size="sm">
-                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
-                </Heading>
-                <Button
-                  name={
-                    tokenView === 'erc20'
-                      ? 'import-erc20'
-                      : 'import-token-button'
-                  }
-                >
-                  + Import
-                </Button>
+                <Box alignment="space-between" direction="horizontal">
+                  <Heading size="sm">
+                    {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
+                  </Heading>
+                  <Button
+                    name={
+                      tokenView === 'erc20'
+                        ? 'import-erc20'
+                        : 'import-token-button'
+                    }
+                  >
+                    + Import
+                  </Button>
+                </Box>
+                <Box direction="horizontal" alignment="start">
+                  <Text> </Text>
+                </Box>
+                {tokenBalances.filter((token) => token.type === tokenView)
+                  .length ? (
+                  tokenBalances
+                    .filter((token) => token.type === tokenView)
+                    .map((token) => (
+                      <TokenAdded key={token.address} token={token} />
+                    ))
+                ) : (
+                  <Text>No tokens was added yet</Text>
+                )}
               </Box>
-              <Box direction="horizontal" alignment="start">
-                <Text> </Text>
-              </Box>
-              {tokenBalances.filter((token) => token.type === tokenView)
-                .length ? (
-                tokenBalances
-                  .filter((token) => token.type === tokenView)
-                  .map((token) => (
-                    <TokenAdded key={token.address} token={token} />
-                  ))
-              ) : (
-                <Text>No tokens was added yet</Text>
-              )}
             </Box>
           )}
         </Box>
