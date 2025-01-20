@@ -12,6 +12,7 @@ import { formatEther } from 'ethers';
 import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens, TokenViewSelector } from '../types';
 import { TokenAdded } from './TokenAdded';
+import { WrongChain } from './WrongChain';
 
 type HomeProps = {
   balance: bigint;
@@ -52,50 +53,50 @@ export const Home = ({
           )}
           <Box direction="horizontal" alignment="start">
             <Text> </Text>
-          </Box>
-          <Box alignment="space-around" direction="horizontal">
-            <Button name="view-tokens-erc20">Tokens</Button>
-            <Button name="view-tokens-nft">NFT</Button>
-          </Box>
-          <Divider />
-          <Box direction="horizontal" alignment="start">
             <Text> </Text>
           </Box>
+
           {wrongChain ? (
-            <Box direction="vertical" alignment="center">
-              <Box direction="horizontal" alignment="center">
-                <Heading size="lg">⚠️</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Heading size="sm">Wrong chain</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Text color="warning" alignment="center">
-                  Please switch to COTI Testnet chain to view your tokens.
-                </Text>
-              </Box>
-            </Box>
+            <WrongChain />
           ) : (
             <Box direction="vertical">
-              <Box alignment="space-between" direction="horizontal">
-                <Heading size="sm">
-                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
-                </Heading>
-                <Button name="import-token-button">+ Import</Button>
+              <Box alignment="space-around" direction="horizontal">
+                {tokenView === 'erc20' ? (
+                  <Heading>Tokens</Heading>
+                ) : (
+                  <Button name="view-tokens-erc20">Tokens</Button>
+                )}
+                {tokenView === 'nft' ? (
+                  <Heading>NFT</Heading>
+                ) : (
+                  <Button name="view-tokens-nft">NFT</Button>
+                )}
               </Box>
+              <Divider />
               <Box direction="horizontal" alignment="start">
                 <Text> </Text>
               </Box>
-              {tokenBalances.filter((token) => token.type === tokenView)
-                .length ? (
-                tokenBalances
-                  .filter((token) => token.type === tokenView)
-                  .map((token) => (
-                    <TokenAdded key={token.address} token={token} />
-                  ))
-              ) : (
-                <Text>No tokens was added yet</Text>
-              )}
+              <Box direction="vertical">
+                <Box alignment="end" direction="horizontal">
+                  {/* <Heading size="sm">
+                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
+                </Heading> */}
+                  <Button name="import-token-button">+ Import</Button>
+                </Box>
+                <Box direction="horizontal" alignment="start">
+                  <Text> </Text>
+                </Box>
+                {tokenBalances.filter((token) => token.type === tokenView)
+                  .length ? (
+                  tokenBalances
+                    .filter((token) => token.type === tokenView)
+                    .map((token) => (
+                      <TokenAdded key={token.address} token={token} />
+                    ))
+                ) : (
+                  <Text>No tokens was added yet</Text>
+                )}
+              </Box>
             </Box>
           )}
         </Box>

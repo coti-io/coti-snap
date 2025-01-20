@@ -1,8 +1,14 @@
+/* eslint-disable no-nested-ternary */
 import styled from 'styled-components';
+import { useAccount } from 'wagmi';
 
-import { ContentManageAESKey, Header } from '../components';
+import {
+  ContentManageAESKey,
+  ContentSwitchNetwork,
+  Header,
+} from '../components';
 import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
-import { useMetaMask } from '../hooks';
+import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 
 const Container = styled.div`
@@ -26,11 +32,20 @@ const Index = () => {
   const { installedSnap } = useMetaMask();
 
   const { userHasAESKey } = useSnap();
+  const { isConnected } = useAccount();
+  const { wrongChain } = useWrongChain();
+
+  if (isConnected && wrongChain) {
+    <ContentSwitchNetwork />;
+  }
 
   return (
     <Container>
       <Header />
-      {installedSnap ? (
+
+      {isConnected && wrongChain ? (
+        <ContentSwitchNetwork />
+      ) : installedSnap ? (
         <ContentManageAESKey userHasAESKey={userHasAESKey} />
       ) : (
         <ContentInstallAESKeyManager />

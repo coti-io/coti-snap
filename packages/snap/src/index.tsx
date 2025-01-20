@@ -8,7 +8,11 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
-import type { OnInstallHandler, OnRpcRequestHandler, OnUpdateHandler } from '@metamask/snaps-sdk';
+import type {
+  OnInstallHandler,
+  OnRpcRequestHandler,
+  OnUpdateHandler,
+} from '@metamask/snaps-sdk';
 import {
   type OnHomePageHandler,
   type OnUserInputHandler,
@@ -28,8 +32,10 @@ import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
+import { WrongChain } from './components/WrongChain';
 import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
+import { getSVGfromMetadata } from './utils/image';
 import { getStateData, setStateData } from './utils/snap';
 import {
   checkChainId,
@@ -38,7 +44,6 @@ import {
   recalculateBalances,
   getTokenURI,
 } from './utils/token';
-import { getSVGfromMetadata } from './utils/image';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, AESKey } =
@@ -72,18 +77,26 @@ export const onInstall: OnInstallHandler = async () => {
   const state = await getStateData<State>();
   await Promise.all([
     ethereum.request({ method: 'eth_requestAccounts' }),
-    !state.balance && setStateData<State>({
-      balance: '0',
-      tokenBalances: [],
-      AESKey: null,
-      tokenView: TokenViewSelector.ERC20,
-    }),
+    !state.balance &&
+      setStateData<State>({
+        balance: '0',
+        tokenBalances: [],
+        AESKey: null,
+        tokenView: TokenViewSelector.ERC20,
+      }),
   ]);
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
+  const wrongChain = await checkChainId();
+
+  if (wrongChain) {
+    return {
+      content: <WrongChain />,
+    };
+  }
+
   const { balance, tokenBalances } = await recalculateBalances();
-  // const wrongChain = await checkChainId();
   const state = await getStateData<State>();
   await setStateData<State>({
     ...state,
@@ -96,7 +109,7 @@ export const onHomePage: OnHomePageHandler = async () => {
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
-        // wrongChain={wrongChain}
+        wrongChain={wrongChain}
       />
     ),
   };
@@ -112,7 +125,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
-        if (token.uri){
+        if (token.uri) {
           const tokenImageBase64 = await getSVGfromMetadata(token.uri);
           token.image = tokenImageBase64;
         }
@@ -120,11 +133,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           method: 'snap_updateInterface',
           params: {
             id,
-            ui: (
-              <TokenDetails
-                token={token}
-              />
-            ),
+            ui: <TokenDetails token={token} />,
           },
         });
       }
@@ -166,19 +175,31 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           method: 'snap_updateInterface',
           params: {
             id,
-            ui: (<ImportToken tokenType={importTokenState.tokenView || TokenViewSelector.ERC20} />),
+            ui: (
+              <ImportToken
+                tokenType={
+                  importTokenState.tokenView || TokenViewSelector.ERC20
+                }
+              />
+            ),
           },
         });
         return;
       case 'view-tokens-nft':
         const veiwNFTstate = await getStateData<State>();
-        await setStateData<State>({ ...veiwNFTstate, tokenView: TokenViewSelector.NFT });
+        await setStateData<State>({
+          ...veiwNFTstate,
+          tokenView: TokenViewSelector.NFT,
+        });
         await recalculateBalances();
         await returnToHomePage(id);
         return;
       case 'view-tokens-erc20':
         const veiwERC20state = await getStateData<State>();
-        await setStateData<State>({ ...veiwERC20state, tokenView: TokenViewSelector.ERC20 });
+        await setStateData<State>({
+          ...veiwERC20state,
+          tokenView: TokenViewSelector.ERC20,
+        });
         await recalculateBalances();
         await returnToHomePage(id);
         return;
@@ -210,7 +231,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           string | boolean | null
         >;
         let tokenType = TokenViewSelector.ERC20;
-        if (formState['token-id'] || formState['token-id'] === null) { // update this workaround
+        if (formState['token-id'] || formState['token-id'] === null) {
+          // update this workaround
           tokenType = TokenViewSelector.NFT;
         }
         if (
