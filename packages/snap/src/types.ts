@@ -22,6 +22,17 @@ export enum TokenViewSelector {
   UNKNOWN = 'unknown',
 }
 
+export type StateIdentifier = {
+  chainId: string;
+  address: string;
+}
+
+export type GeneralState = {
+  [chainId: string]: {
+    [address: string]: State
+  };
+};
+
 // global snap state
 export type State = {
   balance: string;

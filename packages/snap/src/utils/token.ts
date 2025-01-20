@@ -7,9 +7,9 @@ import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc721Abi from '../abis/ERC721.json';
 import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
 import { CHAIN_ID } from '../config';
-import type { State, Tokens } from '../types';
+import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
-import { getStateData, setStateData } from './snap';
+import { getStateByChainIdAndAddress, setStateByChainIdAndAddress } from './snap';
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -104,13 +104,9 @@ export async function getTokenType(address: string): Promise<{
 
   if (erc165Contract.supportsInterface) {
     try {
-      console.log(`Checking for ERC-721 support...`);
-      console.log(erc165Contract.supportsInterface);
-
       isERC721 = await erc165Contract.supportsInterface(ERC721_INTERFACE_ID);
-      console.log(`isERC721: ${isERC721}`);
     } catch (e) {
-      console.log(`Error checking for ERC-721 support: ${e}`);
+      console.error(`Error checking for ERC-721 support: ${e}`);
     }
 
     if (!isERC721) {
@@ -119,17 +115,12 @@ export async function getTokenType(address: string): Promise<{
           ERC1155_INTERFACE_ID,
         );
       } catch (e) {
-        console.log(`Error checking for ERC-1155 support: ${e}`);
+        console.error(`Error checking for ERC-1155 support: ${e}`);
       }
     }
   }
 
   if (isERC721 || isERC1155) {
-    console.log(
-      `Contract ${address} is an NFT contract (likely ERC-${
-        isERC721 ? '721' : '1155'
-      }).`,
-    );
     try {
       const contract = new ethers.Contract(
         address,
@@ -138,12 +129,10 @@ export async function getTokenType(address: string): Promise<{
       );
       const tokenURI = await contract.tokenURI!(BigInt(0));
       if (tokenURI) {
-        console.log(`Contract ${address} has tokenURI method`);
         return { type: TokenViewSelector.NFT, confidential: true };
       }
       return { type: TokenViewSelector.NFT, confidential: false };
     } catch (e) {
-      console.log(`Error checking for tokenURI support: ${e}`);
       return { type: TokenViewSelector.NFT, confidential: false };
     }
   }
@@ -164,16 +153,13 @@ export async function getTokenType(address: string): Promise<{
         provider,
       );
       await erc20ConfidentialContract.accountEncryptionAddress!(address);
-      console.log(`Contract ${address} is likely a ConfidentialERC20 token.`);
       return { type: TokenViewSelector.ERC20, confidential: true };
     } catch (err) {
-      console.log(`Error checking for ConfidentialERC20 support: ${err}`);
+      console.error(`Error checking for ConfidentialERC20 support: ${err}`);
     }
-    console.log(`Contract ${address} is a standard ERC-20 token.`);
-
     return { type: TokenViewSelector.ERC20, confidential: false };
   } catch (e) {
-    console.log(`Error checking for standard ERC-20 support: ${e}`);
+    console.error(`Error checking for standard ERC-20 support: ${e}`);
   }
 
   return { type: TokenViewSelector.UNKNOWN, confidential: false };
@@ -200,8 +186,8 @@ export const checkChainId = async () => {
 };
 
 export const recalculateBalances = async () => {
-  const state = await getStateData<State>();
-  const tokens = state?.tokenBalances || [];
+  const state = await getStateByChainIdAndAddress();
+  const tokens = state.tokenBalances || [];
 
   const provider = new BrowserProvider(ethereum);
 
@@ -257,12 +243,11 @@ export const recalculateBalances = async () => {
     }),
   );
 
-  await setStateData<State>({
+  await setStateByChainIdAndAddress({
     ...state,
     balance: balance.toString(),
     tokenBalances,
   });
-
   return { balance, tokenBalances };
 };
 
@@ -273,14 +258,11 @@ export const importToken = async (
   decimals: string,
   tokenId?: string,
 ) => {
-  const oldState = await getStateData<State>();
+  const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
-  console.log(
-    `Importing token ${name} (${symbol}) at address ${address} with ${decimals} decimals`,
-  );
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
-    console.log(
+    console.error(
       `Token ${name} (${symbol}) at address ${address} with ${decimals} decimals is unknown`,
     );
     return;
@@ -301,15 +283,14 @@ export const importToken = async (
     decimals,
     tokenId: tokenId || null,
   });
-  await setStateData<State>({ ...oldState, tokenBalances: tokens });
+  await setStateByChainIdAndAddress({ ...oldState, tokenBalances: tokens });
 };
 
 export const hideToken = async (address: string) => {
-  const oldState = await getStateData<State>();
+  const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
-  console.log(`Hiding token at address ${address}`);
   const updatedTokens = tokens.filter((token) => token.address !== address);
-  await setStateData<State>({ ...oldState, tokenBalances: updatedTokens });
+  await setStateByChainIdAndAddress({ ...oldState, tokenBalances: updatedTokens });
 };
 
 export const truncateAddress = (address: string, length = 6): string => {

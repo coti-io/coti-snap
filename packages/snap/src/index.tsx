@@ -27,16 +27,14 @@ import { ImportERC721 } from './components/ImportERC721';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
 import { WrongChain } from './components/WrongChain';
-import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
-import { getStateData, setStateData } from './utils/snap';
+import { getStateByChainIdAndAddress, setStateByChainIdAndAddress } from './utils/snap';
 import {
   checkChainId,
   hideToken,
   importToken,
   recalculateBalances,
-  getTokenURI,
   getERC20Details,
   getERC721Details,
   truncateAddress,
@@ -44,7 +42,7 @@ import {
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, AESKey } =
-    await getStateData<State>();
+    await getStateByChainIdAndAddress();
   await snap.request({
     method: 'snap_updateInterface',
     params: {
@@ -71,31 +69,27 @@ export const onUpdate: OnUpdateHandler = async () => {
 };
 
 export const onInstall: OnInstallHandler = async () => {
-  const state = await getStateData<State>();
-  await Promise.all([
-    ethereum.request({ method: 'eth_requestAccounts' }),
-    !state.balance &&
-      setStateData<State>({
-        balance: '0',
-        tokenBalances: [],
-        AESKey: null,
-        tokenView: TokenViewSelector.ERC20,
-      }),
-  ]);
+  await ethereum.request({ method: 'eth_requestAccounts' });
+  const state = await getStateByChainIdAndAddress();
+  !state.balance &&
+    await setStateByChainIdAndAddress({
+      balance: '0',
+      tokenBalances: [],
+      AESKey: null,
+      tokenView: TokenViewSelector.ERC20,
+    });
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
   const wrongChain = await checkChainId();
-
   if (wrongChain) {
     return {
       content: <WrongChain />,
     };
   }
-
   const { balance, tokenBalances } = await recalculateBalances();
-  const state = await getStateData<State>();
-  await setStateData<State>({
+  const state = await getStateByChainIdAndAddress();
+  await setStateByChainIdAndAddress({
     ...state,
     tokenView: TokenViewSelector.ERC20,
   });
@@ -106,18 +100,16 @@ export const onHomePage: OnHomePageHandler = async () => {
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
-        wrongChain={wrongChain}
       />
     ),
   };
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
-  console.log('User input event:', event);
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
       const tokenAddress = event.name.slice('token-details-'.length);
-      const state = await getStateData<State>();
+      const state = await getStateByChainIdAndAddress();
       const token = state.tokenBalances.find(
         (tkn) => tkn.address === tokenAddress,
       );
@@ -138,7 +130,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     }
     if (event.name?.startsWith('confirm-hide-token-')) {
       const tokenAddress = event.name.slice('confirm-hide-token-'.length);
-      const state = await getStateData<State>();
+      const state = await getStateByChainIdAndAddress();
       const token = state.tokenBalances.find(
         (tkn) => tkn.address === tokenAddress,
       );
@@ -187,8 +179,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         return;
 
       case 'view-tokens-nft':
-        const veiwNFTstate = await getStateData<State>();
-        await setStateData<State>({
+        const veiwNFTstate = await getStateByChainIdAndAddress();
+        await setStateByChainIdAndAddress({
           ...veiwNFTstate,
           tokenView: TokenViewSelector.NFT,
         });
@@ -196,8 +188,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         await returnToHomePage(id);
         return;
       case 'view-tokens-erc20':
-        const veiwERC20state = await getStateData<State>();
-        await setStateData<State>({
+        const veiwERC20state = await getStateByChainIdAndAddress();
+        await setStateByChainIdAndAddress({
           ...veiwERC20state,
           tokenView: TokenViewSelector.ERC20,
         });
@@ -313,7 +305,6 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
       case 'erc20-address':
-        console.log('Token address:', event.value);
         const tokenInfo = await getERC20Details(event.value as string);
         if (tokenInfo) {
           await snap.request({
@@ -340,7 +331,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
-  const getState = await getStateData<State>();
+  const getState = await getStateByChainIdAndAddress();
   switch (request.method) {
     case 'encrypt':
       if (!request.params) {
@@ -524,7 +515,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       });
 
       if (deleteResult) {
-        await setStateData<State>({
+        await setStateByChainIdAndAddress({
           ...getState,
           AESKey: null,
         });
@@ -553,7 +544,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       if (!getState.AESKey) {
-        await setStateData<State>({
+        await setStateByChainIdAndAddress({
           ...getState,
           AESKey: newUserAesKey,
         });
