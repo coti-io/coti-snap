@@ -105,8 +105,8 @@ export const onHomePage: OnHomePageHandler = async () => {
   return {
     content: (
       <Home
-        balance={wrongChain ? BigInt(0) : balance}
-        tokenBalances={wrongChain ? [] : tokenBalances}
+        balance={balance}
+        tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
         wrongChain={wrongChain}
