@@ -43,6 +43,7 @@ import {
   importToken,
   recalculateBalances,
   getTokenURI,
+  getERC20Details,
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -178,29 +179,15 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           },
         });
         return;
+
       case 'import-erc20':
-        const importerc20State = await getStateData<State>();
-        const importERC20StateID = await snap.request({
-          method: 'snap_createInterface',
+        await snap.request({
+          method: 'snap_updateInterface',
           params: {
-            ui: (
-              <ImportERC20
-                tokenType={
-                  importerc20State.tokenView ?? TokenViewSelector.ERC20
-                }
-              />
-            ),
+            id,
+            ui: <ImportERC20 />,
           },
         });
-
-        const importERC20StateIDState = await snap.request({
-          method: 'snap_getInterfaceState',
-          params: {
-            id: importERC20StateID,
-          },
-        });
-
-        console.log(importERC20StateIDState);
 
         return;
 
@@ -290,17 +277,72 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             await returnToHomePage(id);
           }
         }
+        return;
+      case 'token-erc20-submit':
+        const erc20state = await snap.request({
+          method: 'snap_getInterfaceState',
+          params: {
+            id,
+          },
+        });
+        const erc20formState = erc20state['erc20-form-to-fill'] as Record<
+          string,
+          string | boolean | null
+        >;
+        if (
+          erc20formState &&
+          erc20formState['token-address']?.toString().length === 42 &&
+          erc20formState['token-decimals'] &&
+          erc20formState['token-name'] &&
+          erc20formState['token-symbol']
+        ) {
+          const address = erc20formState['token-address'] as string;
+          const name = erc20formState['token-name'] as string;
+          const decimals = erc20formState['token-decimals'] as string;
+          const symbol = erc20formState['token-symbol'] as string;
+          await importToken(address, name, symbol, decimals);
+          await recalculateBalances();
+          await returnToHomePage(id);
+        } else {
+          console.log('Invalid form state:', erc20formState);
+          try {
+            await snap.request({
+              method: 'snap_updateInterface',
+              params: {
+                id,
+                ui: <ImportERC20 errorInForm={true} />,
+              },
+            });
+          } catch (error) {
+            console.error(error);
+            await recalculateBalances();
+            await returnToHomePage(id);
+          }
+        }
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
-      case 'selector-tokens-nft':
-        // erc20 or nft
-        const selectedTokenView: TokenViewSelector =
-          event.value as TokenViewSelector;
-        const state = await getStateData<State>();
-        await setStateData<State>({ ...state, tokenView: selectedTokenView });
-        await recalculateBalances();
-        await returnToHomePage(id);
+      case 'token-address':
+        console.log('Token address:', event.value);
+        const tokenInfo = await getERC20Details(event.value as string);
+        if (tokenInfo) {
+          await snap.request({
+            method: 'snap_updateInterface',
+            params: {
+              id,
+              ui: (
+                <ImportERC20
+                  address={event.value as string}
+                  symbol={tokenInfo.symbol}
+                  name={tokenInfo.name}
+                  decimals={tokenInfo.decimals}
+                />
+              ),
+            },
+          });
+        } else {
+          console.error('Failed to fetch token details');
+        }
     }
   }
 };
