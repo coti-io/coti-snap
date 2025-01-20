@@ -46,7 +46,7 @@ export const getERC20Details = async (
   decimals: string | null;
   symbol: string | null;
   name: string | null;
-}> => {
+} | null> => {
   try {
     const provider = new BrowserProvider(ethereum);
     const contract = new ethers.Contract(address, erc20Abi, provider);
@@ -70,7 +70,7 @@ export const getERC721Details = async (
 ): Promise<{
   symbol: string | null;
   name: string | null;
-}> => {
+} | null> => {
   try {
     const provider = new BrowserProvider(ethereum);
     const contract = new ethers.Contract(address, erc721Abi, provider);
