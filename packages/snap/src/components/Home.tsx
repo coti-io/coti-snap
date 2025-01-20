@@ -10,7 +10,8 @@ import {
 import { formatEther } from 'ethers';
 
 import { COMPANION_DAPP_LINK } from '../config';
-import type { Tokens, TokenViewSelector } from '../types';
+import type { Tokens } from '../types';
+import { TokenViewSelector } from '../types';
 import { TokenAdded } from './TokenAdded';
 
 type HomeProps = {
@@ -79,11 +80,13 @@ export const Home = ({
             <Box direction="vertical">
               <Box alignment="space-between" direction="horizontal">
                 <Heading size="sm">
-                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
+                  {tokenView === TokenViewSelector.ERC20 ? 'Tokens' : 'NFT'}
                 </Heading>
                 <Button
                   name={
-                    tokenView === 'erc20' ? 'import-erc20' : 'import-erc721'
+                    tokenView === TokenViewSelector.ERC20
+                      ? 'import-erc20'
+                      : 'import-erc721'
                   }
                 >
                   + Import

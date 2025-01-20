@@ -273,15 +273,15 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         >;
         if (
           erc20formState &&
-          erc20formState['token-address']?.toString().length === 42 &&
-          erc20formState['token-decimals'] &&
-          erc20formState['token-name'] &&
-          erc20formState['token-symbol']
+          erc20formState['erc20-address']?.toString().length === 42 &&
+          erc20formState['erc20-decimals'] &&
+          erc20formState['erc20-name'] &&
+          erc20formState['erc20-symbol']
         ) {
-          const address = erc20formState['token-address'] as string;
-          const name = erc20formState['token-name'] as string;
-          const decimals = erc20formState['token-decimals'] as string;
-          const symbol = erc20formState['token-symbol'] as string;
+          const address = erc20formState['erc20-address'] as string;
+          const name = erc20formState['erc20-name'] as string;
+          const decimals = erc20formState['erc20-decimals'] as string;
+          const symbol = erc20formState['erc20-symbol'] as string;
           await importToken(address, name, symbol, decimals);
           await recalculateBalances();
           await returnToHomePage(id);
@@ -304,7 +304,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
-      case 'token-address':
+      case 'erc20-address':
         console.log('Token address:', event.value);
         const tokenInfo = await getERC20Details(event.value as string);
         if (tokenInfo) {

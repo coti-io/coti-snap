@@ -27,7 +27,7 @@ export const ImportERC20 = ({
           label="Token address"
           error={errorInForm ? 'Token address is required' : undefined}
         >
-          <Input type="text" name="token-address" placeholder="0x123..." />
+          <Input type="text" name="erc20-address" placeholder="0x123..." />
         </Field>
         <Field
           label="Token symbol"
@@ -35,7 +35,7 @@ export const ImportERC20 = ({
         >
           <Input
             type="text"
-            name="token-symbol"
+            name="erc20-symbol"
             placeholder="MYTKN"
             value={symbol ?? ''}
           />
@@ -46,7 +46,7 @@ export const ImportERC20 = ({
         >
           <Input
             type="text"
-            name="token-name"
+            name="erc20-name"
             placeholder="My token"
             value={name ?? ''}
           />
@@ -57,7 +57,7 @@ export const ImportERC20 = ({
         >
           <Input
             type="text"
-            name="token-decimals"
+            name="erc20-decimals"
             placeholder="6"
             value={decimals ?? ''}
           />
