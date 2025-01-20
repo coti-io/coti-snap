@@ -61,6 +61,23 @@ export const Home = ({
             <WrongChain />
           ) : (
             <Box direction="vertical">
+              <Box alignment="space-around" direction="horizontal">
+                {tokenView === TokenViewSelector.ERC20 ? (
+                  <Heading>Tokens</Heading>
+                ) : (
+                  <Button name="view-tokens-erc20">Tokens</Button>
+                )}
+                {tokenView === TokenViewSelector.NFT ? (
+                  <Heading>NFT</Heading>
+                ) : (
+                  <Button name="view-tokens-nft">NFT</Button>
+                )}
+              </Box>
+              <Divider />
+              <Box direction="horizontal" alignment="start">
+                <Text> </Text>
+                <Text> </Text>
+              </Box>
               <Box alignment="space-between" direction="horizontal">
                 <Heading size="sm">
                   {tokenView === TokenViewSelector.ERC20 ? 'Tokens' : 'NFT'}
