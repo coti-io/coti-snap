@@ -3,6 +3,7 @@ import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { isAddress } from 'viem';
+import { useAccount } from 'wagmi';
 
 import { ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
@@ -30,6 +31,7 @@ const SnapContext = createContext<SnapContextProps | undefined>(undefined);
 
 export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const invokeSnap = useInvokeSnap();
+  const { address } = useAccount();
   const { installedSnap } = useMetaMask();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
@@ -155,10 +157,13 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
     if (result) {
       setUserHasAesKEY(result as boolean);
+      setLoading(false);
       return true;
     }
 
+    setUserHasAesKEY(false);
     setLoading(false);
+
     return false;
   };
 
@@ -193,7 +198,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error in hasAESKey', error);
       });
     }
-  }, [installedSnap]);
+  }, [installedSnap, address]);
 
   return (
     <SnapContext.Provider
