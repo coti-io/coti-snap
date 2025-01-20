@@ -77,11 +77,19 @@ export const Home = ({
                 <Text> </Text>
               </Box>
               <Box direction="vertical">
-                <Box alignment="end" direction="horizontal">
-                  {/* <Heading size="sm">
-                  {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
-                </Heading> */}
-                  <Button name="import-token-button">+ Import</Button>
+                <Box alignment="space-between" direction="horizontal">
+                  <Heading size="sm">
+                    {tokenView === 'erc20' ? 'Tokens' : 'NFT'}
+                  </Heading>
+                  <Button
+                    name={
+                      tokenView === 'erc20'
+                        ? 'import-erc20'
+                        : 'import-token-button'
+                    }
+                  >
+                    + Import
+                  </Button>
                 </Box>
                 <Box direction="horizontal" alignment="start">
                   <Text> </Text>

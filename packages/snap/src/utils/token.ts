@@ -6,8 +6,8 @@ import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc721Abi from '../abis/ERC721.json';
 import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
-import type { State, Tokens } from '../types';
 import { CHAIN_ID } from '../config';
+import type { State, Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import { getStateData, setStateData } from './snap';
 
@@ -19,20 +19,51 @@ const ERC165_ABI = [
 const ERC721_INTERFACE_ID = '0x80ac58cd';
 const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
-
-export const getTokenURI = async (address: string, tokenId: string, AESKey: string): Promise<string | null> => {
+export const getTokenURI = async (
+  address: string,
+  tokenId: string,
+  AESKey: string,
+): Promise<string | null> => {
   try {
     const provider = new BrowserProvider(ethereum);
-    const contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
+    const contract = new ethers.Contract(
+      address,
+      erc721ConfidentialAbi,
+      provider,
+    );
     const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId));
     return decryptString(encryptedTokenURI, AESKey);
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
     return null;
   }
-}
+};
 
+export const getERC20Details = async (
+  address: string,
+  // AESKey: string,
+): Promise<{
+  decimals: string | null;
+  symbol: string | null;
+  name: string | null;
+}> => {
+  try {
+    const provider = new BrowserProvider(ethereum);
+    const contract = new ethers.Contract(address, erc20Abi, provider);
+
+    const [_decimals, symbol, name] = await Promise.all([
+      contract.decimals!(),
+      contract.symbol!(),
+      contract.name!(),
+    ]);
+
+    const decimals = _decimals.toString();
+    return { decimals, symbol, name };
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+};
 
 /**
  * Determines the type of token (ERC-20, ConfidentialERC20, or NFT) for a given contract address.
@@ -73,11 +104,16 @@ export async function getTokenType(address: string): Promise<{
 
   if (isERC721 || isERC1155) {
     console.log(
-      `Contract ${address} is an NFT contract (likely ERC-${isERC721 ? '721' : '1155'
+      `Contract ${address} is an NFT contract (likely ERC-${
+        isERC721 ? '721' : '1155'
       }).`,
     );
     try {
-      const contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
+      const contract = new ethers.Contract(
+        address,
+        erc721ConfidentialAbi,
+        provider,
+      );
       const tokenURI = await contract.tokenURI!(BigInt(0));
       if (tokenURI) {
         console.log(`Contract ${address} has tokenURI method`);
@@ -94,14 +130,18 @@ export async function getTokenType(address: string): Promise<{
   const erc20Contract = new ethers.Contract(address, erc20Abi, provider);
 
   try {
-    await erc20Contract.decimals!()
-    await erc20Contract.symbol!()
-    await erc20Contract.totalSupply!()
-    await erc20Contract.balanceOf!(ZeroAddress)
+    await erc20Contract.decimals!();
+    await erc20Contract.symbol!();
+    await erc20Contract.totalSupply!();
+    await erc20Contract.balanceOf!(ZeroAddress);
 
     try {
-      const erc20ConfidentialContract = new ethers.Contract(address, erc20ConfidentialAbi, provider);
-      await erc20ConfidentialContract.accountEncryptionAddress!(address)
+      const erc20ConfidentialContract = new ethers.Contract(
+        address,
+        erc20ConfidentialAbi,
+        provider,
+      );
+      await erc20ConfidentialContract.accountEncryptionAddress!(address);
       console.log(`Contract ${address} is likely a ConfidentialERC20 token.`);
       return { type: TokenViewSelector.ERC20, confidential: true };
     } catch (err) {
@@ -152,7 +192,9 @@ export const recalculateBalances = async () => {
       if (token.type === TokenViewSelector.ERC20) {
         const tokenContract = new Contract(token.address, erc20Abi, signer);
         const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf ? await tok.balanceOf(signerAddress) : null;
+        let tokenBalance = tok.balanceOf
+          ? await tok.balanceOf(signerAddress)
+          : null;
         if (token.confidential && state.AESKey && tokenBalance) {
           tokenBalance = decryptBalance(tokenBalance, state.AESKey);
         } else if (token.confidential && !state.AESKey) {
@@ -166,16 +208,28 @@ export const recalculateBalances = async () => {
       }
 
       if (token.type === TokenViewSelector.NFT) {
-        const tokenContract = new Contract(token.address, erc721ConfidentialAbi, signer);
+        const tokenContract = new Contract(
+          token.address,
+          erc721ConfidentialAbi,
+          signer,
+        );
         const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf
+        const tokenBalance = tok.balanceOf
           ? await tok.balanceOf(signerAddress)
           : null;
         let tokenUri: string | null = token.uri ?? null;
         if (token.confidential && token.tokenId && state.AESKey) {
-          tokenUri = await getTokenURI(token.address, token.tokenId, state.AESKey);
+          tokenUri = await getTokenURI(
+            token.address,
+            token.tokenId,
+            state.AESKey,
+          );
         }
-        return { ...token, balance: tokenBalance?.toString() || null, uri: tokenUri };
+        return {
+          ...token,
+          balance: tokenBalance?.toString() || null,
+          uri: tokenUri,
+        };
       }
       return { ...token, balance: null };
     }),
@@ -215,7 +269,16 @@ export const importToken = async (
     );
     return;
   }
-  tokens.push({ address, name, symbol, balance: null, type, confidential, decimals, tokenId: tokenId || null });
+  tokens.push({
+    address,
+    name,
+    symbol,
+    balance: null,
+    type,
+    confidential,
+    decimals,
+    tokenId: tokenId || null,
+  });
   await setStateData<State>({ ...oldState, tokenBalances: tokens });
 };
 
