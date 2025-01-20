@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable id-length */
 import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
@@ -56,46 +57,46 @@ export const OnboardAccountWizzard = ({
     <ContentSwitchNetwork />;
   }
 
-  if (loading) {
-    <Loading title="Onboard account" actionText="Onboarding account" />;
-  }
-
   return isConnected ? (
-    <>
-      <ContentTitle>Onboard account</ContentTitle>
-      <ContentText>
-        You are going to interact with the <Link>AccountOnboard.sol</Link>{' '}
-        contract.
-      </ContentText>
-      <ContentInput>
-        <ContentText>AccountOnboard.sol address</ContentText>
-        <EditableInputContainer
-          $isEditable={isEditable}
-          $isError={settingAESKeyError}
-        >
-          <EditableInput
-            type="text"
-            value={onboardContractAddress}
+    loading ? (
+      <Loading title="Onboard account" actionText="Onboarding account" />
+    ) : (
+      <>
+        <ContentTitle>Onboard account</ContentTitle>
+        <ContentText>
+          You are going to interact with the <Link>AccountOnboard.sol</Link>{' '}
+          contract.
+        </ContentText>
+        <ContentInput>
+          <ContentText>AccountOnboard.sol address</ContentText>
+          <EditableInputContainer
             $isEditable={isEditable}
-            readOnly={!isEditable}
-            onChange={(e) => handleOnChangeContactAddress(e)}
-            onBlur={handleBlur}
-          />
-          <Edit onClick={handleIconClick}>
-            <EditIcon />
-          </Edit>
-        </EditableInputContainer>
-      </ContentInput>
-      <ContentButtons>
-        <Button text="Cancel" fullWith={true} onClick={handleCancel} />
-        <Button primary text="Onboard" fullWith={true} onClick={setAESKey} />
-      </ContentButtons>
-      {settingAESKeyError && (
-        <ContentErrorText>
-          Error to onboard account, check the contract address
-        </ContentErrorText>
-      )}
-    </>
+            $isError={settingAESKeyError}
+          >
+            <EditableInput
+              type="text"
+              value={onboardContractAddress}
+              $isEditable={isEditable}
+              readOnly={!isEditable}
+              onChange={(e) => handleOnChangeContactAddress(e)}
+              onBlur={handleBlur}
+            />
+            <Edit onClick={handleIconClick}>
+              <EditIcon />
+            </Edit>
+          </EditableInputContainer>
+        </ContentInput>
+        <ContentButtons>
+          <Button text="Cancel" fullWith={true} onClick={handleCancel} />
+          <Button primary text="Onboard" fullWith={true} onClick={setAESKey} />
+        </ContentButtons>
+        {settingAESKeyError && (
+          <ContentErrorText>
+            Error to onboard account, check the contract address
+          </ContentErrorText>
+        )}
+      </>
+    )
   ) : (
     <ContentConnectYourWallet />
   );
