@@ -1,9 +1,13 @@
 /* eslint-disable id-length */
 import React, { useState } from 'react';
+import { useAccount } from 'wagmi';
 
 import { ReactComponent as EditIcon } from '../../assets/edit.svg';
+import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
+import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
+import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
 import { Loading } from '../Loading';
 import { ContentText, ContentTitle } from '../styles';
 import {
@@ -45,9 +49,18 @@ export const OnboardAccountWizzard = ({
     handleCancelOnboard();
   };
 
-  return loading ? (
-    <Loading title="Onboard account" actionText="Onboarding account" />
-  ) : (
+  const { isConnected } = useAccount();
+  const { wrongChain } = useWrongChain();
+
+  if (isConnected && wrongChain) {
+    <ContentSwitchNetwork />;
+  }
+
+  if (loading) {
+    <Loading title="Onboard account" actionText="Onboarding account" />;
+  }
+
+  return isConnected ? (
     <>
       <ContentTitle>Onboard account</ContentTitle>
       <ContentText>
@@ -83,5 +96,7 @@ export const OnboardAccountWizzard = ({
         </ContentErrorText>
       )}
     </>
+  ) : (
+    <ContentConnectYourWallet />
   );
 };

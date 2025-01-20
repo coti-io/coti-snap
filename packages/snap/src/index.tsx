@@ -33,6 +33,7 @@ import { ImportERC20 } from './components/ImportERC20';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
+import { WrongChain } from './components/WrongChain';
 import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
@@ -89,8 +90,15 @@ export const onInstall: OnInstallHandler = async () => {
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
+  const wrongChain = await checkChainId();
+
+  if (wrongChain) {
+    return {
+      content: <WrongChain />,
+    };
+  }
+
   const { balance, tokenBalances } = await recalculateBalances();
-  // const wrongChain = await checkChainId();
   const state = await getStateData<State>();
   await setStateData<State>({
     ...state,
@@ -103,7 +111,7 @@ export const onHomePage: OnHomePageHandler = async () => {
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
         AESKey={state.AESKey}
-        // wrongChain={wrongChain}
+        wrongChain={wrongChain}
       />
     ),
   };

@@ -1,5 +1,6 @@
 import { useAccount, useConnect } from 'wagmi';
 
+import { config } from '../../config/wagmi';
 import { useMetaMask } from '../../hooks';
 import { Button } from '../Button';
 import { ConnectedContainer, Link } from './styles';
@@ -15,7 +16,7 @@ export const HeaderButtons = () => {
   const { isFlask, installedSnap } = useMetaMask();
 
   const { isConnected } = useAccount();
-  const { connectors, connect } = useConnect();
+  const { connectors, connect } = useConnect({ config });
 
   return (
     <ConnectedContainer>
