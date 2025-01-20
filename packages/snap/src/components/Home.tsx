@@ -12,6 +12,7 @@ import { formatEther } from 'ethers';
 import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens, TokenViewSelector } from '../types';
 import { TokenAdded } from './TokenAdded';
+import { WrongChain } from './WrongChain';
 
 type HomeProps = {
   balance: bigint;
@@ -56,19 +57,7 @@ export const Home = ({
           </Box>
 
           {wrongChain ? (
-            <Box direction="vertical" alignment="center">
-              <Box direction="horizontal" alignment="center">
-                <Heading size="lg">⚠️</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Heading size="sm">Wrong chain</Heading>
-              </Box>
-              <Box direction="horizontal" alignment="center">
-                <Text color="warning" alignment="center">
-                  Please switch to COTI Testnet chain to view your tokens.
-                </Text>
-              </Box>
-            </Box>
+            <WrongChain />
           ) : (
             <Box direction="vertical">
               <Box alignment="space-around" direction="horizontal">

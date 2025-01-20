@@ -32,8 +32,10 @@ import { Home } from './components/Home';
 import { ImportToken } from './components/ImportToken';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
+import { WrongChain } from './components/WrongChain';
 import type { State, Tokens } from './types';
 import { TokenViewSelector } from './types';
+import { getSVGfromMetadata } from './utils/image';
 import { getStateData, setStateData } from './utils/snap';
 import {
   checkChainId,
@@ -42,7 +44,6 @@ import {
   recalculateBalances,
   getTokenURI,
 } from './utils/token';
-import { getSVGfromMetadata } from './utils/image';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, AESKey } =
@@ -91,21 +92,7 @@ export const onHomePage: OnHomePageHandler = async () => {
 
   if (wrongChain) {
     return {
-      content: (
-        <Box direction="vertical" alignment="center">
-          <Box direction="horizontal" alignment="center">
-            <Heading size="lg">⚠️</Heading>
-          </Box>
-          <Box direction="horizontal" alignment="center">
-            <Heading size="sm">Wrong chain</Heading>
-          </Box>
-          <Box direction="horizontal" alignment="center">
-            <Text color="warning" alignment="center">
-              Please switch to COTI Testnet chain to view your tokens.
-            </Text>
-          </Box>
-        </Box>
-      ),
+      content: <WrongChain />,
     };
   }
 
@@ -138,7 +125,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         (tkn) => tkn.address === tokenAddress,
       );
       if (token) {
-        if (token.uri){
+        if (token.uri) {
           const tokenImageBase64 = await getSVGfromMetadata(token.uri);
           token.image = tokenImageBase64;
         }
