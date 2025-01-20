@@ -9,13 +9,11 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 
 export const ImportERC20 = ({
-  address,
   symbol,
   name,
   decimals,
   errorInForm = false,
 }: {
-  address?: string;
   symbol?: string | null;
   name?: string | null;
   decimals?: string | null;

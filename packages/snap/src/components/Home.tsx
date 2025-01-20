@@ -83,9 +83,7 @@ export const Home = ({
                 </Heading>
                 <Button
                   name={
-                    tokenView === 'erc20'
-                      ? 'import-erc20'
-                      : 'import-token-button'
+                    tokenView === 'erc20' ? 'import-erc20' : 'import-erc721'
                   }
                 >
                   + Import

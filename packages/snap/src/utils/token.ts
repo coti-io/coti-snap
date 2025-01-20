@@ -64,6 +64,28 @@ export const getERC20Details = async (
     return null;
   }
 };
+export const getERC721Details = async (
+  address: string,
+  // AESKey: string,
+): Promise<{
+  symbol: string | null;
+  name: string | null;
+}> => {
+  try {
+    const provider = new BrowserProvider(ethereum);
+    const contract = new ethers.Contract(address, erc721Abi, provider);
+
+    const [symbol, name] = await Promise.all([
+      contract.symbol!(),
+      contract.name!(),
+    ]);
+
+    return { symbol, name };
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+};
 
 /**
  * Determines the type of token (ERC-20, ConfidentialERC20, or NFT) for a given contract address.
