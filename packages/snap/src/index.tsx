@@ -18,19 +18,12 @@ import {
   type OnUserInputHandler,
   UserInputEventType,
 } from '@metamask/snaps-sdk';
-import {
-  Box,
-  Text,
-  Heading,
-  Container,
-  Footer,
-  Button,
-} from '@metamask/snaps-sdk/jsx';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
 import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
 import { ImportERC20 } from './components/ImportERC20';
-import { ImportToken } from './components/ImportToken';
+import { ImportERC721 } from './components/ImportERC721';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
 import { WrongChain } from './components/WrongChain';
@@ -45,6 +38,8 @@ import {
   recalculateBalances,
   getTokenURI,
   getERC20Details,
+  getERC721Details,
+  truncateAddress,
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -169,21 +164,13 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
 
       return;
     }
-    const { balance, tokenBalances, AESKey } = await getStateData<State>();
     switch (event.name) {
-      case 'import-token-button':
-        const importTokenState = await getStateData<State>();
+      case 'import-erc721':
         await snap.request({
           method: 'snap_updateInterface',
           params: {
             id,
-            ui: (
-              <ImportToken
-                tokenType={
-                  importTokenState.tokenView || TokenViewSelector.ERC20
-                }
-              />
-            ),
+            ui: <ImportERC721 />,
           },
         });
         return;
@@ -233,50 +220,45 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
       case 'token-cancel':
         await returnToHomePage(id);
         return;
-      case 'token-submit':
-        const state = await snap.request({
+      case 'erc721-submit':
+        const erc721state = await snap.request({
           method: 'snap_getInterfaceState',
           params: {
             id,
           },
         });
-        const formState = state['form-to-fill'] as Record<
+        const erc721formState = erc721state['erc721-form-to-fill'] as Record<
           string,
           string | boolean | null
         >;
-        let tokenType = TokenViewSelector.ERC20;
-        if (formState['token-id'] || formState['token-id'] === null) {
-          // update this workaround
-          tokenType = TokenViewSelector.NFT;
-        }
+
         if (
-          formState &&
-          formState['token-address']?.toString().length === 42 &&
-          formState['token-decimals'] &&
-          formState['token-name'] &&
-          formState['token-symbol'] &&
-          (tokenType !== TokenViewSelector.NFT || formState['token-id'])
+          erc721formState &&
+          erc721formState['erc721-address']?.toString().length === 42 &&
+          erc721formState['erc721-id']
         ) {
-          const address = formState['token-address'] as string;
-          const name = formState['token-name'] as string;
-          const decimals = formState['token-decimals'] as string;
-          const symbol = formState['token-symbol'] as string;
-          if (tokenType === TokenViewSelector.NFT) {
-            const tokenId = formState['token-id'] as string;
-            await importToken(address, name, symbol, decimals, tokenId);
-          } else {
-            await importToken(address, name, symbol, decimals);
+          const address = erc721formState['erc721-address'] as string;
+          const tokenId = erc721formState['erc721-id'] as string;
+          const erc721Info = await getERC721Details(address);
+          if (address && tokenId && erc721Info) {
+            await importToken(
+              address,
+              erc721Info.name ?? address,
+              erc721Info.symbol ?? truncateAddress(address),
+              '',
+              tokenId,
+            );
           }
           await recalculateBalances();
           await returnToHomePage(id);
         } else {
-          console.log('Invalid form state:', formState);
+          console.log('Invalid form state:', erc721formState);
           try {
             await snap.request({
               method: 'snap_updateInterface',
               params: {
                 id,
-                ui: <ImportToken tokenType={tokenType} errorInForm={true} />,
+                ui: <ImportERC721 errorInForm={true} />,
               },
             });
           } catch (error) {
@@ -299,15 +281,15 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         >;
         if (
           erc20formState &&
-          erc20formState['token-address']?.toString().length === 42 &&
-          erc20formState['token-decimals'] &&
-          erc20formState['token-name'] &&
-          erc20formState['token-symbol']
+          erc20formState['erc20-address']?.toString().length === 42 &&
+          erc20formState['erc20-decimals'] &&
+          erc20formState['erc20-name'] &&
+          erc20formState['erc20-symbol']
         ) {
-          const address = erc20formState['token-address'] as string;
-          const name = erc20formState['token-name'] as string;
-          const decimals = erc20formState['token-decimals'] as string;
-          const symbol = erc20formState['token-symbol'] as string;
+          const address = erc20formState['erc20-address'] as string;
+          const name = erc20formState['erc20-name'] as string;
+          const decimals = erc20formState['erc20-decimals'] as string;
+          const symbol = erc20formState['erc20-symbol'] as string;
           await importToken(address, name, symbol, decimals);
           await recalculateBalances();
           await returnToHomePage(id);
@@ -330,7 +312,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
     switch (event.name) {
-      case 'token-address':
+      case 'erc20-address':
         console.log('Token address:', event.value);
         const tokenInfo = await getERC20Details(event.value as string);
         if (tokenInfo) {
@@ -340,7 +322,6 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               id,
               ui: (
                 <ImportERC20
-                  address={event.value as string}
                   symbol={tokenInfo.symbol}
                   name={tokenInfo.name}
                   decimals={tokenInfo.decimals}
