@@ -38,6 +38,8 @@ import {
   getERC20Details,
   getERC721Details,
   truncateAddress,
+  checkIfERC20Unique,
+  checkIfERC721Unique,
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -108,10 +110,16 @@ export const onHomePage: OnHomePageHandler = async () => {
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
   if (event.type === UserInputEventType.ButtonClickEvent) {
     if (event.name?.startsWith('token-details-')) {
-      const tokenAddress = event.name.slice('token-details-'.length);
+      const tokenData = event.name.slice('token-details-'.length);
+      const tokenAddress = tokenData.split('-')[0];
+      const tokenId = tokenData.split('-')[1];
       const state = await getStateByChainIdAndAddress();
-      const token = state.tokenBalances.find(
-        (tkn) => tkn.address === tokenAddress,
+      const token = state.tokenBalances.find((tkn) => {
+        if (tokenId) {
+          return tkn.address === tokenAddress && tkn.tokenId === tokenId;
+        }
+        return tkn.address === tokenAddress
+      }
       );
       if (token) {
         if (token.uri) {
@@ -223,14 +231,21 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           string,
           string | boolean | null
         >;
-
-        if (
-          erc721formState &&
-          erc721formState['erc721-address']?.toString().length === 42 &&
-          erc721formState['erc721-id']
-        ) {
+        try {
+          if (
+            !erc721formState ||
+            !erc721formState['erc721-address'] ||
+            erc721formState['erc721-address'].toString().length !== 42 ||
+            !erc721formState['erc721-id']
+          ) {
+            throw new Error('Invalid form state');
+          }
           const address = erc721formState['erc721-address'] as string;
           const tokenId = erc721formState['erc721-id'] as string;
+          const tokenIsUnique = await checkIfERC721Unique(address, tokenId);
+          if (!tokenIsUnique) {
+            throw new Error('Token already exists');
+          }
           const erc721Info = await getERC721Details(address);
           if (address && tokenId && erc721Info) {
             await importToken(
@@ -243,21 +258,16 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           await recalculateBalances();
           await returnToHomePage(id);
-        } else {
-          console.log('Invalid form state:', erc721formState);
-          try {
-            await snap.request({
-              method: 'snap_updateInterface',
-              params: {
-                id,
-                ui: <ImportERC721 errorInForm={true} />,
-              },
-            });
-          } catch (error) {
-            console.error(error);
-            await recalculateBalances();
-            await returnToHomePage(id);
-          }
+
+        } catch (error) {
+          console.error(error);
+          await snap.request({
+            method: 'snap_updateInterface',
+            params: {
+              id,
+              ui: <ImportERC721 errorInForm={true} />,
+            },
+          });
         }
         return;
       case 'token-erc20-submit':
@@ -271,35 +281,36 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           string,
           string | boolean | null
         >;
-        if (
-          erc20formState &&
-          erc20formState['erc20-address']?.toString().length === 42 &&
-          erc20formState['erc20-decimals'] &&
-          erc20formState['erc20-name'] &&
-          erc20formState['erc20-symbol']
-        ) {
+        try {
+          if (
+            !erc20formState ||
+            !erc20formState['erc20-address'] ||
+            erc20formState['erc20-address'].toString().length !== 42 ||
+            !erc20formState['erc20-decimals'] ||
+            !erc20formState['erc20-name'] ||
+            !erc20formState['erc20-symbol']
+          ) {
+            throw new Error('Invalid form state');
+          }
           const address = erc20formState['erc20-address'] as string;
+          const tokenIsUnique = await checkIfERC20Unique(address);
+          if (!tokenIsUnique) {
+            throw new Error('Token already exists');
+          }
           const name = erc20formState['erc20-name'] as string;
           const decimals = erc20formState['erc20-decimals'] as string;
           const symbol = erc20formState['erc20-symbol'] as string;
           await importToken(address, name, symbol, decimals);
           await recalculateBalances();
           await returnToHomePage(id);
-        } else {
-          console.log('Invalid form state:', erc20formState);
-          try {
-            await snap.request({
-              method: 'snap_updateInterface',
-              params: {
-                id,
-                ui: <ImportERC20 errorInForm={true} />,
-              },
-            });
-          } catch (error) {
-            console.error(error);
-            await recalculateBalances();
-            await returnToHomePage(id);
-          }
+        } catch (error) {
+          await snap.request({
+            method: 'snap_updateInterface',
+            params: {
+              id,
+              ui: <ImportERC20 errorInForm={true} />,
+            },
+          });
         }
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {

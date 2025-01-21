@@ -64,6 +64,12 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Link href={token.uri!}>Open</Link>
         </Box>
       )}
+      {Boolean(token.tokenId) && (
+        <Box direction="horizontal" alignment="space-between">
+          <Text>Token ID</Text>
+          <Text>{token.tokenId!}</Text>
+        </Box>
+      )}
       {Boolean(token.image) && (
         <Box direction="horizontal" alignment="space-between">
           <Image src={token.image!} />
