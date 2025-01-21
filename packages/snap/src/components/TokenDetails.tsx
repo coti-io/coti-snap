@@ -61,12 +61,12 @@ export const TokenDetails = ({ token }: { token: Token }) => {
       {Boolean(token.uri) && (
         <Box direction="horizontal" alignment="space-between">
           <Text>Token URI</Text>
-          <Link href={token.uri}>Open</Link>
+          <Link href={token.uri!}>Open</Link>
         </Box>
       )}
       {Boolean(token.image) && (
         <Box direction="horizontal" alignment="space-between">
-          <Image src={token.image} />
+          <Image src={token.image!} />
         </Box>
       )}
       {Boolean(token.decimals) && (
