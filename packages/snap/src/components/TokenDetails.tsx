@@ -39,7 +39,6 @@ export const TokenDetails = ({ token }: { token: Token }) => {
             </Box>
             <Box direction="vertical" alignment="center">
               <Text>{token.symbol}</Text>
-              {/* <Text color="muted">{tokenSymbol}</Text> */}
             </Box>
           </Box>
         </Box>
@@ -47,7 +46,6 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Text>
             {token.balance} {token.symbol}
           </Text>
-          {/* <Text color="muted">USD</Text> */}
         </Box>
       </Box>
       <Box direction="horizontal" alignment="start">
@@ -74,7 +72,6 @@ export const TokenDetails = ({ token }: { token: Token }) => {
       {Boolean(token.decimals) && (
         <Box direction="horizontal" alignment="space-between">
           <Text>Token decimals</Text>
-          {/* TODO: Add decimals */}
           <Text>{token.decimals}</Text>
         </Box>
       )}
