@@ -197,6 +197,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       hasAESKey().catch((error) => {
         console.error('Error in hasAESKey', error);
       });
+      setUserAesKEY(null);
     }
   }, [installedSnap, address]);
 
