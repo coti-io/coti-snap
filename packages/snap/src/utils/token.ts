@@ -185,6 +185,18 @@ export const checkChainId = async () => {
   return false;
 };
 
+export const checkIfERC20Unique = async (address: string) => {
+  const state = await getStateByChainIdAndAddress();
+  const tokens = state.tokenBalances || [];
+  return !(tokens.some((token) => token.address === address));
+}
+
+export const checkIfERC721Unique = async (address: string, tokenId: string) => {
+  const state = await getStateByChainIdAndAddress();
+  const tokens = state.tokenBalances || [];
+  return !(tokens.some((token) => token.address === address && token.tokenId === tokenId));
+}
+
 export const recalculateBalances = async () => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
