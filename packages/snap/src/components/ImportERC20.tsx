@@ -25,7 +25,7 @@ export const ImportERC20 = ({
         <Heading size="lg">Import new token</Heading>
         <Field
           label="Token address"
-          error={errorInForm ? 'Token address is required' : undefined}
+          error={errorInForm ? 'Token address is required and should be unique from already added' : undefined}
         >
           <Input type="text" name="erc20-address" placeholder="0x123..." />
         </Field>

@@ -25,7 +25,7 @@ export const ImportERC721 = ({
         </Field>
         <Field
           label="Token ID"
-          error={errorInForm ? 'Token ID is required' : undefined}
+          error={errorInForm ? 'Token ID is required and should be unique for the address above' : undefined}
         >
           <Input name="erc721-id" placeholder="Token ID" />
         </Field>

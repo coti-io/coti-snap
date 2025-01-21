@@ -12,7 +12,7 @@ export const TokenAdded = ({ token }: { token: Token }) => {
         </Box>
       </Box>
       <Box direction="vertical" alignment="center">
-        <Button name={`token-details-${token.address}`}>View NFT</Button>
+        <Button name={`token-details-${token.address}-${token.tokenId}`}>View NFT</Button>
       </Box>
     </Box>
   ) : (
