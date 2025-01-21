@@ -11,12 +11,9 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 
 import defaultToken from '../../images/default-token.svg';
-import send from '../../images/send.svg';
-import { Token } from 'src/types';
+import { TokenViewSelector, type Token } from '../types';
 
-export const TokenDetails = ({
-  token
-}: { token: Token }) => {
+export const TokenDetails = ({ token }: { token: Token }) => {
   return (
     <Box direction="vertical" alignment="start">
       <Box direction="horizontal" alignment="start">
@@ -30,61 +27,79 @@ export const TokenDetails = ({
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
       </Box>
-      <Box direction="horizontal" alignment="start">
-        <Heading size="md">Your balance</Heading>
-      </Box>
-      <Box direction="horizontal" alignment="space-between">
-        <Box alignment="space-between" direction="horizontal">
-          <Box alignment="center" direction="horizontal">
-            <Box alignment="center" direction="vertical">
-              <Image src={defaultToken} />
+      {token.type === TokenViewSelector.ERC20 && (
+        <Box direction="vertical" alignment="start">
+          <Box direction="horizontal" alignment="start">
+            <Heading size="md">Your balance</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="space-between">
+            <Box alignment="space-between" direction="horizontal">
+              <Box alignment="center" direction="horizontal">
+                <Box alignment="center" direction="vertical">
+                  <Image src={defaultToken} />
+                </Box>
+                <Box direction="vertical" alignment="center">
+                  <Text>{token.symbol}</Text>
+                </Box>
+              </Box>
             </Box>
-            <Box direction="vertical" alignment="center">
-              <Text>{token.symbol}</Text>
-              {/* <Text color="muted">{tokenSymbol}</Text> */}
+            <Box direction="vertical" alignment="end">
+              <Text>
+                {token.balance} {token.symbol}
+              </Text>
             </Box>
           </Box>
+          <Box direction="horizontal" alignment="start">
+            <Text> </Text>
+          </Box>
+          <Box direction="horizontal" alignment="start">
+            <Heading size="md">Token details</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="space-between">
+            <Text>Contract address</Text>
+            <Copyable value={token.address} />
+          </Box>
+          <Box direction="horizontal" alignment="space-between">
+            <Text>Token decimals</Text>
+            <Text>{token.decimals}</Text>
+          </Box>
+          <Box direction="vertical">
+            <Text>Token list</Text>
+            <Text>{token.name}</Text>
+          </Box>
         </Box>
-        <Box direction="vertical" alignment="end">
-          <Text>
-            {token.balance} {token.symbol}
-          </Text>
-          {/* <Text color="muted">USD</Text> */}
+      )}
+      {token.type === TokenViewSelector.NFT && (
+        <Box direction="vertical" alignment="start">
+          <Box direction="horizontal" alignment="start">
+            <Heading size="md">{token.name}</Heading>
+          </Box>
+          <Box direction="horizontal" alignment="start">
+            <Text> </Text>
+          </Box>
+          {Boolean(token.uri) && (
+            <Box direction="horizontal" alignment="space-between">
+              <Text>Token URI</Text>
+              <Link href={token.uri}>Open</Link>
+            </Box>
+          )}
+          {Boolean(token.image) && (
+            <Box direction="horizontal" alignment="space-between">
+              <Image src={token.image} />
+            </Box>
+          )}
         </Box>
-      </Box>
+      )}
       <Box direction="horizontal" alignment="start">
         <Text> </Text>
       </Box>
-      <Box direction="horizontal" alignment="start">
-        <Heading size="md">Token details</Heading>
-      </Box>
-      <Box direction="horizontal" alignment="space-between">
-        <Text>Contract address</Text>
-        <Copyable value={token.address} />
-      </Box>
-      {!!token.uri && (<Box direction="horizontal" alignment="space-between">
-        <Text>Token URI</Text>
-        <Link href={token.uri}>Open</Link>
-      </Box>)}
-      {!!token.image && (<Box direction="horizontal" alignment="space-between">
-        <Image src={token.image} />
-      </Box>)}
-      <Box direction="horizontal" alignment="space-between">
-        <Text>Token decimals</Text>
-        {/* TODO: Add decimals */}
-        <Text>{token.decimals}</Text>
-      </Box>
-      <Box direction="vertical">
-        <Text>Token list</Text>
-        <Text>{token.name}</Text>
-      </Box>
-      <Box direction="horizontal" alignment="start">
-        <Text> </Text>
-      </Box>
-      <Button variant="destructive" name={`confirm-hide-token-${token.address}`}>
+      <Button
+        variant="destructive"
+        name={`confirm-hide-token-${token.address}`}
+      >
         Hide token
       </Button>
-      <Box direction="horizontal" alignment="start">
+      {/* <Box direction="horizontal" alignment="start">
         <Text> </Text>
       </Box>
       <Box direction="vertical" alignment="start">
@@ -104,16 +119,14 @@ export const TokenDetails = ({
               </Box>
             </Box>
           </Box>
-
           <Box alignment="space-between" direction="horizontal">
             <Box direction="vertical" alignment="end">
-              {/* TODO: Add token balances */}
               <Text>{token.symbol}</Text>
               <Text color="muted">USD</Text>
             </Box>
           </Box>
         </Box>
-      </Box>
+      </Box> */}
     </Box>
   );
 };
