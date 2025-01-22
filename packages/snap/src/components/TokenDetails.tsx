@@ -38,7 +38,7 @@ export const TokenDetails = ({ token }: { token: Token }) => {
               <Image src={defaultToken} />
             </Box>
             <Box direction="vertical" alignment="center">
-              <Text>{token.symbol}</Text>
+              <Text>{token.name}</Text>
             </Box>
           </Box>
         </Box>
@@ -81,13 +81,6 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Text>{token.decimals}</Text>
         </Box>
       )}
-      <Box direction="vertical">
-        <Text>Token list</Text>
-        <Text>{token.name}</Text>
-      </Box>
-      <Box direction="horizontal" alignment="start">
-        <Text> </Text>
-      </Box>
       <Button
         variant="destructive"
         name={`confirm-hide-token-${token.address}`}
