@@ -1,27 +1,99 @@
-import { Container, Form, Button, Input, Field, Footer, Box, Heading, Link, Text, Address, Copyable } from '@metamask/snaps-sdk/jsx';
+import {
+  Button,
+  Box,
+  Heading,
+  Text,
+  Copyable,
+  Icon,
+  Image,
+  Link,
+  Bold,
+} from '@metamask/snaps-sdk/jsx';
+import type { Token } from 'src/types';
 
-type TokenDetailsProps = {
-  tokenName: string
-  tokenBalance: string
-  tokenAddress: string
-}
+import defaultToken from '../../images/default-token.svg';
+import send from '../../images/send.svg';
 
-export const TokenDetails = ({ tokenName, tokenBalance, tokenAddress }: TokenDetailsProps) => {
+export const TokenDetails = ({ token }: { token: Token }) => {
   return (
-    <Container>
-      <Box>
-      <Box>
-        <Heading>Token Name</Heading>
-        <Text>{tokenName}</Text>
-        <Heading>Address</Heading>
-        <Copyable value={tokenAddress} />
-        <Heading>Balance</Heading>
-        <Text>{tokenBalance}</Text>
+    <Box direction="vertical" alignment="start">
+      <Box direction="horizontal" alignment="start">
+        <Button name="token-cancel">
+          <Icon name="arrow-left" />
+        </Button>
+        <Text>
+          <Bold>{token.symbol}</Bold>
+        </Text>
       </Box>
+      <Box direction="horizontal" alignment="start">
+        <Text> </Text>
       </Box>
-      <Footer>
-        <Button name="token-cancel">Go back</Button>
-      </Footer>
-    </Container>
+      <Box direction="horizontal" alignment="start">
+        <Heading size="md">Your balance</Heading>
+      </Box>
+      <Box direction="horizontal" alignment="space-between">
+        <Box alignment="space-between" direction="horizontal">
+          <Box alignment="center" direction="horizontal">
+            <Box alignment="center" direction="vertical">
+              <Image src={defaultToken} />
+            </Box>
+            <Box direction="vertical" alignment="center">
+              <Text>{token.symbol}</Text>
+            </Box>
+          </Box>
+        </Box>
+        <Box direction="vertical" alignment="end">
+          <Text>
+            {token.balance} {token.symbol}
+          </Text>
+        </Box>
+      </Box>
+      <Box direction="horizontal" alignment="start">
+        <Text> </Text>
+      </Box>
+      <Box direction="horizontal" alignment="start">
+        <Heading size="md">Token details</Heading>
+      </Box>
+      <Box direction="horizontal" alignment="space-between">
+        <Text>Contract address</Text>
+        <Copyable value={token.address} />
+      </Box>
+      {Boolean(token.uri) && (
+        <Box direction="horizontal" alignment="space-between">
+          <Text>Token URI</Text>
+          <Link href={token.uri!}>Open</Link>
+        </Box>
+      )}
+      {Boolean(token.tokenId) && (
+        <Box direction="horizontal" alignment="space-between">
+          <Text>Token ID</Text>
+          <Text>{token.tokenId!}</Text>
+        </Box>
+      )}
+      {Boolean(token.image) && (
+        <Box direction="horizontal" alignment="space-between">
+          <Image src={token.image!} />
+        </Box>
+      )}
+      {Boolean(token.decimals) && (
+        <Box direction="horizontal" alignment="space-between">
+          <Text>Token decimals</Text>
+          <Text>{token.decimals}</Text>
+        </Box>
+      )}
+      <Box direction="vertical">
+        <Text>Token list</Text>
+        <Text>{token.name}</Text>
+      </Box>
+      <Box direction="horizontal" alignment="start">
+        <Text> </Text>
+      </Box>
+      <Button
+        variant="destructive"
+        name={`confirm-hide-token-${token.address}`}
+      >
+        Hide token
+      </Button>
+    </Box>
   );
-}
+};

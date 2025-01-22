@@ -1,6 +1,11 @@
 import type { DefaultTheme } from 'styled-components';
 import { createGlobalStyle } from 'styled-components';
 
+import SofiaProBold from '../fonts/SofiaProBold.otf';
+import SofiaProMedium from '../fonts/SofiaProMedium.otf';
+import SofiaProRegular from '../fonts/SofiaProRegular.otf';
+import SofiaProSemiBold from '../fonts/SofiaProSemiBold.otf';
+
 const breakpoints = ['600px', '768px', '992px'];
 
 /**
@@ -15,14 +20,15 @@ const theme = {
   fontSizes: {
     heading: '5.2rem',
     mobileHeading: '3.6rem',
-    title: '2.4rem',
-    large: '2rem',
+    title: '1.8rem',
+    large: '1.7rem',
     text: '1.6rem',
     small: '1.4rem',
   },
   radii: {
-    default: '24px',
-    button: '8px',
+    default: '10px',
+    small: '16px',
+    button: '48px',
   },
   breakpoints,
   mediaQueries: {
@@ -42,34 +48,33 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#FFFFFF',
-      alternative: '#F2F4F6',
-      inverse: '#141618',
+      default: '#F8F8FA',
+      content: '#FFFFFF',
     },
     icon: {
       default: '#141618',
       alternative: '#BBC0C5',
     },
     text: {
-      default: '#24272A',
-      muted: '#6A737D',
-      alternative: '#535A61',
-      inverse: '#FFFFFF',
-    },
-    border: {
-      default: '#BBC0C5',
+      default: '#131313',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
+      hover: '#0C8A6F',
       inverse: '#FFFFFF',
+    },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
     },
     card: {
       default: '#FFFFFF',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
@@ -81,9 +86,8 @@ export const light: DefaultTheme = {
 export const dark: DefaultTheme = {
   colors: {
     background: {
-      default: '#24272A',
-      alternative: '#141618',
-      inverse: '#FFFFFF',
+      default: '#041C41',
+      content: '#11284B',
     },
     icon: {
       default: '#FFFFFF',
@@ -91,24 +95,24 @@ export const dark: DefaultTheme = {
     },
     text: {
       default: '#FFFFFF',
-      muted: '#FFFFFF',
-      alternative: '#D6D9DC',
-      inverse: '#24272A',
-    },
-    border: {
-      default: '#848C96',
+      link: '#0EB592',
     },
     primary: {
-      default: '#6F4CFF',
+      default: '#0EB592',
+      hover: '#0C8A6F',
       inverse: '#FFFFFF',
     },
+    secondary: {
+      default100: '#11DEB3',
+      default10: 'rgba(14, 181, 146, 0.1)',
+    },
     card: {
-      default: '#141618',
+      default: '#11284B',
     },
     error: {
-      default: '#d73a49',
-      alternative: '#b92534',
-      muted: '#d73a4919',
+      default: '#F86E6E',
+      default10: 'rgba(248, 110, 110, 0.3)',
+      hover: 'rgba(248, 110, 110, 0.4)',
     },
   },
   ...theme,
@@ -121,6 +125,14 @@ export const dark: DefaultTheme = {
  * @returns Global style React component.
  */
 export const GlobalStyle = createGlobalStyle`
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url(${SofiaProRegular}) format('opentype'), url(${SofiaProMedium}) format('opentype'), local('Sofia Pro'), url(${SofiaProSemiBold}) format('opentype'), url(${SofiaProBold}) format('opentype');
+  font-weight: 400,500,600,700;
+  font-style: normal;
+}
+
   html {
     /* 62.5% of the base size of 16px = 10px.*/
     font-size: 62.5%;
@@ -129,9 +141,11 @@ export const GlobalStyle = createGlobalStyle`
   body {
     background-color: ${(props) => props.theme.colors.background?.default};
     color: ${(props) => props.theme.colors.text?.default};
-    font-family: ${(props) => props.theme.fonts.default};
+    //font-family: ${(props) => props.theme.fonts.default};
+    font-family: "Sofia Pro";
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
+    display: flex;
   }
 
   * {
@@ -154,34 +168,6 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   button {
-    font-size: ${(props) => props.theme.fontSizes.small};
-    border-radius: ${(props) => props.theme.radii.button};
-    background-color: ${(props) => props.theme.colors.background?.inverse};
-    color: ${(props) => props.theme.colors.text?.inverse};
-    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-    font-weight: bold;
-    padding: 1rem;
-    min-height: 4.2rem;
-    cursor: pointer;
-    transition: all .2s ease-in-out;
-
-    &:hover {
-      background-color: transparent;
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-      color: ${(props) => props.theme.colors.text?.default};
-    }
-
-    &:disabled,
-    &[disabled] {
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-      cursor: not-allowed;
-    }
-
-    &:disabled:hover,
-    &[disabled]:hover {
-      background-color: ${(props) => props.theme.colors.background?.inverse};
-      color: ${(props) => props.theme.colors.text?.inverse};
-      border: 1px solid ${(props) => props.theme.colors.background?.inverse};
-    }
+    font-family: "Sofia Pro";
   }
 `;
