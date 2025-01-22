@@ -1,8 +1,8 @@
 import type { Snap } from '../types';
-import { shouldDisplayReconnectButton } from './button';
-import { isLocalSnap } from './snap';
+import { shouldDisplayReconnectButton } from '../utils/button';
+import { isLocalSnap } from '../utils/snap';
 
-jest.mock('./snap', () => ({
+jest.mock('../utils/snap', () => ({
   isLocalSnap: jest.fn(),
 }));
 

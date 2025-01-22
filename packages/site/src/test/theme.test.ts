@@ -1,7 +1,7 @@
-import { getLocalStorage, setLocalStorage } from './localStorage';
-import { getThemePreference } from './theme';
+import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
+import { getThemePreference } from '../utils/theme';
 
-jest.mock('./localStorage');
+jest.mock('../utils/localStorage');
 
 describe('getThemePreference', () => {
   beforeEach(() => {

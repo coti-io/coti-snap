@@ -1,4 +1,4 @@
-import { isLocalSnap } from './snap';
+import { isLocalSnap } from '../utils/snap';
 
 describe('isLocalSnap', () => {
   it('should return true for local snap ID', () => {

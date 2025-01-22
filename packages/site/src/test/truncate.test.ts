@@ -1,4 +1,4 @@
-import { truncateString } from './truncate';
+import { truncateString } from '../utils/truncate';
 
 describe('truncateString', () => {
   it('should return the original string if its length is 10 or less', () => {

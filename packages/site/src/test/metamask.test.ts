@@ -2,7 +2,7 @@ import {
   hasSnapsSupport,
   getMetaMaskEIP6963Provider,
   getSnapsProvider,
-} from './metamask';
+} from '../utils/metamask';
 
 describe('metamask utils', () => {
   describe('hasSnapsSupport', () => {

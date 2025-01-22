@@ -1,4 +1,4 @@
-import { getLocalStorage, setLocalStorage } from './localStorage';
+import { getLocalStorage, setLocalStorage } from '../utils/localStorage';
 
 describe('getLocalStorage', () => {
   it('should return the value from local storage if the key exists', () => {
