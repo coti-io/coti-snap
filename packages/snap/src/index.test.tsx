@@ -1,9 +1,7 @@
-import { decrypt, encodeKey, encodeString, encrypt } from '@coti-io/coti-sdk-typescript';
-import { expect } from '@jest/globals';
-import { error } from '@metamask/snaps-cli/dist/utils/logging.cjs';
+import { decrypt, encodeKey } from '@coti-io/coti-sdk-typescript';
 import { installSnap } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import type { RequestOptions, SnapConfirmationInterface, SnapRequest } from "@metamask/snaps-simulation";
+import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
 
 describe('onRpcRequest', () => {
   it('handles encryption with a valid AES key', async () => {
