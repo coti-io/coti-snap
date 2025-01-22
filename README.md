@@ -14,7 +14,8 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 Clone the COTI-snap-monorepo repository and set up the development environment:
 
 ```shell
-yarn install && yarn start
+yarn install
+yarn start
 ```
 
 To check/test the last changes to be integrated switch from the `main` branch to the `develop` branch.
