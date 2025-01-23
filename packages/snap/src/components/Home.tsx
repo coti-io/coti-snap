@@ -6,6 +6,7 @@ import {
   Divider,
   Heading,
   Link,
+  Icon,
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
 
@@ -104,7 +105,9 @@ export const Home = ({
         </Box>
       </Section>
       <Box alignment="start" direction="horizontal">
-        <Button name="settings-button">Settings</Button>
+        <Button name="settings-button">
+          <Icon name="setting" color="primary" size="md" />
+        </Button>
       </Box>
     </Box>
   );
