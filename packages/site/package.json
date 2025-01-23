@@ -30,6 +30,7 @@
     "@coti-io/coti-ethers": "1.0.2",
     "@metamask/providers": "^16.0.0",
     "@tanstack/react-query": "^5.62.9",
+    "jest-fixed-jsdom": "^0.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",
@@ -73,7 +74,7 @@
     "prettier-plugin-packagejson": "^2.2.18",
     "rimraf": "^3.0.2",
     "ts-jest": "^29.2.5",
-    "typescript": "^4.7.4"
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=18.6.0"

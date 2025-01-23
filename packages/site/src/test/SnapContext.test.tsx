@@ -7,8 +7,8 @@ import { SnapProvider, useSnap } from '../hooks/SnapContext';
 import { useInvokeSnap } from '../hooks/useInvokeSnap';
 import { useMetaMask } from '../hooks/useMetaMask';
 
-jest.mock('./useInvokeSnap');
-jest.mock('./useMetaMask');
+jest.mock('../hooks/useInvokeSnap');
+jest.mock('../hooks/useMetaMask');
 jest.mock('wagmi');
 
 const mockUseInvokeSnap = useInvokeSnap as jest.MockedFunction<
@@ -40,7 +40,7 @@ describe('SnapContext', () => {
     });
   });
 
-  const TestComponent = () => {
+  const TestComponent = (): JSX.Element => {
     const {
       userHasAESKey,
       setAESKey,
@@ -58,40 +58,42 @@ describe('SnapContext', () => {
     } = useSnap();
 
     return (
-      <div>
-        <button
-          onClick={() => {
-            setAESKey().catch(console.error);
-          }}
-        >
-          Set AES Key
-        </button>
-        <button
-          onClick={() => {
-            getAESKey().catch(console.error);
-          }}
-        >
-          Get AES Key
-        </button>
-        <button
-          onClick={() => {
-            deleteAESKey().catch(console.error);
-          }}
-        >
-          Delete AES Key
-        </button>
-        <button onClick={handleShowDelete}>Toggle Delete</button>
-        <input
-          value={onboardContractAddress}
-          onChange={handleOnChangeContactAddress}
-        />
-        <button onClick={handleCancelOnboard}>Cancel Onboard</button>
-        <div>{loading ? 'Loading...' : 'Not Loading'}</div>
-        <div>{settingAESKeyError ? 'Error' : 'No Error'}</div>
-        <div>{showDelete ? 'Show Delete' : 'Hide Delete'}</div>
-        <div>{userHasAESKey ? 'Has AES Key' : 'No AES Key'}</div>
-        <div>{userAESKey}</div>
-      </div>
+      <>
+        <div>
+          <button
+            onClick={() => {
+              setAESKey().catch(console.error);
+            }}
+          >
+            Set AES Key
+          </button>
+          <button
+            onClick={() => {
+              getAESKey().catch(console.error);
+            }}
+          >
+            Get AES Key
+          </button>
+          <button
+            onClick={() => {
+              deleteAESKey().catch(console.error);
+            }}
+          >
+            Delete AES Key
+          </button>
+          <button onClick={handleShowDelete}>Toggle Delete</button>
+          <input
+            value={onboardContractAddress}
+            onChange={handleOnChangeContactAddress}
+          />
+          <button onClick={handleCancelOnboard}>Cancel Onboard</button>
+          <div>{loading ? 'Loading...' : 'Not Loading'}</div>
+          <div>{settingAESKeyError ? 'Error' : 'No Error'}</div>
+          <div>{showDelete ? 'Show Delete' : 'Hide Delete'}</div>
+          <div>{userHasAESKey ? 'Has AES Key' : 'No AES Key'}</div>
+          <div>{userAESKey}</div>
+        </div>
+      </>
     );
   };
 

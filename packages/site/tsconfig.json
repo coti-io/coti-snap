@@ -2,8 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "baseUrl": "./",
+    "allowJs": true,
     "resolveJsonModule": true,
-    "jsx": "preserve"
+    "jsx": "react-jsx"
   },
   "include": ["src", "gatsby-browser.tsx", "gatsby-config.ts", "gatsby-ssr.tsx"]
 }

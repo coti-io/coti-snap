@@ -1,10 +1,13 @@
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'jest-fixed-jsdom',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  testPathIgnorePatterns: ["/node_modules/"],
+  transformIgnorePatterns: [
+    "node_modules/(?!(wagmi)|@wagmi)/",
+  ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    "^.+\\.(t|j)sx?$": "ts-jest",
   },
   testMatch: ['<rootDir>/src/test/**/*.(spec|test).(ts|tsx|js|jsx)'],
 };
