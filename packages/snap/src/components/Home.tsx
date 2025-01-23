@@ -9,6 +9,7 @@ import {
   Icon,
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
+import { toEventSelector } from 'viem';
 
 import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens } from '../types';
@@ -99,15 +100,17 @@ export const Home = ({
                   <TokenAdded key={token.address} token={token} />
                 ))
             ) : (
-              <Text>No tokens was added yet</Text>
+              <Text>
+                {tokenView === TokenViewSelector.ERC20
+                  ? 'No tokens have been added.'
+                  : 'No NFTs have been added.'}
+              </Text>
             )}
           </Box>
         </Box>
       </Section>
       <Box alignment="start" direction="horizontal">
-        <Button name="settings-button">
-          <Icon name="setting" color="primary" size="md" />
-        </Button>
+        <Button name="settings-button">COTI Companion Dapp</Button>
       </Box>
     </Box>
   );
