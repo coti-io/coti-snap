@@ -23,7 +23,7 @@
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!**/CHANGELOG.md' '**/*.yml' --ignore-path .gitignore",
     "start": "yarn workspaces foreach --parallel --interlaced --verbose run start",
-    "test": "yarn workspace snap run test"
+    "test": "yarn workspaces foreach run test"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^3.0.0",
@@ -44,7 +44,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "prettier": "^2.7.1",
     "prettier-plugin-packagejson": "^2.2.18",
-    "sharp": "^0.32.6",
+    "sharp": "^0.33.5",
     "typescript": "^4.7.4"
   },
   "packageManager": "yarn@3.2.1",
