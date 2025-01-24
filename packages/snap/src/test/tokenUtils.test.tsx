@@ -35,7 +35,7 @@ describe('Token Utilities', () => {
         tokenURI: jest.fn().mockResolvedValue('encryptedURI'),
       };
       (ethers.Contract as jest.Mock).mockImplementation(() => mockContract);
-      (decryptString as jest.Mock).mockReturnValue('decryptedURI');
+      (decryptString as jest.Mock).mockReturnValue('https://decryptedURI');
 
       const uri = await tokenUtils.getTokenURI(
         '0xTokenAddress',
@@ -45,7 +45,7 @@ describe('Token Utilities', () => {
 
       expect(mockContract.tokenURI).toHaveBeenCalledWith(BigInt(123));
       expect(decryptString).toHaveBeenCalledWith('encryptedURI', 'mockAESKey');
-      expect(uri).toBe('decryptedURI');
+      expect(uri).toBe('https://decryptedURI');
     });
 
     it('should return null when an error occurs', async () => {
