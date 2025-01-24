@@ -25,11 +25,11 @@ export enum TokenViewSelector {
 export type StateIdentifier = {
   chainId: string;
   address: string;
-}
+};
 
 export type GeneralState = {
   [chainId: string]: {
-    [address: string]: State
+    [address: string]: State;
   };
 };
 

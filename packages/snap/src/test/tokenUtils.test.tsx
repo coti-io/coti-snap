@@ -1,9 +1,9 @@
-import { ethers } from 'ethers';
 import { decryptString, decryptUint } from '@coti-io/coti-sdk-typescript';
+import { ethers } from 'ethers';
 
-import * as tokenUtils from '../utils/token';
-import { TokenViewSelector } from '../types';
 import { CHAIN_ID } from '../config';
+import { TokenViewSelector } from '../types';
+import * as tokenUtils from '../utils/token';
 
 jest.mock('ethers');
 jest.mock('@coti-io/coti-sdk-typescript', () => ({
@@ -23,7 +23,6 @@ global.ethereum = {
   request: jest.fn(),
 };
 
-
 describe('Token Utilities', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -40,7 +39,7 @@ describe('Token Utilities', () => {
       const uri = await tokenUtils.getTokenURI(
         '0xTokenAddress',
         '123',
-        'mockAESKey'
+        'mockAESKey',
       );
 
       expect(mockContract.tokenURI).toHaveBeenCalledWith(BigInt(123));
@@ -57,7 +56,7 @@ describe('Token Utilities', () => {
       const uri = await tokenUtils.getTokenURI(
         '0xTokenAddress',
         '123',
-        'mockAESKey'
+        'mockAESKey',
       );
 
       expect(uri).toBeNull();
@@ -127,18 +126,18 @@ describe('Token Utilities', () => {
         balanceOf: jest.fn().mockResolvedValue('1000'),
         accountEncryptionAddress: jest.fn().mockResolvedValue('mockEncryption'),
       };
-    
-      (ethers.Contract as jest.Mock)
-        .mockImplementation(() => mockERC20ConfidentialContract);
-    
+
+      (ethers.Contract as jest.Mock).mockImplementation(
+        () => mockERC20ConfidentialContract,
+      );
+
       const type = await tokenUtils.getTokenType('0xTokenAddress');
-    
+
       expect(type).toEqual({
         type: TokenViewSelector.ERC20,
         confidential: true,
       });
     });
-    
 
     it('should return UNKNOWN when neither ERC721 nor ERC20 is supported', async () => {
       const mockERC165Contract = {
@@ -164,15 +163,9 @@ describe('Token Utilities', () => {
     it('should return decrypted balance when valid', () => {
       (decryptUint as jest.Mock).mockReturnValue(12345);
 
-      const result = tokenUtils.decryptBalance(
-        1337n,
-        'mockAESKey'
-      );
+      const result = tokenUtils.decryptBalance(1337n, 'mockAESKey');
 
-      expect(decryptUint).toHaveBeenCalledWith(
-        1337n,
-        'mockAESKey'
-      );
+      expect(decryptUint).toHaveBeenCalledWith(1337n, 'mockAESKey');
       expect(result).toBe(12345);
     });
 
@@ -181,10 +174,7 @@ describe('Token Utilities', () => {
         throw new Error('Error');
       });
 
-      const result = tokenUtils.decryptBalance(
-        12345n,
-        'mockAESKey'
-      );
+      const result = tokenUtils.decryptBalance(12345n, 'mockAESKey');
 
       expect(result).toBeNull();
     });

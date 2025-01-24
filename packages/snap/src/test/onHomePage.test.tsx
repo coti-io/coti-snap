@@ -1,13 +1,13 @@
 import { installSnap } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import { TokenViewSelector } from '../types';
 import { setState } from '@metamask/snaps-simulation';
-import { WrongChain } from '../components/WrongChain'
 
+import { Home } from '../components/Home';
+import { WrongChain } from '../components/WrongChain';
+import { CHAIN_ID } from '../config';
+import { TokenViewSelector } from '../types';
 import * as snapUtils from '../utils/snap';
 import { checkChainId } from '../utils/token';
-import { CHAIN_ID } from '../config';
-import { Home } from '../components/Home';
 
 jest.mock('../utils/snap');
 jest.mock('../utils/token', () => ({
@@ -15,7 +15,6 @@ jest.mock('../utils/token', () => ({
 }));
 
 describe('onHomePage', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -25,7 +24,7 @@ describe('onHomePage', () => {
     mockJsonRpc({
       method: 'eth_chainId',
       result: `0x1`,
-    })
+    });
 
     const response = (await onHomePage()) as { response: { result: string } };
     expect(response.response.result).toRender(<WrongChain />);
@@ -34,17 +33,16 @@ describe('onHomePage', () => {
   it('renders Home with ERC20 view', async () => {
     const { onHomePage, mockJsonRpc } = await installSnap();
 
-
     mockJsonRpc({
       method: 'eth_chainId',
       result: `0x${parseInt(CHAIN_ID, 10).toString(16)}`,
-    })
+    });
     mockJsonRpc({
       method: 'eth_getBalance',
       result: `0x${parseInt('100', 10).toString(16)}`,
-    })
+    });
     const response = (await onHomePage()) as { response: { result: string } };
-    const result = response.response.result;
+    const { result } = response.response;
 
     expect(result).toRender(
       Home({
@@ -52,7 +50,7 @@ describe('onHomePage', () => {
         tokenBalances: [],
         tokenView: TokenViewSelector.ERC20,
         AESKey: null,
-      })
+      }),
     );
   });
 });
