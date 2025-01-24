@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 
-import { ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
+import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 
@@ -40,7 +40,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [settingAESKeyError, setSettingAESKeyError] = useState<boolean>(false);
   const [onboardContractAddress, setOnboardContractAddress] =
-    useState<`0x${string}`>(ONBOARD_CONTRACT_ADDRESS);
+    useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
 
   const getWalletPermissions = async () => {
     const permissions: any[] = (await invokeSnap({
@@ -87,7 +87,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleCancelOnboard = () => {
-    setOnboardContractAddress(ONBOARD_CONTRACT_ADDRESS);
+    setOnboardContractAddress(USED_ONBOARD_CONTRACT_ADDRESS);
     setSettingAESKeyError(false);
   };
 

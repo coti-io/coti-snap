@@ -13,9 +13,9 @@ export const Settings = () => {
   return (
     <Container>
       <Box>
-        <Heading>Go to dapp to view your AES Key or delete it.</Heading>
+        <Heading>Visit the COTI companion dapp to manage your AES key.</Heading>
         <Box alignment="center" direction="horizontal">
-          <Link href={COMPANION_DAPP_LINK}>Go to dapp</Link>
+          <Link href={COMPANION_DAPP_LINK}>Go to companion dapp</Link>
         </Box>
       </Box>
       <Footer>
