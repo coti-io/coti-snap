@@ -83,8 +83,8 @@ export const onInstall: OnInstallHandler = async () => {
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-  const wrongChain = await checkChainId();
-  if (wrongChain) {
+  const chainCheck= await checkChainId();
+  if (!chainCheck) {
     return {
       content: <WrongChain />,
     };
