@@ -9,7 +9,10 @@ import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
 import { CHAIN_ID } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
-import { getStateByChainIdAndAddress, setStateByChainIdAndAddress } from './snap';
+import {
+  getStateByChainIdAndAddress,
+  setStateByChainIdAndAddress,
+} from './snap';
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -32,7 +35,11 @@ export const getTokenURI = async (
       provider,
     );
     const encryptedTokenURI = await contract.tokenURI!(BigInt(tokenId));
-    return decryptString(encryptedTokenURI, AESKey);
+    const decryptedURI = decryptString(encryptedTokenURI, AESKey);
+    if (!decryptedURI.startsWith('https://')) {
+      return null;
+    }
+    return decryptedURI;
   } catch (e) {
     console.error(e);
     return null;
@@ -188,14 +195,16 @@ export const checkChainId = async () => {
 export const checkIfERC20Unique = async (address: string) => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
-  return !(tokens.some((token) => token.address === address));
-}
+  return !tokens.some((token) => token.address === address);
+};
 
 export const checkIfERC721Unique = async (address: string, tokenId: string) => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
-  return !(tokens.some((token) => token.address === address && token.tokenId === tokenId));
-}
+  return !tokens.some(
+    (token) => token.address === address && token.tokenId === tokenId,
+  );
+};
 
 export const recalculateBalances = async () => {
   const state = await getStateByChainIdAndAddress();
@@ -302,7 +311,10 @@ export const hideToken = async (address: string) => {
   const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
   const updatedTokens = tokens.filter((token) => token.address !== address);
-  await setStateByChainIdAndAddress({ ...oldState, tokenBalances: updatedTokens });
+  await setStateByChainIdAndAddress({
+    ...oldState,
+    tokenBalances: updatedTokens,
+  });
 };
 
 export const truncateAddress = (address: string, length = 6): string => {
