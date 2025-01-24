@@ -29,7 +29,10 @@ import { TokenDetails } from './components/TokenDetails';
 import { WrongChain } from './components/WrongChain';
 import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
-import { getStateByChainIdAndAddress, setStateByChainIdAndAddress } from './utils/snap';
+import {
+  getStateByChainIdAndAddress,
+  setStateByChainIdAndAddress,
+} from './utils/snap';
 import {
   checkChainId,
   hideToken,
@@ -74,17 +77,17 @@ export const onInstall: OnInstallHandler = async () => {
   await ethereum.request({ method: 'eth_requestAccounts' });
   const state = await getStateByChainIdAndAddress();
   !state.balance &&
-    await setStateByChainIdAndAddress({
+    (await setStateByChainIdAndAddress({
       balance: '0',
       tokenBalances: [],
       AESKey: null,
       tokenView: TokenViewSelector.ERC20,
-    });
+    }));
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-  const wrongChain = await checkChainId();
-  if (wrongChain) {
+  const chainCheck = await checkChainId();
+  if (!chainCheck) {
     return {
       content: <WrongChain />,
     };
@@ -118,9 +121,8 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         if (tokenId) {
           return tkn.address === tokenAddress && tkn.tokenId === tokenId;
         }
-        return tkn.address === tokenAddress
-      }
-      );
+        return tkn.address === tokenAddress;
+      });
       if (token) {
         if (token.uri) {
           const tokenImageBase64 = await getSVGfromMetadata(token.uri);
@@ -258,7 +260,6 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           await recalculateBalances();
           await returnToHomePage(id);
-
         } catch (error) {
           console.error(error);
           await snap.request({

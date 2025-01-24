@@ -186,10 +186,7 @@ export const checkChainId = async () => {
 
   const chainId = await provider.getNetwork();
 
-  if (chainId.chainId.toString() !== CHAIN_ID) {
-    return true;
-  }
-  return false;
+  return chainId.chainId.toString() === CHAIN_ID;
 };
 
 export const checkIfERC20Unique = async (address: string) => {
