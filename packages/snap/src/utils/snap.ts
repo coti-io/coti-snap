@@ -3,7 +3,7 @@ import { getBIP44AddressKeyDeriver } from '@metamask/key-tree';
 import type { Component, DialogResult, Json } from '@metamask/snaps-sdk';
 import { DialogType, panel, type SnapsProvider } from '@metamask/snaps-sdk';
 import { BrowserProvider } from 'ethers';
-import { GeneralState, State, StateIdentifier } from 'src/types';
+import type { GeneralState, State, StateIdentifier } from 'src/types';
 
 declare const snap: SnapsProvider;
 
@@ -116,14 +116,14 @@ export async function setStateData<State>(data: State) {
 
 export const getStateByChainIdAndAddress = async (): Promise<State> => {
   const identifier = await getStateIdentifier();
-  const state = await getStateData<GeneralState>() || {};
+  const state = (await getStateData<GeneralState>()) || {};
   const { chainId, address } = identifier;
-  return state && state[chainId]?.[address] || {} as State;
-}
+  return (state && state[chainId]?.[address]) || ({} as State);
+};
 
 export const setStateByChainIdAndAddress = async (state: State) => {
   const identifier = await getStateIdentifier();
-  const oldState = await getStateData<GeneralState>() || {};
+  const oldState = (await getStateData<GeneralState>()) || {};
   const { chainId, address } = identifier;
   const newState = {
     ...oldState,
@@ -133,7 +133,7 @@ export const setStateByChainIdAndAddress = async (state: State) => {
     },
   };
   await setStateData<GeneralState>(newState);
-}
+};
 
 export const getStateIdentifier = async (): Promise<StateIdentifier> => {
   const provider = new BrowserProvider(ethereum);
@@ -143,4 +143,4 @@ export const getStateIdentifier = async (): Promise<StateIdentifier> => {
   const signerAddress = await signer.getAddress();
   const chainId = network.chainId.toString();
   return { chainId, address: signerAddress };
-}
+};

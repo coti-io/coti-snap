@@ -1,4 +1,6 @@
-export const getSVGfromMetadata = async (url: string): Promise<string | null> => {
+export const getSVGfromMetadata = async (
+  url: string,
+): Promise<string | null> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -24,4 +26,4 @@ export const getSVGfromMetadata = async (url: string): Promise<string | null> =>
     console.error(`Failed to fetch image: ${error}`);
     return null;
   }
-}
+};

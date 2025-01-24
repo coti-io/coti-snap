@@ -1,7 +1,7 @@
 import { decrypt, encodeKey } from '@coti-io/coti-sdk-typescript';
 import { installSnap } from '@metamask/snaps-jest';
-import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
 describe('onRpcRequest', () => {
   it('handles encryption with a valid AES key', async () => {
@@ -29,14 +29,18 @@ describe('onRpcRequest', () => {
     );
 
     await ui.ok();
-    const rpcResponse = await response as { response: { result: string } };
+    const rpcResponse = (await response) as { response: { result: string } };
     expect(rpcResponse).toRespondWith(expect.any(String));
     expect(rpcResponse.response.result).toBeDefined();
 
-    const result = rpcResponse.response.result;
-    const r = JSON.parse(result).r as Object
-    const ciphertext = JSON.parse(result).ciphertext as Object
-    const decryptResult = decrypt(encodeKey(aesKey), new Uint8Array([...Object.values(r)]), new Uint8Array([...Object.values(ciphertext)]))
+    const { result } = rpcResponse.response;
+    const r = JSON.parse(result).r as Object;
+    const ciphertext = JSON.parse(result).ciphertext as Object;
+    const decryptResult = decrypt(
+      encodeKey(aesKey),
+      new Uint8Array([...Object.values(r)]),
+      new Uint8Array([...Object.values(ciphertext)]),
+    );
     const decoder = new TextDecoder('utf-8');
     const decodedString = decoder.decode(decryptResult).replace(/^\u0000+/, '');
 
@@ -74,8 +78,10 @@ describe('onRpcRequest', () => {
     const rpcResponse = await response;
     expect(rpcResponse).toBeDefined();
 
-    const result = (rpcResponse.response as { result: string }).result;
-    const decryptResult = new Uint8Array([...Object.values(JSON.parse(result) as Object)]);
+    const { result } = rpcResponse.response as { result: string };
+    const decryptResult = new Uint8Array([
+      ...Object.values(JSON.parse(result) as Object),
+    ]);
     const decoder = new TextDecoder('utf-8');
     const decodedString = decoder.decode(decryptResult).replace(/^\u0000+/, '');
     expect(decodedString).toBe('Hello, encrypt!');
@@ -101,7 +107,7 @@ describe('onRpcRequest', () => {
 
     await ui.ok();
     const rpcResponse = await response;
-    const result = (rpcResponse.response as { result: null }).result;
+    const { result } = rpcResponse.response as { result: null };
     expect(result).toBeNull();
   });
 
@@ -129,7 +135,7 @@ describe('onRpcRequest', () => {
 
     await ui.ok();
     const rpcResponse = await response;
-    const result = (rpcResponse.response as { result: string }).result;
+    const { result } = rpcResponse.response as { result: string };
     expect(result).toBe(aesKey);
   });
 
