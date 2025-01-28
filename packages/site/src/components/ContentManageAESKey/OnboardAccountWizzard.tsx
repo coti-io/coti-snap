@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
-import  EditIcon from '../../assets/edit.svg';
+import EditIcon from '../../assets/edit.svg';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
@@ -82,7 +82,7 @@ export const OnboardAccountWizzard = ({
               onBlur={handleBlur}
             />
             <Edit onClick={handleIconClick}>
-              <img src={EditIcon} alt="Edit" />
+              <EditIcon />
             </Edit>
           </EditableInputContainer>
         </ContentInput>

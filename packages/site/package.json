@@ -19,6 +19,7 @@
     "react-dom": "^18.3.1",
     "styled-components": "^6.1.14",
     "viem": "^2.22.16",
+    "vite-plugin-svgr": "^4.3.0",
     "wagmi": "^2.14.9"
   },
   "devDependencies": {

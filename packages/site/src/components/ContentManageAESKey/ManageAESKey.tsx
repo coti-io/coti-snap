@@ -56,7 +56,7 @@ export const ManageAESKey = ({
             <>
               <AESInput type="text" value={userAESKey ?? ''} readOnly={true} />
               <IconContainer onClick={() => copyToClipboard(userAESKey ?? '')}>
-                {isCopied ? <img src={CheckIcon} alt="Check" />  : <img src={CopyIcon} alt="CopyIcon" />}
+                {isCopied ? <CheckIcon />  : <CopyIcon />}
               </IconContainer>
             </>
           ) : (
