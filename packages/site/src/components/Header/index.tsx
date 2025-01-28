@@ -7,9 +7,7 @@ export const Header = () => {
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        
-      <img src={COTILogo} className="logo react" alt="React logo" />
-      
+        <COTILogo />
         <ContentTitle>COTI</ContentTitle>
       </LogoWrapper>
       <ButtonsContainer>
