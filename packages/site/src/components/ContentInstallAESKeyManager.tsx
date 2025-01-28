@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useRequestSnap } from '../hooks';
 import { Button } from './Button';
 import { ContentContainer, ContentText, ContentTitle } from './styles';

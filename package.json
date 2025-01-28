@@ -54,7 +54,11 @@
   "lavamoat": {
     "allowScripts": {
       "@lavamoat/preinstall-always-fail": false,
-      "sharp": true
+      "sharp": true,
+      "viem>ws>bufferutil": false,
+      "viem>ws>utf-8-validate": false,
+      "wagmi>@wagmi/connectors>@walletconnect/ethereum-provider>@walletconnect/types>@walletconnect/keyvaluestorage>unstorage>listhen>@parcel/watcher": false,
+      "wagmi>@wagmi/connectors>cbw-sdk>keccak": false
     }
   },
   "dependencies": {

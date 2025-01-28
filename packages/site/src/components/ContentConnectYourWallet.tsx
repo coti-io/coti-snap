@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ContentText, ContentTitle } from './styles';
 
 export const ContentConnectYourWallet = () => {
