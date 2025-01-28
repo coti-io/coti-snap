@@ -13,7 +13,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100vw;
   min-height: 100vh;
   max-width: 100vw;
 `;
