@@ -1,3 +1,0 @@
-import { ONBOARD_CONTRACT_ADDRESS } from '@coti-io/coti-ethers';
-
-export const USED_ONBOARD_CONTRACT_ADDRESS = ONBOARD_CONTRACT_ADDRESS;
