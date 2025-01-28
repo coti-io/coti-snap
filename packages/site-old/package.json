@@ -1,5 +1,5 @@
 {
-  "name": "site",
+  "name": "site-old",
   "version": "0.1.0",
   "private": true,
   "license": "(MIT-0 OR Apache-2.0)",
@@ -11,7 +11,7 @@
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' --ignore-path .gitignore",
-    "start": "GATSBY_TELEMETRY_DISABLED=1 gatsby develop",
+    "starta": "GATSBY_TELEMETRY_DISABLED=1 gatsby develop",
     "test": "jest"
   },
   "browserslist": {
