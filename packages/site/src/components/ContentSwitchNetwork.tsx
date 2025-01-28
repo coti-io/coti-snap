@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSwitchChain } from 'wagmi';
 
 import { CHAIN_ID } from '../config/wagmi';

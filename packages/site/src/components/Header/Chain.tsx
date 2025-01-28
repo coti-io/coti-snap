@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useWrongChain } from '../../hooks';
 import { ConnectedDetails } from './styles';
 

@@ -1,43 +1,38 @@
-# TypeScript Example Snap Front-end
+# Coti Snap Companion DApp
 
-This project was bootstrapped with [Gatsby](https://www.gatsbyjs.com/).
+## Description
 
-## Available Scripts
+This is a complementary decentralized application (DApp) for Coti Snap. It provides additional functionalities and enhancements for the user experience.
 
-In the project directory, you can run:
+## Installation
 
-### `yarn start`
+1. Clone the repository:
+  ```bash
+  git clone https://github.com/protofire/coti-snap.git
+  ```
+2. Navigate to the project directory:
+  ```bash
+  cd coti-snap
+  ```
+3. Install the dependencies:
+  ```bash
+  yarn install
+  ```
 
-Runs the app in the development mode.\
-Open [http://localhost:8000](http://localhost:8000) to view it in the browser.
+## Usage
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. Start the application:
+  ```bash
+  yarn start
+  ```
+2. Open your browser and navigate to `http://localhost:8000`.
 
-### `yarn build`
+## Contribution
 
-Builds the app for production to the `public` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Contributions are welcome! Please follow these steps:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://www.gatsbyjs.com/docs/how-to/previews-deploys-hosting/) for more information.
-
-## Environment variables
-
-Gatsby has built-in support for loading environment variables into the browser and Functions. Loading environment variables into Node.js requires a small code snippet.
-
-In development, Gatsby will load environment variables from a file named `.env.development`. For builds, it will load from `.env.production`.
-
-By default you can use the `SNAP_ORIGIN` variable (used in `src/config/snap.ts`) to define a production origin for you snap (eg. `npm:MyPackageName`). If not defined it will defaults to `local:http://localhost:8080`.
-
-A `.env` file template is available, to use it rename `.env.production.dist` to `.env.production`
-
-To learn more visit [Gatsby documentation](https://www.gatsbyjs.com/docs/how-to/local-development/environment-variables/)
-
-## Learn More
-
-You can learn more in the [Gatsby documentation](https://www.gatsbyjs.com/docs/).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/new-feature`).
+3. Make your changes and commit them (`git commit -m 'Add new feature'`).
+4. Push your changes (`git push origin feature/new-feature`).
+5. Open a Pull Request.

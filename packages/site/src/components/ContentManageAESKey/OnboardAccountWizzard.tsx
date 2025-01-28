@@ -1,9 +1,9 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable id-length */
-import React, { useState } from 'react';
+ 
+ 
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
-import { ReactComponent as EditIcon } from '../../assets/edit.svg';
+import EditIcon from '../../assets/edit.svg';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';

@@ -1,25 +1,51 @@
-import type { FunctionComponent, ReactNode } from 'react';
+import './App.css'
 import styled from 'styled-components';
+import { ContentManageAESKey, ContentSwitchNetwork, Header } from './components';
+import { useMetaMask, useWrongChain } from './hooks';
+import { useSnap } from './hooks/SnapContext';
+import { useAccount } from 'wagmi';
+import { ContentInstallAESKeyManager } from './components/ContentInstallAESKeyManager';
 
-import { GlobalStyle } from './config/theme';
-
-const Wrapper = styled.div`
+const Container = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100vw;
-  min-height: 100vh;
-  max-width: 100vw;
+  margin: auto;
+  width: 564px;
+  height: 100%;
+  gap: 24px;
+  box-sizing: border-box;
+  ${({ theme }) => theme.mediaQueries.small} {
+    width: 100%;
+    padding: 1.6rem;
+    margin: 0;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
 `;
 
-export type AppProps = {
-  children: ReactNode;
-};
+function App() {
+  const { installedSnap } = useMetaMask();
 
-export const App: FunctionComponent<AppProps> = ({ children }) => {
+  const { userHasAESKey } = useSnap();
+  const { isConnected } = useAccount();
+  const { wrongChain } = useWrongChain();
+
+  if (isConnected && wrongChain) {
+    <ContentSwitchNetwork />;
+  }
+
   return (
-    <>
-      <GlobalStyle />
-      <Wrapper>{children}</Wrapper>
-    </>
-  );
-};
+<Container>
+  <Header />
+  {isConnected && wrongChain ? (
+        <ContentSwitchNetwork />
+      ) : installedSnap ? (
+        <ContentManageAESKey userHasAESKey={userHasAESKey} />
+      ) : (
+        <ContentInstallAESKeyManager />
+      )}
+</Container>
+  )
+}
+
+export default App

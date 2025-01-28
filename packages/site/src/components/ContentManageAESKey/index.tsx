@@ -1,5 +1,4 @@
-/* eslint-disable no-nested-ternary */
-import React from 'react';
+ 
 
 import { useSnap } from '../../hooks/SnapContext';
 import { ContentContainer } from '../styles';

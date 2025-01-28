@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
 import { shouldDisplayReconnectButton } from '../utils';
 import { Button } from './Button';

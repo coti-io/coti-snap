@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { ReactComponent as CheckIcon } from '../../assets/check.svg';
-import { ReactComponent as CopyIcon } from '../../assets/copy.svg';
+import CheckIcon  from '../../assets/check.svg';
+import CopyIcon  from '../../assets/copy.svg';
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
 import { Loading } from '../Loading';
@@ -56,7 +56,7 @@ export const ManageAESKey = ({
             <>
               <AESInput type="text" value={userAESKey ?? ''} readOnly={true} />
               <IconContainer onClick={() => copyToClipboard(userAESKey ?? '')}>
-                {isCopied ? <CheckIcon /> : <CopyIcon />}
+                {isCopied ? <CheckIcon />  : <CopyIcon />}
               </IconContainer>
             </>
           ) : (
