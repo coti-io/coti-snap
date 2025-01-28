@@ -14,7 +14,8 @@
   "license": "(MIT-0 OR Apache-2.0)",
   "author": "",
   "workspaces": [
-    "packages/*"
+    "packages/site-vite",
+    "packages/snap"
   ],
   "scripts": {
     "build": "yarn workspaces foreach --parallel --topological --verbose run build",
@@ -54,16 +55,13 @@
   "lavamoat": {
     "allowScripts": {
       "@lavamoat/preinstall-always-fail": false,
-      "sharp": true,
-      "viem>ws>bufferutil": false,
-      "viem>ws>utf-8-validate": false,
-      "wagmi>@wagmi/connectors>@walletconnect/ethereum-provider>@walletconnect/types>@walletconnect/keyvaluestorage>unstorage>listhen>@parcel/watcher": false,
-      "wagmi>@wagmi/connectors>cbw-sdk>keccak": false
+      "sharp": true
     }
   },
   "dependencies": {
     "@metamask/utils": "^11.0.1",
     "@tanstack/react-query": "^5.62.9",
+    "crypto-browserify": "^3.12.1",
     "ethers": "^6.13.5",
     "viem": "2.x",
     "wagmi": "^2.14.5"
