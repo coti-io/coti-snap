@@ -7,7 +7,39 @@ COTI AES key manager is a Metamask extension that allows you to:
 - Encrypt and decrypt data.
 - Manage your AES key,
 
-## How to use it in your dapp
+## For users
+
+### How to install it
+
+Go to COTI AES key manager Companion dapp to install it in your Metamask wallet.
+
+### How to use it
+
+#### Generate AES key
+
+1. Once installed you can view it in Metamask > Menu (the three dots on the top right) > COTI.
+
+2. You will need to generate your AES key to be able to see the tokens you add, to do this click on `Onboard account`, this will redirect you to the dapp companion.
+
+3. Once in the dapp, you will be able to generate your AES key, you will need to connect to wallet and switch to the COTI network to generate it.
+
+4. Once generated, you will be able to view or delete it from the dapp companion.
+
+#### Add token
+
+1. Select in the tabs the type of token, (Tokens / NFT).
+
+2. Click on `add token`.
+
+3. If you are adding a token (erc20), add the contract address of the token, if the token is in the COTI network, the other data will be added automatically, otherwise the missing data will be added.
+
+  If you are adding an NFT (erc721), add the NFT contract address and the token ID.
+
+4. You are done! The token will appear in the COTI AES key manager home.
+
+## For devs
+
+### How to use it in your dapp
 
 0. This assumes you have COTI AES key manager installed on your Memamask, if not, you can add it from here.
 
@@ -127,13 +159,17 @@ To decrypt
   };
 ```
 
-## Getting Started
+### More info
+
+If you need more information you can check the [Metamask documentation](https://docs.metamask.io/snaps/).
+
+### Getting Started
 
 ```shell
 yarn install
 yarn start
 ```
 
-## Testing
+### Testing
 
 To test the snap, run `yarn test` in this directory.
