@@ -1,6 +1,8 @@
 import { defineChain } from 'viem';
 import { http, createConfig } from 'wagmi';
 
+export const CONNECTOR_ID = 'io.metamask.flask';
+
 export const CHAIN_ID = 7082400;
 
 export const COTI = defineChain({

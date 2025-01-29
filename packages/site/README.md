@@ -27,6 +27,17 @@ This is a complementary decentralized application (DApp) for Coti Snap. It provi
   ```
 2. Open your browser and navigate to `http://localhost:8000`.
 
+## Once the snap is in production
+
+1. Go to `src/config/snap.ts` and change the url to the url where the snap is hosted.
+2. Go to `src/config/wagmi.ts` and change `CONNECTOR_ID` to `metamask.io` to use regular MM instead of regular MM.
+3. Go to `src/components/Header/HeaderButtons.tsx` and delete the Flask conditional:
+```
+  {!isFlask && !installedSnap ? (
+    <InstallFlaskButton />
+  ) : (
+```
+
 ## Contribution
 
 Contributions are welcome! Please follow these steps:
