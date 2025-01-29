@@ -1,6 +1,6 @@
 import { useAccount, useConnect } from 'wagmi';
 
-import { config } from '../../config/wagmi';
+import { config, CONNECTOR_ID } from '../../config/wagmi';
 import { useMetaMask } from '../../hooks';
 import { Button } from '../Button';
 import { ConnectedContainer, Link } from './styles';
@@ -29,7 +29,7 @@ export const HeaderButtons = () => {
           ) : (
             connectors.map(
               (connector) =>
-                connector.id === 'io.metamask.flask' && (
+                connector.id === CONNECTOR_ID && (
                   <Button
                     key={connector.id}
                     text="Connect wallet"
