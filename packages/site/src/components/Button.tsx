@@ -8,6 +8,7 @@ type ButtonProps = {
   fullWith?: boolean;
   onClick?: (() => void) | (() => Promise<void>);
   disabled?: boolean;
+  icon?: React.ReactNode;
 };
 
 const getBackgroundColor = (props: any) => {
@@ -69,6 +70,9 @@ const ButtonStyle = styled.button<{
   $error?: boolean;
   $fullWith?: boolean;
 }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: ${(props) => props.theme.fontSizes.small};
   border-radius: ${(props) => props.theme.radii.button};
   background-color: ${getBackgroundColor};
@@ -96,13 +100,14 @@ const ButtonStyle = styled.button<{
   }
 `;
 
-export const Button: React.FC<ButtonProps> = ({
+export const Button: React.FC<ButtonProps & { icon?: React.ReactNode }> = ({
   text,
   primary = false,
   error = false,
   fullWith = false,
   onClick,
   disabled = false,
+  icon,
 }) => {
   return (
     <ButtonStyle
@@ -112,6 +117,7 @@ export const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
     >
+      {icon && <span style={{ marginRight: '8px' }}>{icon}</span>}
       {text}
     </ButtonStyle>
   );
