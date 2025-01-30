@@ -17,7 +17,6 @@
     "packages/*"
   ],
   "scripts": {
-    "allow-scripts": "yarn run allow-scripts --auto",
     "build": "yarn workspaces foreach --parallel --topological --verbose run build",
     "lint": "yarn lint:eslint && yarn lint:misc --check",
     "lint:eslint": "eslint . --cache --ext js,jsx,ts,tsx",
