@@ -27,6 +27,34 @@ This is a complementary decentralized application (DApp) for Coti Snap. It provi
   ```
 2. Open your browser and navigate to `http://localhost:8000`.
 
+## Deployment
+
+### Resources
+
+The minimum resources to run the dApp itself are:
+
+- 1 CPU
+- 1 GB RAM
+- 1.5 GB disk space
+
+### Prepare dapp to deploy
+
+1. if you are in the monorepo, go to the site folder
+```bash
+  cd packages/site
+```
+
+2. Run the following command to build:
+```bash
+  yarn build
+```
+
+3. This will create the `/dist` folder in the root of the project.
+
+4. Follow the steps of your deployer of choice ([Vercel](https://vercel.com/docs/getting-started-with-vercel), [Netlify](https://docs.netlify.com/), etc).
+
+5. If you are going to continue with the monorepo, remember to set the dapp is in `packages/site`.
+
 ## Once the snap is in production
 
 1. Go to `src/config/snap.ts` and change the url to the url where the snap is hosted.
