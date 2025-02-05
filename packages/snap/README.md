@@ -7,6 +7,8 @@ COTI AES key manager is a Metamask extension that allows you to:
 - Encrypt and decrypt data.
 - Manage your AES key,
 
+
+
 ## For users
 
 ### How to install it
@@ -17,13 +19,21 @@ Go to COTI AES key manager Companion dapp to install it in your Metamask wallet.
 
 #### Generate AES key
 
-1. Once installed you can view it in Metamask > Menu (the three dots on the top right) > COTI.
+1. Once installed you can view it in Metamask > Menu (the three dots on the top right) > Snaps > COTI.
 
 2. You will need to generate your AES key to be able to see the tokens you add, to do this click on `Onboard account`, this will redirect you to the dapp companion.
 
 3. Once in the dapp, you will be able to generate your AES key, you will need to connect to wallet and switch to the COTI network to generate it.
 
 4. Once generated, you will be able to view or delete it from the dapp companion.
+
+#### View AES key
+
+1. Once generated you can consult the EAS key manager to obtain it, for this go to companion dapp or go to Metamask > Menu (the three dots on the top right) > Snaps > COTI > COTI Companion Dapp > Go to comanion dapp.
+
+2. Once in the companion dapp, click on Reveal AES Key, this will ask you to sign in to query the manager for the key.
+
+3. Once obtained, you can copy it by clicking on the “copy” icon to the right of the input, once copied it will be hidden again, but you can request it again as many times as you want. 
 
 #### Add token
 
@@ -36,6 +46,8 @@ Go to COTI AES key manager Companion dapp to install it in your Metamask wallet.
   If you are adding an NFT (erc721), add the NFT contract address and the token ID.
 
 4. You are done! The token will appear in the COTI AES key manager home.
+
+
 
 ## For devs
 
