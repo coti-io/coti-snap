@@ -58,7 +58,7 @@ The minimum resources to run the dApp itself are:
 ## Once the snap is in production
 
 1. Go to `src/config/snap.ts` and change the url to the url where the snap is hosted.
-2. Go to `src/config/wagmi.ts` and change `CONNECTOR_ID` to `metamask.io` to use regular MM instead of regular MM.
+2. Go to `src/config/wagmi.ts` and change `CONNECTOR_ID` to `metamask.io` to use regular MM instead of MM Flask.
 3. Go to `src/components/Header/HeaderButtons.tsx` and delete the Flask conditional:
 ```
   {!isFlask && !installedSnap ? (
