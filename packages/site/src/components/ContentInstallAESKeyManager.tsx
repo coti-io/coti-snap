@@ -7,7 +7,7 @@ export const ContentInstallAESKeyManager = () => {
   const requestSnap = useRequestSnap();
   return (
     <ContentContainer>
-      <ContentTitle>Install MetaMask COTI Snap</ContentTitle>
+      <ContentTitle>Install the COTI MetaMask Snap</ContentTitle>
       <ContentText>
         Please install the COTI MetaMask snap to onboard your account. If you
         don't have the COTI snap installed you will be prompted to install it.
