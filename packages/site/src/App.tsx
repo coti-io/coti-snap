@@ -1,6 +1,11 @@
-import './App.css'
+import './App.css';
 import styled from 'styled-components';
-import { ContentManageAESKey, ContentSwitchNetwork, Header } from './components';
+import {
+  ContentConnectYourWallet,
+  ContentManageAESKey,
+  ContentSwitchNetwork,
+  Header,
+} from './components';
 import { useMetaMask, useWrongChain } from './hooks';
 import { useSnap } from './hooks/SnapContext';
 import { useAccount } from 'wagmi';
@@ -35,17 +40,21 @@ function App() {
   }
 
   return (
-<Container>
-  <Header />
-  {isConnected && wrongChain ? (
-        <ContentSwitchNetwork />
-      ) : installedSnap ? (
-        <ContentManageAESKey userHasAESKey={userHasAESKey} />
+    <Container>
+      <Header />
+      {isConnected ? (
+        wrongChain ? (
+          <ContentSwitchNetwork />
+        ) : installedSnap ? (
+          <ContentManageAESKey userHasAESKey={userHasAESKey} />
+        ) : (
+          <ContentInstallAESKeyManager />
+        )
       ) : (
-        <ContentInstallAESKeyManager />
+        <ContentConnectYourWallet />
       )}
-</Container>
-  )
+    </Container>
+  );
 }
 
-export default App
+export default App;

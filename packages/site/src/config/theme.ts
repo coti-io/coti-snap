@@ -20,10 +20,15 @@ const theme = {
   fontSizes: {
     heading: '5.2rem',
     mobileHeading: '3.6rem',
-    title: '1.8rem',
+    title: '2rem',
     large: '1.7rem',
     text: '1.6rem',
-    small: '1.4rem',
+    small: '1.6rem',
+  },
+  lineHeights: {
+    heading: '1.2',
+    title: '1.5',
+    text: '1.5',
   },
   radii: {
     default: '10px',

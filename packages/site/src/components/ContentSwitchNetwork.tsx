@@ -14,7 +14,7 @@ export const ContentSwitchNetwork = () => {
     <ContentContainer>
       <ContentTitle>Switch Network</ContentTitle>
       <ContentText>
-        It looks like you are not on the COTI network, please change network to
+        It looks like you are not on the COTI network, please switch network to
         continue.
       </ContentText>
       <Button primary text="Switch Network" onClick={handleSwitchChain} />

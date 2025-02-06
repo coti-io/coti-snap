@@ -20,6 +20,7 @@ import {
   EditableInputContainer,
   Link,
 } from './styles';
+import { ONBOARD_CONTRACT_LINK } from '../../config/onboard';
 
 export const OnboardAccountWizzard = ({
   handleOnboardAccount,
@@ -64,7 +65,7 @@ export const OnboardAccountWizzard = ({
       <>
         <ContentTitle>Onboard account</ContentTitle>
         <ContentText>
-          You are going to interact with the <Link>AccountOnboard.sol</Link>{' '}
+          You are about to interact with the <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>AccountOnboard.sol</Link>{' '}
           contract.
         </ContentText>
         <ContentInput>

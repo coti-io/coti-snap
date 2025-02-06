@@ -1,18 +1,24 @@
 import { useRequestSnap } from '../hooks';
 import { Button } from './Button';
 import { ContentContainer, ContentText, ContentTitle } from './styles';
-import Metamask  from '../assets/metamask_fox.svg';
+import Metamask from '../assets/metamask_fox.svg';
 
 export const ContentInstallAESKeyManager = () => {
   const requestSnap = useRequestSnap();
   return (
     <ContentContainer>
-      <ContentTitle>Connect to MetaMask COTI Snap</ContentTitle>
+      <ContentTitle>Install MetaMask COTI Snap</ContentTitle>
       <ContentText>
-        Please install the COTI MetaMask snap to onboard your account. If you don't have the COTI snap installed you will be prompted to install it.
+        Please install the COTI MetaMask snap to onboard your account. If you
+        don't have the COTI snap installed you will be prompted to install it.
       </ContentText>
 
-      <Button text="Connect with MetaMask" primary onClick={requestSnap} icon={<Metamask />} />
+      <Button
+        text="Install with MetaMask"
+        primary
+        onClick={requestSnap}
+        icon={<Metamask />}
+      />
     </ContentContainer>
   );
 };

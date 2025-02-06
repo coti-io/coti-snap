@@ -19,6 +19,12 @@ export const HeaderWrapper = styled.header`
   }
 `;
 
+export const ContentTitle = styled.p`
+  font-size: 2.4rem;
+  font-weight: bold;
+  margin: 0;
+`;
+
 export const LogoWrapper = styled.div`
   display: flex;
   flex-direction: row;
@@ -59,6 +65,7 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
   height: 31px;
   gap: 4px;
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   font-weight: 400;
   border-radius: ${(props) => props.theme.radii.small};
   background-color: ${(props) =>
@@ -79,6 +86,7 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
 
 export const Link = styled.a`
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   border-radius: ${(props) => props.theme.radii.button};
   background-color: ${(props) => props.theme.colors.primary?.default};
   color: ${(props) => props.theme.colors.primary?.inverse};
