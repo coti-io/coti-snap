@@ -26,6 +26,7 @@ export const ContentTitle = styled.p`
 
 export const ContentText = styled.p`
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   font-weight: medium;
   margin: 0;
 `;
@@ -88,6 +89,7 @@ export const IconContainer = styled.button<{ $isCopied?: boolean }>`
 
 export const ContentBoldText = styled.p`
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   font-weight: bold;
   margin: 0;
 `;
@@ -100,6 +102,7 @@ export const ContentButtons = styled.div`
 
 export const ContentErrorText = styled.p`
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   font-weight: medium;
   margin: 0;
   color: ${(props) => props.theme.colors.error?.default};

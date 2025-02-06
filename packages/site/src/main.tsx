@@ -1,5 +1,11 @@
 import { createRoot } from 'react-dom/client';
-import { StrictMode, createContext, useState, FunctionComponent, ReactNode } from 'react';
+import {
+  StrictMode,
+  createContext,
+  useState,
+  FunctionComponent,
+  ReactNode,
+} from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { WagmiProvider } from 'wagmi';
 import { MetaMaskProvider } from './hooks/MetamaskContext.js';
@@ -9,6 +15,7 @@ import { getThemePreference } from './utils/index.js';
 import App from './App.js';
 import { config } from './config/wagmi.js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Footer } from './components/Footer/index.jsx';
 
 const Wrapper = styled.div`
   display: flex;
@@ -35,9 +42,7 @@ export const Root: FunctionComponent<RootProps> = ({ children }) => {
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <MetaMaskProvider>
-            <SnapProvider>
-              { children }
-            </SnapProvider>
+            <SnapProvider>{children}</SnapProvider>
           </MetaMaskProvider>
         </QueryClientProvider>
       </WagmiProvider>
@@ -52,6 +57,7 @@ createRoot(document.getElementById('root')!).render(
     <Root>
       <Wrapper>
         <App />
+        <Footer />
       </Wrapper>
       <GlobalStyle />
     </Root>

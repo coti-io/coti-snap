@@ -74,6 +74,7 @@ const ButtonStyle = styled.button<{
   align-items: center;
   justify-content: center;
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   border-radius: ${(props) => props.theme.radii.button};
   background-color: ${getBackgroundColor};
   color: ${getColor};

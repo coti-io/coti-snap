@@ -18,6 +18,7 @@ const Rotate = styled.div`
 
 const ContentText = styled.p`
   font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
   font-weight: medium;
   margin: 0;
 `;
