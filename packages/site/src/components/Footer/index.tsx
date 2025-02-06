@@ -5,7 +5,7 @@ export const Footer = () => {
   return (
     <FooterContainer>
       <ContentText>
-        Powered by <Link>Metamask Snaps</Link>
+        Powered by <Link>MetaMask Snaps</Link>
       </ContentText>
       <ContentText>
         © 2025 COTI{' '}

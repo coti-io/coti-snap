@@ -4,7 +4,7 @@ export const FooterContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px;
+  padding: 35px 20px;
   gap: 10px;
   width: auto;
   ${({ theme }) => theme.mediaQueries.small} {
