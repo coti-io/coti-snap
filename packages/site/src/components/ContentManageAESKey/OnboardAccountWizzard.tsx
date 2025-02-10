@@ -1,5 +1,3 @@
- 
- 
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 
@@ -20,7 +18,7 @@ import {
   EditableInputContainer,
   Link,
 } from './styles';
-import { ONBOARD_CONTRACT_LINK } from '../../config/onboard';
+import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK } from '../../config/onboard';
 
 export const OnboardAccountWizzard = ({
   handleOnboardAccount,
@@ -65,7 +63,10 @@ export const OnboardAccountWizzard = ({
       <>
         <ContentTitle>Onboard account</ContentTitle>
         <ContentText>
-          You are about to interact with the <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>AccountOnboard.sol</Link>{' '}
+          You are about to interact with the{' '}
+          <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>
+            AccountOnboard.sol
+          </Link>{' '}
           contract.
         </ContentText>
         <ContentInput>
@@ -91,9 +92,24 @@ export const OnboardAccountWizzard = ({
           <Button text="Cancel" fullWith={true} onClick={handleCancel} />
           <Button primary text="Onboard" fullWith={true} onClick={setAESKey} />
         </ContentButtons>
-        {settingAESKeyError && (
+
+        {settingAESKeyError === 'accountBalanceZero' && (
+          <ContentErrorText>
+            Error onboarding account: Insufficient funds. Fund your account and
+            try again. Testnet funds available at{' '}
+            <Link target="_blank" href={COTI_FAUCET_LINK}>
+              https://faucet.coti.io
+            </Link>
+          </ContentErrorText>
+        )}
+        {settingAESKeyError === 'invalidAddress' && (
           <ContentErrorText>
             Error to onboard account, check the contract address
+          </ContentErrorText>
+        )}
+        {settingAESKeyError === 'unknownError' && (
+          <ContentErrorText>
+            Error to onboard account, try again
           </ContentErrorText>
         )}
       </>

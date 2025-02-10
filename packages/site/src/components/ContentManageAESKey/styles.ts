@@ -1,3 +1,4 @@
+import { setAESKeyErrorsType } from 'src/hooks/SnapContext';
 import styled from 'styled-components';
 
 export const ContentContainer = styled.div`
@@ -116,7 +117,7 @@ export const Link = styled.a`
 
 export const EditableInputContainer = styled.div<{
   $isEditable: boolean;
-  $isError: boolean;
+  $isError: setAESKeyErrorsType;
 }>`
   display: flex;
   align-items: center;
@@ -125,7 +126,7 @@ export const EditableInputContainer = styled.div<{
   background-color: ${(props) => props.theme.colors.background?.default};
   color: ${(props) => props.theme.colors.text?.default};
   border: ${(props) => {
-    if (props.$isError) {
+    if (props.$isError !== null) {
       return '1px solid #F86E6E';
     } else if (props.$isEditable) {
       return '1px solid #0EB592';
