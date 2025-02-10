@@ -29,7 +29,10 @@ export const Home = ({
   AESKey,
   tokenView,
 }: HomeProps) => {
-  const formatedBalance = parseFloat(formatEther(balance)).toFixed(2);
+  const formatedBalance = formatEther(balance).slice(
+    0,
+    formatEther(balance).indexOf('.') + 4,
+  );
   return (
     <Box>
       <Section>
