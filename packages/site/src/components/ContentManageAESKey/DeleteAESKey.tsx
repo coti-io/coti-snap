@@ -22,11 +22,12 @@ export const DeleteAESKey = ({
     <>
       <ContentTitle>Delete your AES Key</ContentTitle>
       <ContentBoldText>
-        Are you sure you want to remove your account?
+        Are you sure you want to remove the AES key from MetaMask account?
       </ContentBoldText>
       <ContentText>
-        Without your AES Key you will not be able to see your tokens and nfts,
-        you can also create another one to see your encrypted data.
+        Without your AES Key you won't be able to see your private tokens and
+        NFTs. You can acquire the AES back at anytime using a transaction to the
+        network.
       </ContentText>
       <ContentButtons>
         <Button text="Cancel" fullWith onClick={handleShowDelete} />

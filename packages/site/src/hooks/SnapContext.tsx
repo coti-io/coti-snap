@@ -95,7 +95,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const handleCancelOnboard = () => {
     setOnboardContractAddress(USED_ONBOARD_CONTRACT_ADDRESS);
-    setSettingAESKeyError('unknownError');
+    setSettingAESKeyError(null);
   };
 
   const setAESKey = async () => {
@@ -124,7 +124,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
       await signer
         .signMessage(
-          'You will be prompted to sign a message to set your AES key.',
+          'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.',
         )
         .then(async () => {
           await signer.generateOrRecoverAes(onboardContractAddress);

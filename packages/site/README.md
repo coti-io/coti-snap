@@ -7,24 +7,31 @@ This is a complementary decentralized application (DApp) for Coti Snap. It provi
 ## Installation
 
 1. Clone the repository:
-  ```bash
-  git clone https://github.com/protofire/coti-snap.git
-  ```
+
+```bash
+git clone https://github.com/protofire/coti-snap.git
+```
+
 2. Navigate to the project directory:
-  ```bash
-  cd coti-snap
-  ```
+
+```bash
+cd coti-snap
+```
+
 3. Install the dependencies:
-  ```bash
-  yarn install
-  ```
+
+```bash
+yarn install
+```
 
 ## Usage
 
 1. Start the application:
-  ```bash
-  yarn start
-  ```
+
+```bash
+yarn start
+```
+
 2. Open your browser and navigate to `http://localhost:8000`.
 
 ## Deployment
@@ -40,11 +47,13 @@ The minimum resources to run the dApp itself are:
 ### Prepare dapp to deploy
 
 1. if you are in the monorepo, go to the site folder
+
 ```bash
   cd packages/site
 ```
 
 2. Run the following command to build:
+
 ```bash
   yarn build
 ```
@@ -58,13 +67,7 @@ The minimum resources to run the dApp itself are:
 ## Once the snap is in production
 
 1. Go to `src/config/snap.ts` and change the url to the url where the snap is hosted.
-2. Go to `src/config/wagmi.ts` and change `CONNECTOR_ID` to `metamask.io` to use regular MM instead of MM Flask.
-3. Go to `src/components/Header/HeaderButtons.tsx` and delete the Flask conditional:
-```
-  {!isFlask && !installedSnap ? (
-    <InstallFlaskButton />
-  ) : (
-```
+2. Go to `src/config/wagmi.ts` and change `CONNECTOR_MM` from `CONNECTOR_MM_FLASK` to `CONNECTOR_MM_REGULAR` to use regular MM instead of MM Flask.
 
 ## Contribution
 

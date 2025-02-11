@@ -15,8 +15,12 @@ export const OnboardAccount = () => {
     <OnboardAccountWizzard handleOnboardAccount={handleOnboardAccount} />
   ) : (
     <>
-      <ContentTitle>Manage your AES Key</ContentTitle>
-      <ContentText>Start with the onboarding of your account</ContentText>
+      <ContentTitle>Onboard Account</ContentTitle>
+      <ContentText>
+        Start with onboarding your account so that your wallet could interact
+        with private chain data, for example: your balance in a private ERC20
+        token.
+      </ContentText>
       <Button primary text="Onboard account" onClick={handleOnboardAccount} />
     </>
   );

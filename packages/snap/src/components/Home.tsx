@@ -105,8 +105,8 @@ export const Home = ({
             ) : (
               <Text>
                 {tokenView === TokenViewSelector.ERC20
-                  ? 'No tokens have been added.'
-                  : 'No NFTs have been added.'}
+                  ? 'No tokens imported. Use the import button on the right...'
+                  : 'No NFTs imported. Use the import button on the right...'}
               </Text>
             )}
           </Box>
