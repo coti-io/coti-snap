@@ -9,6 +9,12 @@ import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 
+export type setAESKeyErrorsType =
+  | 'accountBalanceZero'
+  | 'invalidAddress'
+  | 'unknownError'
+  | null;
+
 type SnapContextProps = {
   setAESKey: () => Promise<void>;
   deleteAESKey: () => Promise<void>;
@@ -19,7 +25,7 @@ type SnapContextProps = {
   handleShowDelete: () => void;
   showDelete: boolean;
   loading: boolean;
-  settingAESKeyError: boolean;
+  settingAESKeyError: setAESKeyErrorsType;
   onboardContractAddress: `0x${string}`;
   handleOnChangeContactAddress: (
     inputEvent: React.ChangeEvent<HTMLInputElement>,
@@ -38,7 +44,8 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
   const [showDelete, setShowDelete] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [settingAESKeyError, setSettingAESKeyError] = useState<boolean>(false);
+  const [settingAESKeyError, setSettingAESKeyError] =
+    useState<setAESKeyErrorsType>(null);
   const [onboardContractAddress, setOnboardContractAddress] =
     useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
 
@@ -88,7 +95,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const handleCancelOnboard = () => {
     setOnboardContractAddress(USED_ONBOARD_CONTRACT_ADDRESS);
-    setSettingAESKeyError(false);
+    setSettingAESKeyError('unknownError');
   };
 
   const setAESKey = async () => {
@@ -106,7 +113,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       if (!isAddress(onboardContractAddress)) {
-        setSettingAESKeyError(true);
+        setSettingAESKeyError('invalidAddress');
         setLoading(false);
         return;
       }
@@ -142,8 +149,16 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         setUserHasAesKEY(true);
       }
     } catch (error) {
-      console.error('Error setting AES key:', error);
-      setSettingAESKeyError(true);
+      if (error instanceof Error) {
+        if (error.message.includes('Account balance is 0')) {
+          setSettingAESKeyError('accountBalanceZero');
+        } else {
+          console.error('Error setting AES key:', error.message);
+          setSettingAESKeyError('unknownError');
+        }
+      } else {
+        setSettingAESKeyError('unknownError');
+      }
     } finally {
       setLoading(false);
     }

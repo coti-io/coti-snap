@@ -18,6 +18,9 @@ const getBackgroundColor = (props: any) => {
   if (props.$primary) {
     return props.theme.colors.primary?.default;
   }
+  if (props.$disabled) {
+    return props.theme.colors.background?.default10;
+  }
   return props.theme.colors.background?.content;
 };
 
@@ -49,7 +52,7 @@ const getHoverBackgroundColor = (props: any) => {
 };
 
 const getHoverBorder = (props: any) => {
-  if (props.$error || props.$primary) {
+  if (props.$error || props.$primary || props.$disabled) {
     return 'none';
   }
   return `1px solid #0EB592`;
@@ -69,6 +72,7 @@ const ButtonStyle = styled.button<{
   $primary?: boolean;
   $error?: boolean;
   $fullWith?: boolean;
+  $disabled?: boolean;
 }>`
   display: flex;
   align-items: center;
@@ -86,7 +90,6 @@ const ButtonStyle = styled.button<{
   min-height: 4.2rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-
   &:hover {
     background-color: ${getHoverBackgroundColor};
     border: ${getHoverBorder};
@@ -94,10 +97,10 @@ const ButtonStyle = styled.button<{
   }
 
   &:disabled {
-    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
     cursor: not-allowed;
     background-color: ${(props) => props.theme.colors.background?.inverse};
     color: ${(props) => props.theme.colors.text?.inverse};
+    opacity: 0.5;
   }
 `;
 

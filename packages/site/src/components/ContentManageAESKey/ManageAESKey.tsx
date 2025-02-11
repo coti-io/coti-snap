@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import CheckIcon  from '../../assets/check.svg';
-import CopyIcon  from '../../assets/copy.svg';
+import CheckIcon from '../../assets/check.svg';
+import CopyIcon from '../../assets/copy.svg';
 import { useSnap } from '../../hooks/SnapContext';
 import { Button } from '../Button';
 import { Loading } from '../Loading';
@@ -56,7 +56,7 @@ export const ManageAESKey = ({
             <>
               <AESInput type="text" value={userAESKey ?? ''} readOnly={true} />
               <IconContainer onClick={() => copyToClipboard(userAESKey ?? '')}>
-                {isCopied ? <CheckIcon />  : <CopyIcon />}
+                {isCopied ? <CheckIcon /> : <CopyIcon />}
               </IconContainer>
             </>
           ) : (
@@ -64,7 +64,12 @@ export const ManageAESKey = ({
           )}
         </AESKeyContainer>
       </ContentInput>
-      <Button text="Reveal AES Key" primary={true} onClick={getAESKey} />
+      <Button
+        disabled={userAESKey !== null}
+        text="Reveal AES Key"
+        primary={true}
+        onClick={getAESKey}
+      />
       <Button text="Delete" primary={false} onClick={handleShowDelete} />
     </>
   );
