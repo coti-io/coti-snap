@@ -1,4 +1,6 @@
 <p align="center">
+    <img src=".github/coti_snap_header.jpg" alt="COTI Snap Header">
+    <br>
     <img src=".github/coti_snap_preview.jpg" alt="COTI Snap Preview">
     <br>
 </p>
