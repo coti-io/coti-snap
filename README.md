@@ -11,7 +11,7 @@ The COTI Snap allows users to onboard their COTI account, add and view balances 
 
 ## Usage
 
-Visit https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap for usage details.
+Visit [docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap](https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap) for usage details.
 
 ## Development
 
@@ -36,7 +36,7 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 
 ### dApp Integration Guide
 
-See https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap for a detailed integration guide.
+See [docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap](https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap) for a detailed integration guide.
 
 ### Testing and Linting
 
