@@ -1,17 +1,17 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "COTI Snap",
   "proposedName": "COTI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+    "url": "https://github.com/YaruLabs/coti-snap.git"
   },
   "source": {
-    "shasum": "Z1xQN/dj5XN8rg8MQOSV/0Upkzj5HYmEDPkCeBN81h8=",
+    "shasum": "U8xqzDB4QQeoHWXX1DNzCD3naBfDNIXD5mcfxvcZa5E=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
-        "packageName": "snap",
+        "packageName": "@yarulabs/coti-snap",
         "iconPath": "images/icon.svg",
         "registry": "https://registry.npmjs.org/"
       }
@@ -29,6 +29,6 @@
       "snaps": false
     }
   },
-  "platformVersion": "6.16.0",
+  "platformVersion": "6.24.0",
   "manifestVersion": "0.1"
 }

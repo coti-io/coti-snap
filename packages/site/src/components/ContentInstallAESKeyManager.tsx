@@ -1,7 +1,7 @@
+import Metamask from '../assets/metamask_fox.svg';
 import { useRequestSnap } from '../hooks';
 import { Button } from './Button';
 import { ContentContainer, ContentText, ContentTitle } from './styles';
-import Metamask from '../assets/metamask_fox.svg';
 
 export const ContentInstallAESKeyManager = () => {
   const requestSnap = useRequestSnap();

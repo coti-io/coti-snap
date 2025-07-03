@@ -42,7 +42,7 @@ import {
   getERC721Details,
   truncateAddress,
   checkIfERC20Unique,
-  checkIfERC721Unique,
+  checkIfERC721Unique
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {

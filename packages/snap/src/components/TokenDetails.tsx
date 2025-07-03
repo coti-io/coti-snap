@@ -8,14 +8,28 @@ import {
   Image,
   Link,
   Bold,
+  Section,
 } from '@metamask/snaps-sdk/jsx';
 import type { Token } from 'src/types';
+import { TokenViewSelector } from '../types';
 
-import defaultToken from '../../images/default-token.svg';
-import send from '../../images/send.svg';
+import defaultToken from '../../images/default.svg';
+import logo from '../../images/logo.svg';
 
 export const TokenDetails = ({ token }: { token: Token }) => {
-  return (
+  const renderNFTDetails = () => (
+    <Section>
+      <Box direction="vertical" alignment="center">
+        <Heading size="lg">My NFT</Heading>
+        <Image src={token.image || defaultToken} alt={`NFT ${token.name}`} />
+      </Box>
+      <Button name="token-cancel">
+        See in...
+      </Button>
+    </Section>
+  );
+
+  const renderTokenDetails = () => (
     <Box direction="vertical" alignment="space-between">
       <Box direction="vertical" alignment="start">
         <Box direction="horizontal">
@@ -37,7 +51,7 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Box alignment="space-between" direction="horizontal">
             <Box alignment="center" direction="horizontal">
               <Box alignment="center" direction="vertical">
-                <Image src={defaultToken} />
+                <Image src={logo} alt="Token logo" />
               </Box>
               <Box direction="vertical" alignment="center">
                 <Text>{token.name}</Text>
@@ -60,29 +74,29 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Text>Contract address</Text>
           <Copyable value={token.address} />
         </Box>
-        {Boolean(token.uri) && (
+        {token.uri ? (
           <Box direction="horizontal" alignment="space-between">
             <Text>Token URI</Text>
-            <Link href={token.uri!}>Open</Link>
+            <Link href={token.uri}>Open</Link>
           </Box>
-        )}
-        {Boolean(token.tokenId) && (
+        ) : null}
+        {token.tokenId ? (
           <Box direction="horizontal" alignment="space-between">
             <Text>Token ID</Text>
-            <Text>{token.tokenId!}</Text>
+            <Text>{token.tokenId}</Text>
           </Box>
-        )}
-        {Boolean(token.image) && (
+        ) : null}
+        {token.image ? (
           <Box direction="horizontal" alignment="space-between">
-            <Image src={token.image!} />
+            <Image src={token.image} alt={`${token.name} image`} />
           </Box>
-        )}
-        {Boolean(token.decimals) && (
+        ) : null}
+        {token.decimals ? (
           <Box direction="horizontal" alignment="space-between">
             <Text>Token decimals</Text>
             <Text>{token.decimals}</Text>
           </Box>
-        )}
+        ) : null}
       </Box>
       <Button
         variant="destructive"
@@ -92,4 +106,8 @@ export const TokenDetails = ({ token }: { token: Token }) => {
       </Button>
     </Box>
   );
+
+  return token.type === TokenViewSelector.NFT ? renderNFTDetails() : renderTokenDetails();
 };
+
+export default TokenDetails;
