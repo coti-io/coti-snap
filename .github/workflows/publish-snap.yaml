@@ -1,0 +1,78 @@
+name: Publish COTI Snap Package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/snap/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish-snap:
+    name: Build and Publish Snap
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.16.0'
+          registry-url: 'https://registry.npmjs.org/'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Auto-increment version
+        id: version
+        run: |
+          cd packages/snap
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          echo "Current version: $CURRENT_VERSION"
+          echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Update package.json
+          npx json -I -f package.json -e "this.version='$NEW_VERSION'"
+          
+          # Update snap.manifest.json
+          npx json -I -f snap.manifest.json -e "this.version='$NEW_VERSION'"
+
+      - name: Build Snap
+        run: |
+          cd packages/snap
+          yarn build
+
+      - name: Update shasum in manifest
+        run: |
+          cd packages/snap
+          yarn prepublishOnly
+
+      - name: Publish to npm
+        run: |
+          cd packages/snap
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit version changes
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add packages/snap/package.json packages/snap/snap.manifest.json
+          git commit -m "chore: bump snap version to ${{ steps.version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+          git push
