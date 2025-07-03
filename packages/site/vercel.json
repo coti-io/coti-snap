@@ -1,0 +1,14 @@
+{
+  "framework": "vite",
+  "buildCommand": "yarn build",
+  "outputDirectory": "dist",
+  "installCommand": "yarn install",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "github": {
+    "enabled": true,
+    "silent": true
+  }
+}

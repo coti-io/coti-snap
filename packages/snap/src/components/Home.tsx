@@ -7,15 +7,14 @@ import {
   Heading,
   Link,
   Icon,
+  Banner,
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
-import { toEventSelector } from 'viem';
 
 import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import { TokenAdded } from './TokenAdded';
-import { WrongChain } from './WrongChain';
 
 type HomeProps = {
   balance: bigint;
@@ -35,6 +34,13 @@ export const Home = ({
   );
   return (
     <Box>
+      {!AESKey && (
+        <Box direction="horizontal" alignment="center">
+          <Banner title="" severity="info">
+            <Text>To view your balances, you must first register your account. Click on the button below to get started</Text>
+          </Banner>
+        </Box>
+      )}
       <Section>
         <Box alignment="center" direction="vertical">
           <Box alignment="center" direction="horizontal">
@@ -48,9 +54,9 @@ export const Home = ({
               <Box direction="horizontal" alignment="center">
                 <Link href={COMPANION_DAPP_LINK}>Onboard account</Link>
               </Box>
-              <Box direction="horizontal" alignment="center">
-                <Text color="muted" alignment="center">
-                  Add your AES Key to view your encrypted tokens and NFTs{' '}
+              <Box direction="horizontal" alignment="space-around">
+                <Text color="muted" alignment="center" size="sm">
+                  Add your AES Key to view your tokens and NFTs
                 </Text>
               </Box>
             </Box>
@@ -112,8 +118,11 @@ export const Home = ({
           </Box>
         </Box>
       </Section>
-      <Box alignment="start" direction="horizontal">
-        <Button name="settings-button">COTI Companion Dapp</Button>
+      <Box direction="horizontal" alignment="start">
+        <Button name="settings-button">
+          <Icon name="setting" size="md" color="primary" />
+          Settings
+        </Button>
       </Box>
     </Box>
   );

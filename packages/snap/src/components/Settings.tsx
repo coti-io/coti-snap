@@ -1,26 +1,23 @@
 import {
-  Container,
-  Button,
-  Footer,
   Box,
   Heading,
   Link,
+  Section,
 } from '@metamask/snaps-sdk/jsx';
 
 import { COMPANION_DAPP_LINK } from '../config';
 
 export const Settings = () => {
   return (
-    <Container>
-      <Box>
-        <Heading>Visit the COTI companion dapp to manage your AES key.</Heading>
+    <Section alignment="center">
+      <Box alignment="center" direction="vertical">
         <Box alignment="center" direction="horizontal">
-          <Link href={COMPANION_DAPP_LINK}>Go to companion dapp</Link>
+          <Heading>Go to dapp to view your AES Key or delete it.</Heading>
         </Box>
       </Box>
-      <Footer>
-        <Button name="token-cancel">Go back</Button>
-      </Footer>
-    </Container>
+      <Box alignment="center" direction="horizontal">
+        <Link href={COMPANION_DAPP_LINK}>Go to dapp</Link>
+      </Box>
+    </Section>
   );
 };

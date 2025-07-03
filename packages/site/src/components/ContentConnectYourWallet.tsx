@@ -1,6 +1,7 @@
 import { useConnect } from 'wagmi';
-import { ContentContainer, ContentText, ContentTitle } from './styles';
+
 import { config } from '../config/wagmi';
+import { ContentContainer, ContentText, ContentTitle } from './styles';
 
 export const ContentConnectYourWallet = () => {
   const { connectors, connect } = useConnect({ config });

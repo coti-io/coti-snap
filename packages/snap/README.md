@@ -47,8 +47,6 @@ Go to COTI AES key manager Companion dapp to install it in your Metamask wallet.
 
 4. You are done! The token will appear in the COTI AES key manager home.
 
-
-
 ## For devs
 
 ### How to use it in your dapp

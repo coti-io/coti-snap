@@ -1,10 +1,10 @@
 import { defineChain } from 'viem';
 import { http, createConfig } from 'wagmi';
 
-export interface CONNECTOR {
+export type CONNECTOR = {
   ID: string;
   INSTALLATION_URL: string;
-}
+};
 
 const CONNECTOR_MM_FLASK: CONNECTOR = {
   ID: 'io.metamask.flask',

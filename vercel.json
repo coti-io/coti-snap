@@ -1,0 +1,8 @@
+{
+  "buildCommand": "yarn build",
+  "installCommand": "yarn install --frozen-lockfile",
+  "github": {
+    "enabled": true,
+    "silent": true
+  }
+}

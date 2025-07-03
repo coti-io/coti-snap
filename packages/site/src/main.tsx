@@ -1,21 +1,17 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { FunctionComponent, ReactNode } from 'react';
+import { StrictMode, createContext, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-  StrictMode,
-  createContext,
-  useState,
-  FunctionComponent,
-  ReactNode,
-} from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { WagmiProvider } from 'wagmi';
+
+import App from './App.js';
+import { Footer } from './components/Footer';
+import { dark, GlobalStyle, light } from './config/theme.js';
+import { config } from './config/wagmi.js';
 import { MetaMaskProvider } from './hooks/MetamaskContext.js';
 import { SnapProvider } from './hooks/SnapContext.js';
-import { dark, GlobalStyle, light } from './config/theme.js';
-import { getThemePreference } from './utils/index.js';
-import App from './App.js';
-import { config } from './config/wagmi.js';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Footer } from './components/Footer/index.jsx';
+import { getThemePreference } from './utils';
 
 const Wrapper = styled.div`
   display: flex;

@@ -63,7 +63,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       const caveat = ethAccountsPermission.caveats?.find(
         (_caveat: any) => _caveat.type === 'restrictReturnedAccounts',
       );
-      if (caveat?.value?.length > 0) {
+      if (caveat?.value && caveat.value.length > 0) {
         console.log('eth_accounts address:', caveat.value[0]);
         return true;
       }

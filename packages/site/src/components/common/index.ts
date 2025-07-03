@@ -1,0 +1,1 @@
+export { JazziconComponent } from './JazziconComponent';
