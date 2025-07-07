@@ -4,4 +4,4 @@
  * Change it once you have the url where the snap is hosted.
  */
 //export const defaultSnapOrigin = `npm:@yarulabs/coti-snap`;
-export const defaultSnapOrigin = `local:http://localhost:8080`;
+export const defaultSnapOrigin = `local:https://snap.coti.io`;
