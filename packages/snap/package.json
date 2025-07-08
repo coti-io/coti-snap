@@ -1,10 +1,10 @@
 {
-  "name": "@yarulabs/coti-snap",
+  "name": "snap",
   "version": "0.1.3",
-  "description": "COTI Snap",
+  "description": "The 'Hello, world!' of MetaMask Snaps, now written in TypeScript.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YaruLabs/coti-snap.git"
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "license": "MIT",
   "main": "./dist/bundle.js",

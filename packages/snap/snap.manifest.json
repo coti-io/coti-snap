@@ -1,10 +1,10 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.0",
   "description": "COTI Snap",
   "proposedName": "COTI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YaruLabs/coti-snap.git"
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
     "shasum": "U8xqzDB4QQeoHWXX1DNzCD3naBfDNIXD5mcfxvcZa5E=",
