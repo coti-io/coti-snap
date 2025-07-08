@@ -38,7 +38,7 @@ const getBorder = (props: any) => {
   if (props.$error || props.$primary) {
     return 'none';
   }
-  return '1px solid #0EB592';
+  return `1px solid ${props.theme.colors.primary?.default}`;
 };
 
 const getHoverBackgroundColor = (props: any) => {
@@ -55,7 +55,7 @@ const getHoverBorder = (props: any) => {
   if (props.$error || props.$primary || props.$disabled) {
     return 'none';
   }
-  return `1px solid #0EB592`;
+  return `1px solid ${props.theme.colors.primary?.default}`;
 };
 
 const getHoverColor = (props: any) => {

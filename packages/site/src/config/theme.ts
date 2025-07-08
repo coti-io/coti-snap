@@ -55,6 +55,9 @@ export const light: DefaultTheme = {
     background: {
       default: '#F8F8FA',
       content: '#FFFFFF',
+      alternative: '#F0F0F0',
+      inverse: '#131313',
+      default10: 'rgba(255, 255, 255, 0.1)',
     },
     icon: {
       default: '#141618',
@@ -63,6 +66,7 @@ export const light: DefaultTheme = {
     text: {
       default: '#131313',
       link: '#0EB592',
+      inverse: '#FFFFFF',
     },
     primary: {
       default: '#0EB592',
@@ -93,6 +97,9 @@ export const dark: DefaultTheme = {
     background: {
       default: '#041C41',
       content: '#11284B',
+      alternative: '#1E3A5F',
+      inverse: '#FFFFFF',
+      default10: 'rgba(17, 40, 75, 0.1)',
     },
     icon: {
       default: '#FFFFFF',
@@ -101,6 +108,7 @@ export const dark: DefaultTheme = {
     text: {
       default: '#FFFFFF',
       link: '#0EB592',
+      inverse: '#041C41',
     },
     primary: {
       default: '#0EB592',
