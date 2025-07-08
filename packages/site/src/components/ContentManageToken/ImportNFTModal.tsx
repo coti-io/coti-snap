@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { Contract } from 'ethers';
 import { normalizeAddress } from '../../utils/normalizeAddress';
 import { useTokenOperations, NFTInfo } from '../../hooks/useTokenOperations';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
@@ -154,7 +155,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
 
   const detectTokenType = useCallback(async (address: string): Promise<'ERC721' | 'ERC1155'> => {
     const browserProvider = provider;
-    const contract = new (await import('ethers')).Contract(address, [
+    const contract = new Contract(address, [
       'function supportsInterface(bytes4 interfaceId) view returns (bool)'
     ], browserProvider);
     

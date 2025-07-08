@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import CheckIcon from '../../assets/check.svg';
 import CopyIcon from '../../assets/copy.svg';
@@ -7,7 +8,6 @@ import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { Button } from '../Button';
 import { Loading } from '../Loading';
 import { ContentText, ContentTitle } from '../styles';
-import { Alert } from '../ContentManageToken/Alert';
 import {
   AESInput,
   AESKeyContainer,
@@ -23,6 +23,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
   handleShowDelete,
 }) => {
   const { userAESKey, getAESKey, loading } = useSnap();
+  const navigate = useNavigate();
 
   const { copied: isCopied, copyToClipboard } = useCopyToClipboard({ 
     successDuration: 2000
@@ -53,9 +54,6 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
 
   return (
     <>
-      <Alert type="success">
-        Account onboarded successfully
-      </Alert>
       <ContentTitle>Manage your AES Key</ContentTitle>
       <ContentInput>
         <ContentText id="aes-key-label">AES Key</ContentText>
@@ -96,7 +94,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
       <Button 
         text="Delete" 
         primary={false} 
-        onClick={handleShowDelete}
+        onClick={() => navigate('/delete')}
         aria-label="Delete AES key"
       />
     </>
