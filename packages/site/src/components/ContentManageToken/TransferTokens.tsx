@@ -25,7 +25,7 @@ import {
   HeaderBarSlotTitle,
   HeaderBarSlotRight,
   BalanceRow,
-  BalanceSub,
+  BalanceSubTransfer,
   MaxButton,
   TokenRowFlex,
   ArrowDownStyled,
@@ -725,7 +725,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           </AccountBox>
           
           <BalanceRow>
-            <BalanceSub error={insufficientFunds}>
+            <BalanceSubTransfer error={insufficientFunds}>
               {currentToken?.tokenId && currentToken?.type === 'ERC721' ? (
                 `Balance: 1 NFT`
               ) : (
@@ -738,7 +738,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
                   )}
                 </>
               )}
-            </BalanceSub>
+            </BalanceSubTransfer>
             {!(currentToken?.tokenId && currentToken?.type === 'ERC721') && (
               amount === currentBalance && amount !== '' ? (
                 <MaxButton onClick={handleClearAmount} type="button">

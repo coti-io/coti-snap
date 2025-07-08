@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
@@ -17,6 +18,7 @@ interface AESKeyState {
 }
 
 export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {
+  const navigate = useNavigate();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({
     showDelete: false,
     showManage: false
@@ -26,11 +28,7 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
   const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showDelete && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
 
   const handleToggleDelete = () => {
-    setAesKeyState(prev => ({
-      ...prev,
-      showDelete: !prev.showDelete,
-      showManage: false
-    }));
+    navigate('/delete');
   };
 
   const handleToggleManage = () => {

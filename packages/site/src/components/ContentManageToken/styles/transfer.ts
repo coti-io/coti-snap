@@ -178,7 +178,7 @@ export const BalanceRow = styled.div`
   width: 100%;
 `;
 
-export const BalanceSub = styled.div.withConfig({
+export const BalanceSubTransfer = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'error'
 })<{ error?: boolean }>`
   font-size: ${typography.sizes.base};

@@ -1,10 +1,27 @@
+import { useState } from 'react';
 import Metamask from '../assets/metamask_fox.svg';
-import { useRequestSnap } from '../hooks';
+import { useRequestSnap, useMetaMask } from '../hooks';
 import { Button } from './Button';
 import { ContentContainer, ContentText, ContentTitle } from './styles';
 
 export const ContentInstallAESKeyManager = () => {
   const requestSnap = useRequestSnap();
+  const { getSnap } = useMetaMask();
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  const handleInstallSnap = async () => {
+    try {
+      setIsInstalling(true);
+      await requestSnap();
+      // Refresh snap status after installation
+      await getSnap();
+    } catch (error) {
+      console.error('Failed to install snap:', error);
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
   return (
     <ContentContainer>
       <ContentTitle>Install the COTI MetaMask Snap</ContentTitle>
@@ -14,9 +31,10 @@ export const ContentInstallAESKeyManager = () => {
       </ContentText>
 
       <Button
-        text="Install with MetaMask"
+        text={isInstalling ? "Installing..." : "Install with MetaMask"}
         primary
-        onClick={requestSnap}
+        onClick={handleInstallSnap}
+        disabled={isInstalling}
         icon={<Metamask />}
       />
     </ContentContainer>
