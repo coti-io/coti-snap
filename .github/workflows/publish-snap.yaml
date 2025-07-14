@@ -65,13 +65,6 @@ jobs:
           cd packages/snap
           yarn prepublishOnly
 
-      - name: Publish to npm
-        run: |
-          cd packages/snap
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Commit version changes
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
