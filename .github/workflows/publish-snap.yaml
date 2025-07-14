@@ -41,7 +41,10 @@ jobs:
           MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
           PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
           NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          
+          COMMIT_HASH=$(git rev-parse --short=6 HEAD)
+          
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH-$COMMIT_HASH"
           echo "Current version: $CURRENT_VERSION"
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
