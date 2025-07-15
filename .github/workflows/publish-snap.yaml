@@ -37,9 +37,10 @@ jobs:
         run: |
           cd packages/snap
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
-          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
-          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          SEMVER_VERSION=$(echo "$CURRENT_VERSION" | cut -d'-' -f1)
+          MAJOR=$(echo "$SEMVER_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$SEMVER_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$SEMVER_VERSION" | cut -d. -f3)
           NEW_PATCH=$((PATCH + 1))
           
           COMMIT_HASH=$(git rev-parse --short=6 HEAD)
