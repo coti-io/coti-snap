@@ -7,7 +7,7 @@
     "url": "https://github.com/coti-io/coti-snap.git"
   },
   "source": {
-    "shasum": "Vu9khgfjL9/pkGY6k8CryWkNBylWnQqRyaUW/c9/a3U=",
+    "shasum": "3zN/KvnYWnJcaxoN48mEDNnb+WFQgeoHID4S3b0ZFxM=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

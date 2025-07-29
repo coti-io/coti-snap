@@ -185,7 +185,7 @@ describe('Token Utilities', () => {
       const mockProvider = {
         getNetwork: jest.fn().mockResolvedValue({ chainId: CHAIN_ID }),
       };
-      (ethers.BrowserProvider as jest.Mock).mockReturnValue(mockProvider);
+      (ethers.BrowserProvider as unknown as jest.Mock).mockReturnValue(mockProvider);
 
       const result = await tokenUtils.checkChainId();
 
@@ -197,7 +197,7 @@ describe('Token Utilities', () => {
       const mockProvider = {
         getNetwork: jest.fn().mockResolvedValue({ chainId: 2 }),
       };
-      (ethers.BrowserProvider as jest.Mock).mockReturnValue(mockProvider);
+      (ethers.BrowserProvider as unknown as jest.Mock).mockReturnValue(mockProvider);
 
       const result = await tokenUtils.checkChainId();
 
