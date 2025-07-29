@@ -1,17 +1,17 @@
 {
-  "version": "0.1.12-61f659",
-  "description": "COTI Snap",
-  "proposedName": "COTI",
+  "version": "1.0.0",
+  "description": "COTI AES Key Manager - MetaMask Snap for managing confidential tokens and AES keys",
+  "proposedName": "COTI AES Key Manager",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+    "url": "https://github.com/coti-io/coti-snap.git"
   },
   "source": {
-    "shasum": "wsjx9SJOpGCeMfDP2/ticNj2H+yNkc4ihowlKmfNwcg=",
+    "shasum": "Vu9khgfjL9/pkGY6k8CryWkNBylWnQqRyaUW/c9/a3U=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
-        "packageName": "snap",
+        "packageName": "@coti-io/coti-snap",
         "iconPath": "images/icon.svg",
         "registry": "https://registry.npmjs.org/"
       }
