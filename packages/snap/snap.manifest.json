@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "description": "COTI AES Key Manager - MetaMask Snap for managing confidential tokens and AES keys",
-  "proposedName": "COTI AES Key Manager",
+  "description": "COTI Snap - MetaMask Snap for managing confidential tokens and confidential transactions",
+  "proposedName": "COTI Snap",
   "repository": {
     "type": "git",
     "url": "https://github.com/coti-io/coti-snap.git"
