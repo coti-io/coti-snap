@@ -16,7 +16,12 @@ const CONNECTOR_MM_REGULAR: CONNECTOR = {
   INSTALLATION_URL: 'https://metamask.io/',
 };
 
-export const CONNECTOR_MM: CONNECTOR = CONNECTOR_MM_FLASK;
+// Default to regular MetaMask connector
+export const CONNECTOR_MM: CONNECTOR = CONNECTOR_MM_REGULAR;
+
+// Export both connectors for dynamic selection
+export const CONNECTOR_MM_FLASK_EXPORT = CONNECTOR_MM_FLASK;
+export const CONNECTOR_MM_REGULAR_EXPORT = CONNECTOR_MM_REGULAR;
 
 export const CHAIN_ID = 7082400;
 

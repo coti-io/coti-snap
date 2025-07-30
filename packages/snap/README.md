@@ -1,185 +1,173 @@
-# COTI AES key manager
+# COTI AES Key Manager Snap
 
-This part of repository contains the COTI AES key manager.
+A MetaMask Snap for managing AES keys and confidential tokens on the COTI network.
 
-COTI AES key manager is a Metamask extension that allows you to:
-- View your private tokens (erc20 and erc721).
-- Encrypt and decrypt data.
-- Manage your AES key,
+## Features
 
+- 🔐 **AES Key Management**: Securely store and manage AES keys in MetaMask
+- 🪙 **Confidential Tokens**: View and manage confidential ERC-20 tokens
+- 🖼️ **NFT Support**: Handle confidential NFTs with metadata
+- 🔄 **Token Operations**: Transfer and deposit tokens
+- 🛡️ **Secure Storage**: Encrypted storage within MetaMask's secure environment
+- 🔗 **COTI Network**: Native support for COTI's confidential blockchain
 
+## Installation
 
-## For users
+### For Users
 
-### How to install it
+1. **Install MetaMask** if you haven't already
+2. **Visit the companion dapp**: [https://snap.coti.io](https://snap.coti.io)
+3. **Connect your wallet** and follow the installation prompts
+4. **Generate your AES key** to start managing confidential tokens
 
-Go to COTI AES key manager Companion dapp to install it in your Metamask wallet.
+### For Developers
 
-### How to use it
+```bash
+# Clone the repository
+git clone https://github.com/coti-io/coti-snap.git
+cd coti-snap
 
-#### Generate AES key
-
-1. Once installed you can view it in Metamask > Menu (the three dots on the top right) > Snaps > COTI.
-
-2. You will need to generate your AES key to be able to see the tokens you add, to do this click on `Onboard account`, this will redirect you to the dapp companion.
-
-3. Once in the dapp, you will be able to generate your AES key, you will need to connect to wallet and switch to the COTI network to generate it.
-
-4. Once generated, you will be able to view or delete it from the dapp companion.
-
-#### View AES key
-
-1. Once generated you can consult the EAS key manager to obtain it, for this go to companion dapp or go to Metamask > Menu (the three dots on the top right) > Snaps > COTI > COTI Companion Dapp > Go to comanion dapp.
-
-2. Once in the companion dapp, click on Reveal AES Key, this will ask you to sign in to query the manager for the key.
-
-3. Once obtained, you can copy it by clicking on the “copy” icon to the right of the input, once copied it will be hidden again, but you can request it again as many times as you want. 
-
-#### Add token
-
-1. Select in the tabs the type of token, (Tokens / NFT).
-
-2. Click on `add token`.
-
-3. If you are adding a token (erc20), add the contract address of the token, if the token is in the COTI network, the other data will be added automatically, otherwise the missing data will be added.
-
-  If you are adding an NFT (erc721), add the NFT contract address and the token ID.
-
-4. You are done! The token will appear in the COTI AES key manager home.
-
-## For devs
-
-### How to use it in your dapp
-
-0. This assumes you have COTI AES key manager installed on your Memamask, if not, you can add it from here.
-
-1. Add `@metamask/providers` to your dapp.
-
-```shell
-yarn add @metamask/providers
-```
-
-2. Create a function to detect if the user has Metamask to use it as a provider. You can guide yourself with [this repo](https://github.com/MetaMask/template-snap-monorepo/blob/main/packages/site/src/utils/metamask.ts).
-
-3. Create a `MetaMaskProvider` in your dapp, which will let us know if COTI AES key manager is installed in the user's wallet. You can guide yourself with [this repo](https://github.com/MetaMask/template-snap-monorepo/blob/main/packages/site/src/hooks/MetamaskContext.tsx).
-
-4. Create the `useRequest` hook to interact with Metamask. You can guide yourself with [this repo](https://github.com/MetaMask/template-snap-monorepo/blob/main/packages/site/src/hooks/useRequest.ts).
-
-5. Now, create a hook called `useInvokeKeyManager` to invoke the COTI AES key manager.
-
-```
-export type InvokeKeyManagerParams = {
-  method: string;
-  params?: Record<string, unknown>;
-};
-
-export const useInvokeKeyManager = (snapId) => {
-  const request = useRequest();
-
-  /**
-   * Invoke the requested method.
-   *
-   * @param params - The invoke params.
-   * @param params.method - The method name.
-   * @param params.params - The method params.
-   * @returns The response.
-   */
-  const invokeKeyManager = async ({ method, params }: InvokeKeyManagerParams) =>
-    request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId,
-        request: params ? { method, params } : { method },
-      },
-    });
-
-  return invokeKeyManager;
-};
-```
-
-6. (Optional) You can also create a hook that detects if COTI AES key manager is installed or not.
-
-```
-export const useMetaMask = () => {
-  const { provider, setInstalledSnap, installedSnap } = useMetaMaskContext();
-  const request = useRequest();
-
-    /**
-   * Get the Snap informations from MetaMask.
-   */
-  const getSnap = async () => {
-    const snaps = (await request({
-      method: 'wallet_getSnaps',
-    })) as GetSnapsResponse;
-
-    setInstalledSnap(snaps[defaultSnapOrigin] ?? null);
-  };
-
-  useEffect(() => {
-    const detect = async () => {
-      if (provider) {
-        await getSnap();
-      }
-    };
-
-    detect().catch(console.error);
-  }, [provider]);
-
-  return { installedSnap, getSnap };
-};
-```
-
-7. Done! Now if you want to encrypt or decrypt some data from your dapp, you can use something like this:
-
-To encrypt
-```
-  const handleEncryptClick = async () => {
-    const result = await invokeSnap({
-      method: 'encrypt',
-      params: { value: 'hello' },
-    });
-    if (result) {
-      alert(result);
-    }
-  };
-```
-
-To decrypt
-```
-  const handleDecryptClick = async () => {
-    const result = await invokeSnap({
-      method: 'decrypt',
-      params: {
-        value: JSON.stringify({
-          ciphertext: new Uint8Array([
-            230, 250, 246, 145, 200, 66, 40, 179, 108, 187, 128, 135, 216, 44,
-            32, 48,
-          ]),
-          r: new Uint8Array([
-            67, 194, 73, 74, 131, 182, 125, 200, 112, 210, 211, 145, 192, 148,
-            187, 11,
-          ]),
-        }),
-      },
-    });
-    console.log('result', result);
-    if (result) {
-      alert(result);
-    }
-  };
-```
-
-### More info
-
-If you need more information you can check the [Metamask documentation](https://docs.metamask.io/snaps/).
-
-### Getting Started
-
-```shell
+# Install dependencies
 yarn install
-yarn start
+
+# Build the snap
+yarn workspace @coti-io/coti-snap build
+
+# Run tests
+yarn workspace @coti-io/coti-snap test
+
+# Start development server
+yarn workspace @coti-io/coti-snap start
+```
+
+## Usage
+
+### AES Key Management
+
+```typescript
+// Check if user has AES key
+const hasKey = await invokeSnap({ method: 'has-aes-key' });
+
+// Get AES key (requires user confirmation)
+const aesKey = await invokeSnap({ method: 'get-aes-key' });
+
+// Set AES key
+await invokeSnap({ 
+  method: 'set-aes-key', 
+  params: { newUserAesKey: 'your-aes-key' } 
+});
+
+// Delete AES key
+await invokeSnap({ method: 'delete-aes-key' });
+```
+
+### Encryption/Decryption
+
+```typescript
+// Encrypt data
+const encrypted = await invokeSnap({ 
+  method: 'encrypt', 
+  params: { value: 'data-to-encrypt' } 
+});
+
+// Decrypt data
+const decrypted = await invokeSnap({ 
+  method: 'decrypt', 
+  params: { value: encryptedData } 
+});
+```
+
+## API Reference
+
+### RPC Methods
+
+| Method | Description | Parameters |
+|--------|-------------|------------|
+| `has-aes-key` | Check if AES key exists | None |
+| `get-aes-key` | Retrieve AES key | None |
+| `set-aes-key` | Store AES key | `{ newUserAesKey: string }` |
+| `delete-aes-key` | Remove AES key | None |
+| `encrypt` | Encrypt data | `{ value: string }` |
+| `decrypt` | Decrypt data | `{ value: string }` |
+| `connect-to-wallet` | Connect to MetaMask | None |
+| `get-permissions` | Get wallet permissions | None |
+
+### Permissions
+
+The snap requires the following permissions:
+
+- `snap_dialog`: For user confirmations
+- `snap_manageState`: For secure state storage
+- `endowment:ethereum-provider`: For blockchain interactions
+- `endowment:network-access`: For API calls
+- `endowment:rpc`: For dapp communication
+
+## Security
+
+- **AES keys are stored securely** in MetaMask's encrypted storage
+- **All operations require user confirmation** through MetaMask dialogs
+- **State is isolated** per chain and address
+- **No sensitive data is logged** or exposed
+
+## Development
+
+### Project Structure
+
+```
+packages/snap/
+├── src/
+│   ├── components/     # Snap UI components
+│   ├── config/        # Configuration files
+│   ├── utils/         # Utility functions
+│   ├── test/          # Test files
+│   └── index.tsx      # Main snap entry point
+├── images/            # Snap icons
+├── snap.manifest.json # Snap manifest
+└── package.json       # Package configuration
+```
+
+### Building
+
+```bash
+# Development build with watch mode
+yarn workspace @coti-io/coti-snap start
+
+# Production build
+yarn workspace @coti-io/coti-snap build
+
+# Clean build
+yarn workspace @coti-io/coti-snap build:clean
 ```
 
 ### Testing
 
-To test the snap, run `yarn test` in this directory.
+```bash
+# Run all tests
+yarn workspace @coti-io/coti-snap test
+
+# Run tests in watch mode
+yarn workspace @coti-io/coti-snap test --watch
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+## License
+
+MIT License - see [LICENSE](../../LICENSE) for details.
+
+## Support
+
+- **Documentation**: [https://docs.coti.io](https://docs.coti.io)
+- **Discord**: [COTI Community](https://discord.gg/coti)
+- **GitHub Issues**: [Report bugs here](https://github.com/coti-io/coti-snap/issues)
+
+## Version History
+
+- **v1.0.0**: Initial production release with AES key management and confidential token support
