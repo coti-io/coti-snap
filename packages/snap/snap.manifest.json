@@ -1,5 +1,5 @@
 {
-  "version": "0.1.12-61f659",
+  "version": "0.1.13-a0e1b9",
   "description": "COTI Snap",
   "proposedName": "COTI",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "Yb44afuNTxRl7NRFHykFwcLaqUlSY15WimPBwwkY81I=",
+    "shasum": "++XTiu+xEMFEy55VKyk4E5BAOHhTVqWszaeyenxxSoY=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
