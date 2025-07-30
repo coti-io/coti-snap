@@ -22,8 +22,7 @@ export const getSVGfromMetadata = async (
         <image href="data:${mimeType};base64,${base64}" width="200" height="200"/>
       </svg>
     `;
-  } catch (error) {
-    console.error(`Failed to fetch image: ${error}`);
+  } catch {
     return null;
   }
 };

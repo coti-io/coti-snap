@@ -9,7 +9,6 @@ declare const snap: SnapsProvider;
 
 /**
  * Retrieves the current SnapsProvider.
- *
  * @returns The current SnapsProvider.
  */
 export function getProvider(): SnapsProvider {
@@ -18,7 +17,6 @@ export function getProvider(): SnapsProvider {
 
 /**
  * Retrieves a BIP44AddressKeyDeriver object.
- *
  * @returns A Promise that resolves to a BIP44AddressKeyDeriver object.
  */
 export async function getBip44Deriver(): Promise<BIP44AddressKeyDeriver> {
@@ -33,7 +31,6 @@ export async function getBip44Deriver(): Promise<BIP44AddressKeyDeriver> {
 
 /**
  * Displays a confirmation dialog with the specified interface id.
- *
  * @param interfaceId - A string representing the id of the interface.
  * @returns A Promise that resolves to the result of the dialog.
  */
@@ -51,7 +48,6 @@ export async function createInteractiveConfirmDialog(
 
 /**
  * Displays a confirmation dialog with the specified components.
- *
  * @param components - An array of components to display in the dialog.
  * @returns A Promise that resolves to the result of the dialog.
  */
@@ -69,7 +65,6 @@ export async function confirmDialog(
 
 /**
  * Displays a alert dialog with the specified components.
- *
  * @param components - An array of components to display in the dialog.
  * @returns A Promise that resolves to the result of the dialog.
  */
@@ -87,24 +82,22 @@ export async function alertDialog(
 
 /**
  * Retrieves the current state data.
- *
  * @returns A Promise that resolves to the current state data.
  */
-export async function getStateData<State>(): Promise<State> {
+export async function getStateData<StateType>(): Promise<StateType> {
   return (await snap.request({
     method: 'snap_manageState',
     params: {
       operation: 'get',
     },
-  })) as unknown as State;
+  })) as unknown as StateType;
 }
 
 /**
  * Sets the current state data to the specified data.
- *
  * @param data - The new state data to set.
  */
-export async function setStateData<State>(data: State) {
+export async function setStateData<StateType>(data: StateType): Promise<void> {
   await snap.request({
     method: 'snap_manageState',
     params: {
@@ -114,14 +107,24 @@ export async function setStateData<State>(data: State) {
   });
 }
 
+export const getStateIdentifier = async (): Promise<StateIdentifier> => {
+  const provider = new BrowserProvider(ethereum);
+  const network = await provider.getNetwork();
+  const signer = await provider.getSigner();
+
+  const signerAddress = await signer.getAddress();
+  const chainId = network.chainId.toString();
+  return { chainId, address: signerAddress };
+};
+
 export const getStateByChainIdAndAddress = async (): Promise<State> => {
   const identifier = await getStateIdentifier();
   const state = (await getStateData<GeneralState>()) || {};
   const { chainId, address } = identifier;
-  return (state && state[chainId]?.[address]) || ({} as State);
+  return state[chainId]?.[address] ?? ({} as State);
 };
 
-export const setStateByChainIdAndAddress = async (state: State) => {
+export const setStateByChainIdAndAddress = async (state: State): Promise<void> => {
   const identifier = await getStateIdentifier();
   const oldState = (await getStateData<GeneralState>()) || {};
   const { chainId, address } = identifier;
@@ -133,14 +136,4 @@ export const setStateByChainIdAndAddress = async (state: State) => {
     },
   };
   await setStateData<GeneralState>(newState);
-};
-
-export const getStateIdentifier = async (): Promise<StateIdentifier> => {
-  const provider = new BrowserProvider(ethereum);
-  const network = await provider.getNetwork();
-  const signer = await provider.getSigner();
-
-  const signerAddress = await signer.getAddress();
-  const chainId = network.chainId.toString();
-  return { chainId, address: signerAddress };
 };

@@ -49,7 +49,7 @@ describe('onHomePage', () => {
         balance: 100n,
         tokenBalances: [],
         tokenView: TokenViewSelector.ERC20,
-        AESKey: null,
+        aesKey: null,
       }),
     );
   });

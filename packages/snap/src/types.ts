@@ -37,6 +37,6 @@ export type GeneralState = {
 export type State = {
   balance: string;
   tokenBalances: Tokens;
-  AESKey: string | null;
+  aesKey: string | null;
   tokenView?: TokenViewSelector;
 };
