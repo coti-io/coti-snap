@@ -1,6 +1,6 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
-import { BrowserProvider, Contract, ethers, ZeroAddress, EventLog } from 'ethers';
+import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
