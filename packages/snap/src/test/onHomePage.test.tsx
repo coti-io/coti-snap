@@ -1,13 +1,9 @@
 import { installSnap } from '@metamask/snaps-jest';
-import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import { setState } from '@metamask/snaps-simulation';
 
 import { Home } from '../components/Home';
 import { WrongChain } from '../components/WrongChain';
 import { CHAIN_ID } from '../config';
 import { TokenViewSelector } from '../types';
-import * as snapUtils from '../utils/snap';
-import { checkChainId } from '../utils/token';
 
 jest.mock('../utils/snap');
 jest.mock('../utils/token', () => ({
