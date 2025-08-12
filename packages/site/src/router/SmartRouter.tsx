@@ -13,7 +13,6 @@ const Container = styled.div`
   width: 564px;
   height: 100%;
   max-height: 100vh;
-  margin-top: 20px;
   max-height: calc(100vh - 120px);
   gap: 24px;
   box-sizing: border-box;
