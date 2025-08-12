@@ -153,7 +153,7 @@ export const GlobalStyle = createGlobalStyle`
 
   body {
     background: transparent;
-    color: ${(props) => props.theme.colors.text?.default};
+    color: #FFFFFF;
     //font-family: ${(props) => props.theme.fonts.default};
     font-family: "Sofia Pro";
     font-size: ${(props) => props.theme.fontSizes.text};
@@ -188,5 +188,13 @@ export const GlobalStyle = createGlobalStyle`
 
   button {
     font-family: "Sofia Pro";
+  }
+
+  * {
+    color: #FFFFFF;
+  }
+
+  p, h1, h2, h3, h4, h5, h6, span, div, a {
+    color: #FFFFFF !important;
   }
 `;

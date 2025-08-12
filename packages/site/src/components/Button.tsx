@@ -13,59 +13,47 @@ type ButtonProps = {
 
 const getBackgroundColor = (props: any) => {
   if (props.$error) {
-    return props.theme.colors.error?.default10;
+    return 'rgba(248, 110, 110, 0.2)';
   }
   if (props.$primary) {
-    return props.theme.colors.primary?.default;
+    return 'rgba(255, 255, 255, 0.2)';
   }
   if (props.$disabled) {
-    return props.theme.colors.background?.default10;
+    return 'rgba(255, 255, 255, 0.1)';
   }
-  return props.theme.colors.background?.content;
+  return 'rgba(255, 255, 255, 0.15)';
 };
 
 const getColor = (props: any) => {
-  if (props.$error) {
-    return props.theme.colors.error?.default;
-  }
-  if (props.$primary) {
-    return props.theme.colors.primary?.inverse;
-  }
-  return props.theme.colors.primary?.default;
+  return '#FFFFFF';
 };
 
 const getBorder = (props: any) => {
   if (props.$error || props.$primary) {
     return 'none';
   }
-  return `1px solid ${props.theme.colors.primary?.default}`;
+  return '1px solid rgba(255, 255, 255, 0.3)';
 };
 
 const getHoverBackgroundColor = (props: any) => {
   if (props.$error) {
-    return props.theme.colors.error?.hover;
+    return 'rgba(248, 110, 110, 0.3)';
   }
   if (props.$primary) {
-    return props.theme.colors.primary?.hover;
+    return 'rgba(255, 255, 255, 0.3)';
   }
-  return props.theme.colors.secondary?.default10;
+  return 'rgba(255, 255, 255, 0.25)';
 };
 
 const getHoverBorder = (props: any) => {
   if (props.$error || props.$primary || props.$disabled) {
     return 'none';
   }
-  return `1px solid ${props.theme.colors.primary?.default}`;
+  return '1px solid rgba(255, 255, 255, 0.5)';
 };
 
 const getHoverColor = (props: any) => {
-  if (props.$error) {
-    return props.theme.colors.error?.default;
-  }
-  if (props.$primary) {
-    return props.theme.colors.primary?.inverse;
-  }
-  return props.theme.colors.primary?.default;
+  return '#FFFFFF';
 };
 
 const ButtonStyle = styled.button<{
@@ -98,8 +86,8 @@ const ButtonStyle = styled.button<{
 
   &:disabled {
     cursor: not-allowed;
-    background-color: ${(props) => props.theme.colors.background?.inverse};
-    color: ${(props) => props.theme.colors.text?.inverse};
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
     opacity: 0.5;
   }
 `;
