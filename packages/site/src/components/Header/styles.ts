@@ -8,6 +8,7 @@ export const HeaderWrapper = styled.header`
   align-items: center;
   background-color: transparent;
   width: auto;
+  position: relative;
   ${({ theme }) => theme.mediaQueries.small} {
     flex-direction: row;
     flex-wrap: wrap;
@@ -35,6 +36,120 @@ export const ButtonsContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: none;
+  }
+`;
+
+export const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: flex;
+  }
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
+  display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  position: absolute;
+  top: 100%;
+  right: 0;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 16px;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: ${({ theme }) => theme.radii.default};
+  z-index: 20;
+  gap: 12px;
+  margin-top: 10px;
+  min-width: 200px;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  }
+  
+  @media screen and (min-width: 601px) {
+    display: none;
+  }
+`;
+
+export const MobileAddressDisplay = styled.div`
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  background-color: #2a3441;
+  border-radius: ${({ theme }) => theme.radii.button};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  color: #FFFFFF;
+  font-family: 'Sofia Pro';
+`;
+
+export const MobileConnectButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: rgb(42, 52, 65);
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: 'Sofia Pro';
+  padding: 12px 40px;
+  min-height: 4.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: rgb(52, 62, 75);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: rgb(32, 42, 55);
+    opacity: 0.7;
+  }
+`;
+
+export const MobileInstallLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: #2a3441;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: 'Sofia Pro';
+  padding: 12px 40px;
+  min-height: 4.2rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #3a4451;
+    color: #FFFFFF;
+  }
 `;
 
 // ---------- WalletManager.tsx

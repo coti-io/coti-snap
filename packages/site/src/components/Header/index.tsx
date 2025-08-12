@@ -1,5 +1,6 @@
 import COTILogo from '../../assets/logo.svg';
 import { HeaderButtons } from './HeaderButtons';
+import { MobileMenu } from './MobileMenu';
 import {
   ButtonsContainer,
   HeaderWrapper,
@@ -15,6 +16,7 @@ export const Header = () => {
       <ButtonsContainer>
         <HeaderButtons />
       </ButtonsContainer>
+      <MobileMenu />
     </HeaderWrapper>
   );
 };
