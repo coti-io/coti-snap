@@ -6,7 +6,6 @@ import styled, { ThemeProvider } from 'styled-components';
 import { WagmiProvider } from 'wagmi';
 
 import App from './App.js';
-import { Footer } from './components/Footer';
 import { GlobalBackground } from './components/GlobalBackground';
 import { dark, GlobalStyle, light } from './config/theme.js';
 import { config } from './config/wagmi.js';
@@ -56,7 +55,6 @@ createRoot(document.getElementById('root')!).render(
       <GlobalBackground>
         <Wrapper>
           <App />
-          <Footer />
         </Wrapper>
       </GlobalBackground>
       <GlobalStyle />
