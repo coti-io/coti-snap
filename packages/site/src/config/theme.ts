@@ -152,13 +152,19 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(props) => props.theme.colors.background?.default};
+    background: transparent;
     color: ${(props) => props.theme.colors.text?.default};
     //font-family: ${(props) => props.theme.fonts.default};
     font-family: "Sofia Pro";
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
-    display: flex;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  html {
+    margin: 0;
+    padding: 0;
   }
 
   * {

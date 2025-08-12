@@ -15,6 +15,7 @@ const Container = styled.div`
   gap: 24px;
   box-sizing: border-box;
   border-radius: 14px;
+  background: transparent;
   ${({ theme }) => theme.mediaQueries.small} {
     width: 100%;
     padding: 1.6rem;

@@ -7,6 +7,7 @@ import { WagmiProvider } from 'wagmi';
 
 import App from './App.js';
 import { Footer } from './components/Footer';
+import { GlobalBackground } from './components/GlobalBackground';
 import { dark, GlobalStyle, light } from './config/theme.js';
 import { config } from './config/wagmi.js';
 import { MetaMaskProvider } from './hooks/MetamaskContext.js';
@@ -18,6 +19,7 @@ const Wrapper = styled.div`
   flex-direction: column;
   min-height: 100vh;
   max-width: 100vw;
+  background: transparent;
 `;
 
 export type RootProps = {
@@ -51,10 +53,12 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Root>
-      <Wrapper>
-        <App />
-        <Footer />
-      </Wrapper>
+      <GlobalBackground>
+        <Wrapper>
+          <App />
+          <Footer />
+        </Wrapper>
+      </GlobalBackground>
       <GlobalStyle />
     </Root>
   </StrictMode>,
