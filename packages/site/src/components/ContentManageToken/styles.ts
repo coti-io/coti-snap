@@ -497,6 +497,7 @@ export const TokenLogoBig = styled.div`
   font-size: ${typography.sizes.xl};
   color: #000000 !important;
   font-weight: ${typography.weights.medium};
+  background:#f9f9f9 !important;
   position: absolute;
   left: 0;
   top: 0;

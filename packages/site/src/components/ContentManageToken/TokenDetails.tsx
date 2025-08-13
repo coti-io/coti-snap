@@ -146,6 +146,8 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
     return formatBalance(decryptedBalance);
   })();
 
+  const hasBalance = decryptedBalance && decryptedBalance !== '0' && decryptedBalance !== '(encrypted)' && decryptedBalance !== '';
+
   return (
     <>
     <TokenDetailsContainer>
@@ -235,7 +237,12 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
           <TokenDetailsValue>{token.decimals}</TokenDetailsValue>
         </TokenDetailsRow>
       </TokenDetailsContent>
-      <SendButton onClick={() => onSendClick && onSendClick(token)}>Send</SendButton>
+      <SendButton 
+        onClick={() => onSendClick && onSendClick(token)}
+        disabled={!hasBalance}
+      >
+        Send
+      </SendButton>
     </TokenDetailsContainer>
     
     <ConfirmationModal
