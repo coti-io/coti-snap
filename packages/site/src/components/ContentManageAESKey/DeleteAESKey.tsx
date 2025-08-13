@@ -46,14 +46,14 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
       <ContentButtons>
         <Button 
           text="Cancel" 
-          fullWith 
+          fullWidth 
           onClick={handleShowDelete}
           aria-label="Cancel deletion"
         />
         <Button 
           error 
           text="Delete" 
-          fullWith 
+          fullWidth 
           onClick={handleDeleteClick}
           aria-label="Confirm deletion of AES key"
         />
