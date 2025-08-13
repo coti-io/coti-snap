@@ -31,7 +31,6 @@ interface OnboardAccountWizardProps {
 }
 
 export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
-  handleOnboardAccount,
   handleCancelOnboard,
 }) => {
   const {

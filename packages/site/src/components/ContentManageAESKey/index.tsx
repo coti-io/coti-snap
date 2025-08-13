@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ContentBorderWrapper, ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
+import { isLocal } from '../../config/snap';
 import { DeleteAESKey } from './DeleteAESKey';
 import { ManageAESKey } from './ManageAESKey';
 import { OnboardAccount } from './OnboardAccount';
@@ -24,7 +25,7 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
     showManage: false
   });
 
-  const shouldShowOnboarding = useMemo(() => !userHasAESKey, [userHasAESKey]);
+  const shouldShowOnboarding = useMemo(() => !userHasAESKey && isLocal(), [userHasAESKey]);
   const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showDelete && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
 
   const handleToggleDelete = () => {
