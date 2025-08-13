@@ -13,12 +13,13 @@ export const SymbolText = styled.div`
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 16px;
+  color: #000000 !important;
 `;
 
 export const MessageText = styled.p`
   margin-bottom: 40px;
   font-size: 16px;
-  color: #666;
+  color: #000000 !important;
   line-height: 1.6;
 `;
 

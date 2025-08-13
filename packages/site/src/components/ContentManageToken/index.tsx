@@ -4,7 +4,7 @@ import { formatUnits } from 'ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import styled, { keyframes } from 'styled-components';
 import { QuickAccessButton, QuickAccessGroup, QuickAccessItem, QuickAccessLabel, MainStack } from './styles';
-import { Balance } from './Balance';
+import { BalanceDisplay } from './components/BalanceDisplay';
 import { RequestAESKey } from './RequestAESKey';
 import { Tokens } from './Tokens';
 import NFTDetails from './NFTDetails';
@@ -142,7 +142,6 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   };
 
   const handleNFTSendClick = (nft: ImportedToken) => {
-    // Siempre pasar el token COTI
     setTransferToken({
       address: '',
       name: 'COTI',
@@ -178,16 +177,6 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
     }
   };
 
-  const handleToggleDecryption = async () => {
-    if (!currentAESKey) {
-      try {
-        await getAESKey();
-      } catch (error) {
-      }
-    }
-  };
-
-  const isDecrypted = !!currentAESKey;
 
   if (shouldShowConnectWallet) {
     return <Loading title="Loading..." actionText="" />;
@@ -249,10 +238,8 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   return (
     <>
       <MainStack>
-        <Balance 
+        <BalanceDisplay
           balance={formattedBalance} 
-          isDecrypted={isDecrypted}
-          onToggleDecryption={handleToggleDecryption}
         />
         
         <QuickAccessActions 

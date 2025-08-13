@@ -19,17 +19,17 @@ interface AlertContainerProps {
 const ALERT_STYLES = {
   error: css`
     background: #ffecec;
-    color: #000000;
+    color: #000000 !important;
     border-left: 5px solid #e53935;
   `,
   success: css`
     background: #f4fff7;
-    color: #000000;
+    color: #000000 !important;
     border-left: 5px solid #43a047;
   `,
   loading: css`
     background: #fff7d0;
-    color: #000000;
+    color: #000000 !important;
     border-left: 5px solid #a9a224;
   `,
 } as const;
@@ -67,7 +67,8 @@ const IconWrapper = styled.span`
 
 const AlertContent = styled.div`
   flex: 1;
-  line-height: 1.4;
+  line-height: 1;
+  color: #000000 !important;
 `;
 
 export const Alert: React.FC<AlertProps> = ({ 

@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 
 import { truncateString } from '../../utils';
-import { Button } from '../Button';
 import { Chain } from './Chain';
-import { ConnectedDetails, Dropdown } from './styles';
+import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
 
 export const WalletManager = () => {
   const { address } = useAccount();
@@ -14,6 +13,11 @@ export const WalletManager = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = () => setIsVisible(!isVisible);
+
+  const handleDisconnect = () => {
+    disconnect();
+    setIsVisible(false);
+  };
 
   const handleClickOutside = (vnt: MouseEvent) => {
     if (
@@ -36,7 +40,9 @@ export const WalletManager = () => {
       <ConnectedDetails $wrongChain={false} onClick={toggleDropdown}>
         {address ? truncateString(address) : 'no address'}
         <Dropdown ref={dropdownRef} $isVisible={isVisible}>
-          <Button text="Disconnect" error onClick={disconnect} />
+          <DisconnectButton onClick={handleDisconnect}>
+            Disconnect
+          </DisconnectButton>
         </Dropdown>
       </ConnectedDetails>
       <Chain />

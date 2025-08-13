@@ -6,11 +6,9 @@ export const HeaderWrapper = styled.header`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 2.4rem;
-  background-color: ${(props) => props.theme.colors.background?.content};
-  box-shadow: ${({ theme }) => theme.shadows.default};
-  border-radius: ${({ theme }) => theme.radii.default};
+  background-color: transparent;
   width: auto;
+  position: relative;
   ${({ theme }) => theme.mediaQueries.small} {
     flex-direction: row;
     flex-wrap: wrap;
@@ -30,6 +28,7 @@ export const LogoWrapper = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 `;
 
 export const ButtonsContainer = styled.div`
@@ -37,6 +36,120 @@ export const ButtonsContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: none;
+  }
+`;
+
+export const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: flex;
+  }
+  
+  img {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
+  display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  position: absolute;
+  top: 100%;
+  right: 0;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 16px;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: ${({ theme }) => theme.radii.default};
+  z-index: 20;
+  gap: 12px;
+  margin-top: 10px;
+  min-width: 200px;
+  
+  ${({ theme }) => theme.mediaQueries.small} {
+    display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  }
+  
+  @media screen and (min-width: 601px) {
+    display: none;
+  }
+`;
+
+export const MobileAddressDisplay = styled.div`
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  background-color: #2a3441;
+  border-radius: ${({ theme }) => theme.radii.button};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  color: #FFFFFF;
+  font-family: 'Sofia Pro';
+`;
+
+export const MobileConnectButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: rgb(42, 52, 65);
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: 'Sofia Pro';
+  padding: 12px 40px;
+  min-height: 4.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: rgb(52, 62, 75);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: rgb(32, 42, 55);
+    opacity: 0.7;
+  }
+`;
+
+export const MobileInstallLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: #2a3441;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: 'Sofia Pro';
+  padding: 12px 40px;
+  min-height: 4.2rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #3a4451;
+    color: #FFFFFF;
+  }
 `;
 
 // ---------- WalletManager.tsx
@@ -47,13 +160,42 @@ export const Dropdown = styled.div<{ $isVisible: boolean }>`
   left: 0;
   display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
   flex-direction: column;
-  background-color: ${(props) => props.theme.colors.background?.content};
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
   padding: 10px;
-  box-shadow: ${({ theme }) => theme.shadows.large};
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
   border-radius: ${({ theme }) => theme.radii.default};
   z-index: 10;
   gap: 8px;
   margin-top: 10px;
+`;
+
+export const DisconnectButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: #ff1900;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: 'Sofia Pro';
+  padding: 12px 40px;
+  min-height: 4.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: #e55a5a;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background-color: #d4a4a4;
+    opacity: 0.7;
+  }
 `;
 
 export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
@@ -61,25 +203,28 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
   align-self: flex-start;
   align-items: center;
   justify-content: center;
-  padding: 1px 20px;
-  height: 31px;
+  padding: 12px 40px;
   gap: 4px;
   font-size: ${(props) => props.theme.fontSizes.small};
   line-height: 1.2;
   font-weight: 400;
-  border-radius: ${(props) => props.theme.radii.small};
+  border-radius: ${(props) => props.theme.radii.button};
   background-color: ${(props) =>
     props.$wrongChain
-      ? props.theme.colors.error?.default10
-      : props.theme.colors.secondary?.default10};
-  color: ${(props) =>
-    props.$wrongChain
-      ? props.theme.colors.error?.default
-      : props.theme.colors.text?.default};
+      ? 'rgba(248, 110, 110, 0.2)'
+      : 'rgba(255, 255, 255, 0.15)'};
+  color: #FFFFFF;
   margin-top: auto;
   margin-bottom: auto;
   position: relative;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: ${(props) =>
+    props.$wrongChain
+      ? 'rgba(248, 110, 110, 0.3)'
+      : 'rgba(255, 255, 255, 0.25)'};
 `;
 
 // ---------- HeaderButtons.tsx
@@ -88,28 +233,29 @@ export const Link = styled.a`
   font-size: ${(props) => props.theme.fontSizes.small};
   line-height: 1.2;
   border-radius: ${(props) => props.theme.radii.button};
-  background-color: ${(props) => props.theme.colors.primary?.default};
-  color: ${(props) => props.theme.colors.primary?.inverse};
-  border: 'none';
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  border: none;
   font-weight: 500;
-  font-size: 'Sofia Pro';
-  flex: 'none';
+  font-family: 'Sofia Pro';
+  flex: none;
   padding: 12px 40px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: ${(props) => props.theme.colors.primary?.hover};
-    border: 'none';
-    color: ${(props) => props.theme.colors.primary?.inverse};
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: #FFFFFF;
   }
 
   &:disabled {
-    border: 1px solid ${(props) => props.theme.colors.background?.inverse};
+    border: none;
     cursor: not-allowed;
-    background-color: ${(props) => props.theme.colors.background?.inverse};
-    color: ${(props) => props.theme.colors.text?.inverse};
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    opacity: 0.5;
   }
 `;
 

@@ -50,13 +50,18 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const [showImportNFTModal, setShowImportNFTModal] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState<ImportedToken | null>(null);
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
-
   const { userAESKey, userHasAESKey, getAESKey } = useSnap();
+  const [isDecrypted, setIsDecrypted] = useState(!!userAESKey || !!aesKey);
+  
   const { importedTokens, isLoading, refreshTokens } = useImportedTokens();
   const menuDropdown = useDropdown();
   const sortDropdown = useDropdown();
 
   const effectiveAESKey = aesKey || userAESKey;
+
+  useEffect(() => {
+    setIsDecrypted(!!effectiveAESKey);
+  }, [effectiveAESKey, userAESKey, aesKey, isDecrypted]);
 
   const { regularTokens, nftTokens } = useMemo(() => {
       const cotiToken: ImportedToken = {
@@ -132,6 +137,10 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
     refreshTokensList();
     menuDropdown.close();
   }, [refreshTokensList, menuDropdown]);
+
+  const handleToggleDecryption = useCallback(() => {
+    setIsDecrypted(prev => !prev);
+  }, []);
 
   const headerActionsStyle = useMemo(() => ({ position: 'relative' as const }), []);
 
@@ -211,6 +220,9 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
               cotiBalance={balance}
               propAESKey={aesKey}
               onSelectToken={onSelectToken || setSelectedToken}
+              isDecrypted={isDecrypted}
+              onToggleDecryption={handleToggleDecryption}
+              balances={balances}
             />
           )
         ) : (

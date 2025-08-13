@@ -23,7 +23,6 @@ export const useRequestSnap = (
    */
   const requestSnap = async () => {
     try {
-      console.log('Requesting snap with ID:', snapId);
       
       const snaps = (await request({
         method: 'wallet_requestSnaps',
@@ -31,9 +30,6 @@ export const useRequestSnap = (
           [snapId]: version ? { version } : {},
         },
       })) as Record<string, Snap>;
-
-      console.log('Response from wallet_requestSnaps:', snaps);
-      console.log('Installed snap:', snaps?.[snapId]);
 
       // Updates the `installedSnap` context variable since we just installed the Snap.
       setInstalledSnap(snaps?.[snapId] ?? null);

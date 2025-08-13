@@ -1,7 +1,7 @@
 import COTILogo from '../../assets/logo.svg';
 import { HeaderButtons } from './HeaderButtons';
+import { MobileMenu } from './MobileMenu';
 import {
-  ContentTitle,
   ButtonsContainer,
   HeaderWrapper,
   LogoWrapper,
@@ -12,11 +12,11 @@ export const Header = () => {
     <HeaderWrapper>
       <LogoWrapper>
         <COTILogo />
-        <ContentTitle>COTI</ContentTitle>
       </LogoWrapper>
       <ButtonsContainer>
         <HeaderButtons />
       </ButtonsContainer>
+      <MobileMenu />
     </HeaderWrapper>
   );
 };

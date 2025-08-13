@@ -64,11 +64,9 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         (_caveat: any) => _caveat.type === 'restrictReturnedAccounts',
       );
       if (caveat?.value && caveat.value.length > 0) {
-        console.log('eth_accounts address:', caveat.value[0]);
         return true;
       }
     }
-    console.log('eth_accounts permission not found or no address available');
     return false;
   };
 
@@ -135,8 +133,6 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         return;
       }
-
-      console.log('aesKey:', aesKey);
 
       const result = await invokeSnap({
         method: 'set-aes-key',

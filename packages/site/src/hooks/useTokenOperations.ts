@@ -179,12 +179,16 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       
       const ctBalance = await balanceOfMethod(await signer.getAddress()) as ctUint;
       
+      
       if (aesKey) {
-        // If there's an AES key, decrypt the balance
+        if (ctBalance === 0n || Number(ctBalance) === 0) {
+          return 0n;
+        }
+        
         signer.setAesKey(aesKey);
-        return await signer.decryptValue(BigInt(ctBalance));
+        const decrypted = await signer.decryptValue(BigInt(ctBalance));
+        return decrypted;
       } else {
-        // If there's no AES key, return the encrypted balance as string
         return ctBalance;
       }
     });

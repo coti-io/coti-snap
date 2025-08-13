@@ -12,7 +12,7 @@ const TooltipText = styled.div`
   min-width: 220px;
   max-width: 320px;
   background: #fff;
-  color: #6b7280;
+  color: #6b7280 !important;
   text-align: left;
   border-radius: 10px;
   padding: 10px 14px;

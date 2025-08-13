@@ -12,7 +12,7 @@ const slideUpFadeIn = keyframes`
 `;
 
 const colors = {
-  primary: '#4664ff',
+  primary: '#1E29F6',
   primaryHover: '#3350e6',
   primaryDark: '#2946c7',
   secondary: '#3d5afe',
@@ -115,11 +115,23 @@ const buttonBase = `
   }
 `;
 
+const buttonBaseAction = `
+  outline: none;
+  cursor: pointer;
+  font-weight: ${typography.weights.semibold};
+  transition: all ${transitions.normal};
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
 const inputBase = `
   border: 1.5px solid ${colors.border.primary};
   border-radius: ${borderRadius.md};
   font-size: ${typography.sizes.lg};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   background: ${colors.background.secondary};
   outline: none;
   transition: border-color ${transitions.fast}, background-color ${transitions.fast};
@@ -143,21 +155,21 @@ export const MainStack = styled.div`
 
 export const QuickAccessGroup = styled.nav`
   display: flex;
-  gap: ${spacing.xxxxl};
+  gap: ${spacing.xxl};
   justify-content: center;
-  align-items: flex-start;
+  align-items: flex-center;
 `;
 
 export const QuickAccessItem = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: ${spacing.lg};
+  gap: ${spacing.md};
 `;
 
 export const QuickAccessButton = styled.button`
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: ${borderRadius.full};
   background: ${colors.primary};
   display: flex;
@@ -183,20 +195,13 @@ export const QuickAccessButton = styled.button`
 `;
 
 export const QuickAccessLabel = styled.span`
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.normal};
   text-align: center;
+  font-weight: 450;
 `;
 
-export const BalanceAmount = styled.div`
-  font-weight: 600;
-  font-size: 32px;
-  color: #000;
-  margin-top: 2px;
-  white-space: nowrap;
-  text-align: center;
-`;
 
 export const BalanceEye = styled.button`
   background: none;
@@ -277,9 +282,9 @@ export const Tab = styled.button.withConfig({
   border: none;
   outline: none;
   font-size: ${typography.sizes.xl};
-  font-weight: ${({ active }) => (active ? typography.weights.bold : typography.weights.medium)};
-  color: ${({ active }) => (active ? colors.text.primary : colors.text.tertiary)};
-  border-bottom: 3px solid ${({ active }) => (active ? colors.text.primary : colors.border.primary)};
+  font-weight: ${({ active }) => (active ? typography.weights.normal : typography.weights.normal)};
+  color: ${({ active }) => (active ? colors.text.primary : "#071550")};
+  border-bottom: 2px solid ${({ active }) => (active ? "#1E29F6" : colors.border.primary)};
   padding: 0 ${spacing.xl} ${spacing.lg} ${spacing.xl};
   cursor: pointer;
   transition: color ${transitions.normal}, border-bottom ${transitions.normal};
@@ -300,12 +305,12 @@ export const HeaderBar = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0 0 ${spacing.lg} 0;
+  padding: ${spacing.sm} 0 0 0;
 `;
 
 export const NetworkBadge = styled.div`
   background: none;
-  color: ${colors.text.tertiary};
+  color: #000000 !important;
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.medium};
   border-radius: ${spacing.lg};
@@ -337,7 +342,7 @@ export const IconButton = styled.button.withConfig({
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  color: ${colors.text.primary};
+  color: #000000 !important;
   border-radius: ${spacing.sm};
   transition: background ${transitions.fast};
   
@@ -348,7 +353,7 @@ export const IconButton = styled.button.withConfig({
 
 export const MenuDropdown = styled.div`
   position: absolute;
-  top: 42px;
+  top: 30px;
   right: 0;
   background: ${colors.background.primary};
   box-shadow: ${shadows.dropdown};
@@ -372,7 +377,7 @@ export const MenuItem = styled.button`
   font-size: ${typography.sizes.lg};
   color: ${colors.text.primary};
   font-weight: ${typography.weights.medium};
-  padding: ${spacing.xl};
+  padding: ${spacing.md};
   cursor: pointer;
   transition: background ${transitions.fast};
   
@@ -383,7 +388,7 @@ export const MenuItem = styled.button`
 
 export const SortDropdown = styled.div`
   position: absolute;
-  top: 42px;
+  top: 30px;
   right: 0;
   background: ${colors.background.primary};
   box-shadow: ${shadows.dropdown};
@@ -406,9 +411,9 @@ export const SortOption = styled.button.withConfig({
   border: none;
   outline: none;
   font-size: ${typography.sizes.lg};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: ${typography.weights.medium};
-  padding: ${spacing.xl};
+  padding: ${spacing.md};
   cursor: pointer;
   transition: background ${transitions.fast};
   position: relative;
@@ -447,7 +452,7 @@ export const TokenRow = styled.div`
 export const TokenInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: ${spacing.sm};
+  gap: ${spacing.xs};
   
   &:hover {
     cursor: pointer;
@@ -460,23 +465,33 @@ export const TokenLogos = styled.div`
   height: 40px;
   display: flex;
   align-items: center;
+  
+  @media (max-width: 600px) {
+    width: 32px;
+    height: 32px;
+  }
 `;
 
 export const TokenLogoBig = styled.div`
-  width: 35px;
-  height: 35px;
-  background: ${colors.background.tertiary};
+  width: 40px;
+  height: 40px;
   border-radius: ${borderRadius.full};
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: ${typography.sizes.xl};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: ${typography.weights.medium};
   position: absolute;
   left: 0;
   top: 0;
   z-index: 1;
+  
+  @media (max-width: 600px) {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
 `;
 
 export const TokenLogoSmall = styled.div`
@@ -488,7 +503,7 @@ export const TokenLogoSmall = styled.div`
   align-items: center;
   justify-content: center;
   font-size: ${typography.sizes.base};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: ${typography.weights.medium};
   position: absolute;
   left: 18px;
@@ -501,7 +516,11 @@ export const TokenLogoSmall = styled.div`
 export const TokenName = styled.span`
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.bold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
+  
+  @media (max-width: 600px) {
+    font-size: 14px;
+  }
 `;
 
 export const TokenValues = styled.div`
@@ -510,6 +529,7 @@ export const TokenValues = styled.div`
   align-items: flex-end;
   gap: 2px;
   min-width: 110px;
+  text-align: right;
 `;
 
 export const TokenUsd = styled.span`
@@ -520,16 +540,15 @@ export const TokenUsd = styled.span`
 `;
 
 export const TokenAmount = styled.span`
-  font-size: ${typography.sizes.md};
+  font-size: 16px;
   font-weight: ${typography.weights.bold};
-  color: ${colors.text.secondary};
+  color: #1F2D67 !important;
   letter-spacing: 0.01em;
-  word-break: break-all;
-  overflow-wrap: break-word;
-  max-width: 160px;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: inline-block;
 `;
 
 export const NFTGrid = styled.div`
@@ -591,6 +610,16 @@ export const TransferContainer = styled.div`
   box-shadow: none;
   padding: 0 ${spacing.lg};
   background: none;
+  
+  @media (max-width: 600px) {
+    padding: 0 ${spacing.md};
+  }
+`;
+
+export const TransferContainerMain = styled.div`
+  box-shadow: none;
+  padding: 0 ${spacing.lg};
+  background: none;
   width: 100%;
   max-width: 100%;
 `;
@@ -601,7 +630,12 @@ export const SendAmount = styled.div`
   gap: ${spacing.xs};
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.normal};
-  color: ${colors.text.primary};
+  color: #1F2D67 !important;
+  
+  @media (max-width: 600px) {
+    font-size: 14px;
+    gap: 2px;
+  }
 `;
 
 export const AccountBox = styled.div.withConfig({
@@ -632,6 +666,7 @@ export const AccountIcon = styled.div`
 export const AccountDetails = styled.div`
   display: flex;
   flex-direction: column;
+  color: #000000 !important;
 `;
 
 export const AccountName = styled.div`
@@ -640,8 +675,18 @@ export const AccountName = styled.div`
 `;
 
 export const AccountAddress = styled.div`
-  font-size: ${typography.sizes.sm};
-  color: ${colors.text.tertiary};
+  font-size: ${typography.sizes.md};
+  font-weight: ${typography.weights.normal};
+  color: #1F2D67 !important;
+  max-width: 120px;
+  text-align: right;
+  padding: 0 4px;
+
+  @media (max-width: 600px) {
+    max-width: 80px;
+    font-size: 14px;
+    gap: 2px;
+  }
 `;
 
 export const DropdownIcon = styled.div`
@@ -668,6 +713,7 @@ export const AddressInput = styled.input`
   font-size: ${typography.sizes.md};
   flex: 1;
   background: transparent;
+  color: #000000 !important;
 `;
 
 export const ScanButton = styled.button`
@@ -751,7 +797,7 @@ export const ModalHeader = styled.h2`
   text-align: center;
   padding: ${spacing.xxxl} ${spacing.xxxl} 0 ${spacing.xxxl};
   margin: 0 0 ${spacing.xl} 0;
-  color: ${colors.text.primary};
+  color: #000000 !important;
 `;
 
 export const ModalClose = styled.button`
@@ -774,7 +820,7 @@ export const ModalClose = styled.button`
 export const ModalLabel = styled.div`
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.semibold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   margin: ${spacing.sm} 0 0 0;
 `;
 
@@ -828,57 +874,90 @@ export const ModalActionButton = styled.button.withConfig({
   }
 `;
 
+export const DepositBorderWrapper = styled.div`
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  padding: 9px;
+  width: auto;
+  
+  @media (max-width: 600px) {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    max-width: 600px;
+    height: 100vh;
+    min-height: 100vh;
+  }
+`;
+
 export const DepositModalContainer = styled.div`
   background: ${colors.background.primary};
   border-radius: ${borderRadius.xxxxl};
   box-shadow: ${shadows.lg};
-  width: 300px;
-  max-width: 98vw;
-  margin: ${spacing.xxxxl} auto;
-  gap: ${spacing.sm};
-  padding: ${spacing.xxxl} ${spacing.xxl} ${spacing.xxxl} ${spacing.xxl};
+  width: 320px;
+  max-width: 320px;
+  gap: ${spacing.xxl};
+  padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  
+  @media (max-width: 600px) {
+    background: #FFFFFF;
+    max-width: 600px;
+    border-radius: 0;
+    box-shadow: none;
+    height: 100vh;
+    min-height: 100vh;
+    justify-content: flex-start;
+  }
 `;
 
 export const DepositCloseButton = styled.button`
-  position: absolute;
-  top: ${spacing.xxl};
-  right: ${spacing.xxl};
   background: none;
   border: none;
   font-size: 3rem;
   color: ${colors.text.primary};
   cursor: pointer;
   transition: background-color ${transitions.fast};
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background: ${colors.background.tertiary};
-    border-radius: ${spacing.xs};
+    border-radius: ${spacing.sm};
   }
+`;
+
+export const DepositHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+`;
+
+export const DepositHeaderSpacer = styled.div`
+  width: 48px;
 `;
 
 export const DepositTitle = styled.h2`
   font-size: ${typography.sizes.xxxxxl};
   font-weight: ${typography.weights.bold};
   text-align: center;
-  margin: 0 0 ${spacing.xxxl} 0;
-  color: ${colors.text.primary};
+  color: #000000 !important;
+  margin: 0;
 `;
 
 export const DepositQRWrapper = styled.div`
   background: ${colors.background.primary};
   border-radius: ${spacing.xl};
-  padding: ${spacing.lg};
-  margin-bottom: ${spacing.sm};
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid ${colors.border.secondary};
-  box-shadow: ${shadows.md};
 `;
 
 export const DepositAccountName = styled.div`
@@ -890,14 +969,13 @@ export const DepositAccountName = styled.div`
 `;
 
 export const DepositAccountAddress = styled.div`
-  font-size: ${typography.sizes.md};
-  color: ${colors.text.secondary};
+  font-size: 16px;
+  color: #000000 !important;
   font-weight: ${typography.weights.normal};
   text-align: center;
   word-break: break-all;
-  margin-bottom: 18px;
-  max-width: 280px;
   line-height: 1.5;
+  width: 100%;
 `;
 
 export const DepositCopyIconWrapper = styled.span`
@@ -911,21 +989,17 @@ export const DepositCopyIconWrapper = styled.span`
 export const DepositCopyButton = styled.button<{ $copied: boolean }>`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: ${spacing.lg};
-  background: none;
+  background: ${colors.primary};
   border: none;
-  color: ${colors.primary};
-  font-size: ${typography.sizes.base};
+  color: #FFFFFF;
+  font-size: 14px;
   font-weight: ${typography.weights.semibold};
   cursor: pointer;
-  margin: 0 auto;
-  padding: ${spacing.sm} ${spacing.lg};
-  border-radius: ${borderRadius.sm};
-  svg {
-    color: inherit;
-    fill: currentColor;
-    stroke: currentColor;
-  }
+  width: 100%;
+  padding: ${spacing.lg} ${spacing.xxxl};
+  border-radius: ${borderRadius.md};
 `;
 
 export const TabButton = styled.button.withConfig({
@@ -1041,7 +1115,7 @@ export const TokenInfoRow = styled.div`
 `;
 
 export const TokenInfoValue = styled.span`
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-size: ${typography.sizes.md};
   align-items: center;
 `;
@@ -1062,7 +1136,7 @@ export const TokenSummaryLogo = styled.div`
   align-items: center;
   justify-content: center;
   font-size: ${typography.sizes.xxxxl};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: ${typography.weights.bold};
   position: relative;
 `;
@@ -1093,7 +1167,7 @@ export const TokenSummaryInfo = styled.div`
 export const TokenSummaryName = styled.div`
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.bold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
 `;
 
 export const TokenSummaryAddress = styled.div`
@@ -1110,7 +1184,7 @@ export const TokenSummarySymbol = styled.div`
 
 export const TokenSummaryBalance = styled.div`
   font-size: ${typography.sizes.md};
-  color: rgb(179, 179, 179);
+  color: #B6B6B6 !important;
   font-weight: ${typography.weights.semibold};
   margin-top: ${spacing.sm};
   max-width: 200px;
@@ -1163,7 +1237,7 @@ export const CenteredText = styled.div`
   font-size: ${typography.sizes.xl};
   margin: ${spacing.xxl} 0 0 0;
   font-weight: ${typography.weights.normal};
-  color: ${colors.text.primary};
+  color: #000000 !important;
 `;
 
 export const LabelRow = styled.div`
@@ -1171,7 +1245,7 @@ export const LabelRow = styled.div`
   align-items: center;
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.semibold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   margin-top: ${spacing.md};
 `;
 
@@ -1248,7 +1322,7 @@ export const NFTDetailsLabel = styled.span`
 `;
 
 export const NFTDetailsValue = styled.span`
-  color: ${colors.text.primary};
+  color: #1F2D67 !important;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.xxl};
 `;
@@ -1290,19 +1364,24 @@ export const NFTDetailsDisclaimer = styled.div`
 export const SendButton = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'backgroundColor' && prop !== 'textColor'
 })<{ backgroundColor?: string; textColor?: string }>`
-  background: ${({ backgroundColor }) => backgroundColor || '#4664ff'};
+  background: ${({ backgroundColor }) => backgroundColor || '#1E29F6'};
   color: ${({ textColor }) => textColor || '#fff'};
   border-radius: 12px;
+  border: 2px solid #1E29F6;
   font-size: 1.5rem;
   font-weight: 600;
-  padding: 14px 0;
+  padding: 20px 40px;
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex: 1;
+  gap: 6px;
   margin-top: ${spacing.xl};
   margin-bottom: 0;
   width: 100%;
   transition: background 0.2s, opacity 0.2s;
-  ${buttonBase}
-  border: 2px solid #4664ff !important;
+  ${buttonBaseAction}
   
   &:hover:not(:disabled) {
     background: ${({ backgroundColor }) => 
@@ -1315,7 +1394,13 @@ export const SendButton = styled.button.withConfig({
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: ${({ backgroundColor }) => backgroundColor || '#4664ff'};
+    background: ${({ backgroundColor }) => backgroundColor || '#1E29F6'};
+  }
+  
+  @media (max-width: 600px) {
+    font-size: 14px;
+    padding: 16px 32px;
+    margin-top: ${spacing.md};
   }
 `;
 
@@ -1399,29 +1484,29 @@ export const TokenDetailsLogoSmall = styled.div`
 
 export const TokenDetailsContent = styled.div`
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 0;
+  box-sizing: border-box;
+  padding-top: 0;
+  margin: 0 auto 0;
   display: flex;
   flex-direction: column;
-  gap: ${spacing.lg};
+  gap: ${spacing.xxxl};
 `;
 
 export const TokenDetailsRow = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 0;
+  padding: 14px 0 0 12px;
 `;
 
 export const TokenDetailsLabel = styled.span`
-  color: ${colors.text.secondary};
+  color: #04133D !important;
   font-weight: ${typography.weights.semibold};
   font-size: ${typography.sizes.lg};
   flex: 1;
 `;
 
 export const TokenDetailsValue = styled.span`
-  color: ${colors.text.primary};
+  color: #1F2D67 !important;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.lg};
   text-align: right;
@@ -1430,7 +1515,7 @@ export const TokenDetailsValue = styled.span`
 `;
 
 export const TokenDetailsLink = styled.a`
-  color: #4664ff;
+  color: #1E29F6 !important;
   font-weight: 500;
   font-size: ${typography.sizes.lg};
   text-decoration: none;
@@ -1687,9 +1772,9 @@ export const BalanceContainer = styled.div`
 `;
 
 export const BalanceTitle = styled.div`
-  font-weight: 700;
+  font-weight: 900;
   font-size: 18px;
-  margin-top: 0;
+  color: #000000 !important;
 `;
 
 export const BalanceRow = styled.div`
@@ -1812,7 +1897,7 @@ export const TokenBalanceRow = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 14px 0 14px 0;
+  padding: 14px 0 0 12px;
 `;
 
 export const TokenBalanceLeft = styled.div`
@@ -1840,7 +1925,7 @@ export const TokenBalanceLogoBig = styled.div`
   justify-content: center;
   font-size: 18px;
   font-weight: 500;
-  color: #222;
+  color: #000000 !important;
   z-index: 1;
 `;
 
@@ -1867,7 +1952,7 @@ export const TokenBalanceLogoSmall = styled.div`
 export const TokenBalanceName = styled.span`
   font-weight: 600;
   font-size: 16px;
-  color: #222;
+  color: #000000 !important;
   display: flex;
   align-items: center;
   height: 48px;
@@ -1886,7 +1971,7 @@ export const TokenBalanceRight = styled.div`  display: flex;
 export const TokenBalanceAmount = styled.span`
   font-size: 16px;
   font-weight: 700;
-  color: #7c8191;
+  color: #1F2D67 !important;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1897,7 +1982,7 @@ export const TokenBalanceAmount = styled.span`
 export const TokenBalanceSymbol = styled.span`
   font-size: 16px;
   font-weight: 700;
-  color: #7c8191;
+  color: #1F2D67 !important;
   margin-left: 2px;
 `;
 
@@ -1924,7 +2009,7 @@ export const TokenNameRow = styled.div`
 export const TokenNameText = styled.span`
   font-weight: 600;
   font-size: 18px;
-  color: #222;
+  color: #04133D !important;
 `;
 
 export const AddressBadge = styled.div`
@@ -1935,7 +2020,7 @@ export const AddressBadge = styled.div`
   padding: 4px 18px;
   font-size: 18px;
   font-weight: 500;
-  color: #4664ff;
+  color: #1E29F6;
   gap: 8px;
   user-select: none;
   cursor: pointer;
@@ -1948,11 +2033,18 @@ export const AddressCopyButton = styled.button`
   display: flex;
   align-items: center;
   cursor: pointer;
+  color: #1E29F6;
+  
   svg {
     width: 18px;
     height: 18px;
-    fill: currentColor;
     display: block;
+  }
+  
+  svg path,
+  svg rect {
+    stroke: #1E29F6 !important;
+    fill: none !important;
   }
 `;
 

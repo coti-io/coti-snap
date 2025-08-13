@@ -19,13 +19,13 @@ import { TokenAdded } from './TokenAdded';
 type HomeProps = {
   balance: bigint;
   tokenBalances: Tokens;
-  AESKey: string | null;
+  aesKey: string | null;
   tokenView?: TokenViewSelector;
 };
 export const Home = ({
   balance,
   tokenBalances,
-  AESKey,
+  aesKey,
   tokenView,
 }: HomeProps) => {
   const formatedBalance = formatEther(balance).slice(
@@ -34,7 +34,7 @@ export const Home = ({
   );
   return (
     <Box>
-      {!AESKey && (
+      {!aesKey && (
         <Box direction="horizontal" alignment="center">
           <Banner title="" severity="info">
             <Text>To view your balances, you must first register your account. Click on the button below to get started</Text>
@@ -49,7 +49,7 @@ export const Home = ({
           <Box direction="horizontal" alignment="start">
             <Text> </Text>
           </Box>
-          {!AESKey && (
+          {!aesKey && (
             <Box direction="vertical" alignment="center">
               <Box direction="horizontal" alignment="center">
                 <Link href={COMPANION_DAPP_LINK}>Onboard account</Link>

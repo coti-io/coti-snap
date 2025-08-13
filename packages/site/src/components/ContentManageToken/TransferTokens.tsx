@@ -62,6 +62,7 @@ import { ErrorText } from './components/ErrorText';
 import ArrowBack from '../../assets/arrow-back.svg';
 import XIcon from '../../assets/x.svg';
 import SearchIcon from '../../assets/icons/search.svg';
+import { CotiLogo } from '../../assets/icons';
 
 interface TransferTokensProps {
   onBack: () => void;
@@ -306,8 +307,13 @@ const TokenModal: React.FC<{
                 >
                   {isSelected && <TokenListItemBar />}
                   <TokenLogos>
-                    <TokenLogoBig>{item.symbol[0] || 'N'}</TokenLogoBig>
-                    <TokenLogoSmall>{item.symbol[0] || 'N'}</TokenLogoSmall>
+                    <TokenLogoBig>
+                      {item.symbol === 'COTI' ? (
+                        <CotiLogo />
+                      ) : (
+                        item.symbol[0] || 'N'
+                      )}
+                    </TokenLogoBig>
                   </TokenLogos>
                   <TokenListInfo>
                     <TokenListName>{displayName}</TokenListName>
@@ -682,7 +688,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       <SectionTitle>From</SectionTitle>
       <AccountBox>
-        <JazziconComponent address={address} />
+        <JazziconComponent address={address} type="from" />
         <AccountDetails>
           <AccountAddress>{address}</AccountAddress>
         </AccountDetails>
@@ -694,8 +700,13 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
             <TokenRowFlex>
               <TokenInfo onClick={handleOpenTokenModal}>
                 <TokenLogos>
-                  <TokenLogoBig>{currentToken.symbol[0]}</TokenLogoBig>
-                  <TokenLogoSmall>{currentToken.symbol[0]}</TokenLogoSmall>
+                  <TokenLogoBig>
+                    {currentToken.symbol === 'COTI' ? (
+                      <CotiLogo />
+                    ) : (
+                      currentToken.symbol[0]
+                    )}
+                  </TokenLogoBig>
                 </TokenLogos>
                 <TokenName>
                   {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : currentToken.symbol}
@@ -768,7 +779,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       {addressValidation.isValid && (
         <AccountBox>
-          <JazziconComponent address={addressInput} />
+          <JazziconComponent address={addressInput} type="to" />
           <AccountDetails>
             <AccountAddress>{truncateString(addressInput)}</AccountAddress>
           </AccountDetails>
@@ -787,8 +798,13 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           <TokenRowFlex>
             <TokenInfo>
               <TokenLogos>
-                <TokenLogoBig>{currentToken.symbol[0]}</TokenLogoBig>
-                <TokenLogoSmall>{currentToken.symbol[0]}</TokenLogoSmall>
+                <TokenLogoBig>
+                  {currentToken.symbol === 'COTI' ? (
+                    <CotiLogo />
+                  ) : (
+                    currentToken.symbol[0]
+                  )}
+                </TokenLogoBig>
               </TokenLogos>
               <TokenName>
                 {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : currentToken.symbol}
@@ -823,7 +839,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           onClick={handleCancel} 
           type="button"
           backgroundColor="#fff"
-          textColor="#4664ff"
+          textColor="#1E29F6"
         >
           Cancel
         </SendButton>
@@ -831,10 +847,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           disabled={!canContinue} 
           onClick={handleContinue}
           type="button"
-          backgroundColor="#4664ff"
+          backgroundColor="#1E29F6"
           textColor="#fff"
         >
-          {txStatus === 'loading' ? 'Sending...' : 'Continue'}
+          {txStatus === 'loading' ? 'Sending...' : 'Send'}
         </SendButton>
       </BottomActions>
 

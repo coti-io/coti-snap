@@ -3,7 +3,6 @@ import { QRCode } from 'react-qrcode-logo';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import CopyIcon from '../../assets/copy.svg';
 import CopySuccessIcon from '../../assets/copy-success.svg';
-import MetamaskLogo from '../../assets/images/metamask-fox.png';
 import {
   DepositModalContainer,
   DepositCloseButton,
@@ -12,7 +11,10 @@ import {
   DepositAccountName,
   DepositAccountAddress,
   DepositCopyIconWrapper,
-  DepositCopyButton
+  DepositCopyButton,
+  DepositHeader,
+  DepositHeaderSpacer,
+  DepositBorderWrapper
 } from './styles';
 
 interface DepositTokensProps {
@@ -21,14 +23,12 @@ interface DepositTokensProps {
   accountName?: string;
 }
 
-const QR_SIZE = 150;
-const LOGO_SIZE = 32;
-const LOGO_PADDING = 5;
+const QR_SIZE = 320;
 
-export const DepositTokens: React.FC<DepositTokensProps> = React.memo(({ 
-  onClose, 
-  address, 
-  accountName 
+export const DepositTokens: React.FC<DepositTokensProps> = React.memo(({
+  onClose,
+  address,
+  accountName
 }) => {
   const { copied, copyToClipboard } = useCopyToClipboard({ successDuration: 1500 });
 
@@ -58,52 +58,51 @@ export const DepositTokens: React.FC<DepositTokensProps> = React.memo(({
   }
 
   return (
-    <DepositModalContainer onKeyDown={handleKeyDown} tabIndex={-1}>
-      <DepositCloseButton 
-        aria-label="Cerrar modal de depósito" 
-        onClick={handleClose}
-        type="button"
-      >
-        ×
-      </DepositCloseButton>
-      
-      <DepositTitle>Receive</DepositTitle>
-      
-      <DepositQRWrapper>
-        <QRCode 
-          value={qrCodeValue} 
-          size={QR_SIZE} 
-          logoImage={MetamaskLogo} 
-          logoWidth={LOGO_SIZE} 
-          logoHeight={LOGO_SIZE} 
-          logoPadding={LOGO_PADDING}
-          logoPaddingStyle='square'
-          qrStyle="dots"
-          eyeRadius={8}
-          quietZone={10}
-        />
-      </DepositQRWrapper>
-      
-      {accountName && (
-        <DepositAccountName>{accountName}</DepositAccountName>
-      )}
-      
-      <DepositAccountAddress title={address}>
-        {formattedAddress}
-      </DepositAccountAddress>
-      
-      <DepositCopyButton 
-        onClick={handleCopy}
-        $copied={copied}
-        type="button"
-        aria-label={copied ? "Address copied" : "Copy address"}
-      >
-        <DepositCopyIconWrapper>
-          {copied ? <CopySuccessIcon /> : <CopyIcon />}
-        </DepositCopyIconWrapper>
-        Copy address
-      </DepositCopyButton>
-    </DepositModalContainer>
+    <DepositBorderWrapper>
+      <DepositModalContainer onKeyDown={handleKeyDown} tabIndex={-1}>
+        <DepositHeader>
+          <DepositHeaderSpacer />
+          <DepositTitle>Receive</DepositTitle>
+          <DepositCloseButton
+            aria-label="Close deposit modal"
+            onClick={handleClose}
+            type="button"
+          >
+            ×
+          </DepositCloseButton>
+        </DepositHeader>
+
+        <DepositQRWrapper>
+          <QRCode
+            value={qrCodeValue}
+            size={QR_SIZE}
+            qrStyle="squares"
+            eyeRadius={0}
+            quietZone={10}
+          />
+        </DepositQRWrapper>
+
+        {accountName && (
+          <DepositAccountName>{accountName}</DepositAccountName>
+        )}
+
+        <DepositAccountAddress title={address}>
+          {formattedAddress}
+        </DepositAccountAddress>
+
+        <DepositCopyButton
+          onClick={handleCopy}
+          $copied={copied}
+          type="button"
+          aria-label={copied ? "Address copied" : "Copy address"}
+        >
+          <DepositCopyIconWrapper>
+            {copied ? <CopySuccessIcon /> : <CopyIcon />}
+          </DepositCopyIconWrapper>
+          Copy address
+        </DepositCopyButton>
+      </DepositModalContainer>
+    </DepositBorderWrapper>
   );
 });
 

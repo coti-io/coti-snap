@@ -323,7 +323,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
               onClick={handleClose}
               disabled={isLoading}
               backgroundColor="#fff"
-              textColor="#4664ff"
+              textColor="#1E29F6"
               type="button"
             >
               Cancel

@@ -110,4 +110,3 @@ export const TokenDetails = ({ token }: { token: Token }) => {
   return token.type === TokenViewSelector.NFT ? renderNFTDetails() : renderTokenDetails();
 };
 
-export default TokenDetails;

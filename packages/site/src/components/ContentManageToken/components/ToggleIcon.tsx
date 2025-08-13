@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const IconButton = styled.span<{ disabled?: boolean }>`
   margin-left: 12px;
   cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
-  color: ${({ disabled }) => disabled ? '#9ca3af' : '#007bff'};
+  color: ${({ disabled }) => disabled ? '#9ca3af' : '#000000'};
   font-size: 16px;
   display: inline-flex;
   align-items: center;
@@ -14,7 +14,18 @@ const IconButton = styled.span<{ disabled?: boolean }>`
   opacity: ${({ disabled }) => disabled ? 0.6 : 1};
   
   &:hover {
-    color: ${({ disabled }) => disabled ? '#9ca3af' : '#0056b3'};
+    color: ${({ disabled }) => disabled ? '#9ca3af' : '#333333'};
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke: ${({ disabled }) => disabled ? '#9ca3af' : '#000000'} !important;
+    fill: none !important;
+  }
+  
+  &:hover svg {
+    stroke: ${({ disabled }) => disabled ? '#9ca3af' : '#333333'} !important;
   }
 `;
 

@@ -152,13 +152,19 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(props) => props.theme.colors.background?.default};
-    color: ${(props) => props.theme.colors.text?.default};
+    background: transparent;
+    color: #FFFFFF;
     //font-family: ${(props) => props.theme.fonts.default};
     font-family: "Sofia Pro";
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
-    display: flex;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  html {
+    margin: 0;
+    padding: 0;
   }
 
   * {
@@ -182,5 +188,13 @@ export const GlobalStyle = createGlobalStyle`
 
   button {
     font-family: "Sofia Pro";
+  }
+
+  * {
+    color: #FFFFFF;
+  }
+
+  p, h1, h2, h3, h4, h5, h6, span, div, a {
+    color: #FFFFFF !important;
   }
 `;

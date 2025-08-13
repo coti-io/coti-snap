@@ -152,12 +152,8 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
       isAddressValid: true
     });
 
-    try {
-      console.log("User Has AES Key", userHasAESKey);
-      console.log("AES Key is: ", userAESKey);
-      
+    try {    
       if (!userHasAESKey) {
-        console.log("No AES Key available");
         return;
       }
 
@@ -167,7 +163,6 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
         tokenInfoError: null
       });
     } catch (error) {
-      console.error('Error reading token information:', error);
       updateState({
         tokenInfo: null,
         tokenInfoError: 'Error reading token information'
@@ -183,17 +178,14 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
     try {
       // Get decrypted balance for display
       const balance = await decryptERC20Balance(state.address, userAESKey || undefined);
-      console.log("balance", balance);
       
       // Get encrypted balance for storage
       const encryptedBalance = await decryptERC20Balance(state.address);
-      console.log("encryptedBalance", encryptedBalance);
       
       updateState({ 
         balance: `${balance}`
       });
     } catch (error) {
-      console.error('Error getting balance:', error);
       updateState({ balance: '0' });
     } finally {
       updateState({ balanceLoading: false });
@@ -370,7 +362,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 disabled={state.importLoading}
                 type="button"
                 backgroundColor="#fff"
-                textColor="#4664ff"
+                textColor="#1E29F6"
               >
                 Back
               </SendButton>
