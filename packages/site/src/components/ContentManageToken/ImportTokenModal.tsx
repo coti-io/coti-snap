@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import styled, { keyframes } from 'styled-components';
 import { useTokenOperations } from '../../hooks/useTokenOperations';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useModal } from '../../hooks/useModal';
@@ -15,9 +16,6 @@ import {
   ModalClose,
   ModalInput,
   ModalLabel,
-  TokenInfoBox,
-  TokenInfoRow,
-  TokenInfoValue,
   TokenSummaryBox,
   TokenSummaryLogo,
   TokenSummaryInfo,
@@ -29,6 +27,47 @@ import {
   ImportTokenContent
 } from './styles';
 import { ErrorText } from './components/ErrorText';
+import SpinnerIcon from '../../assets/spinner.png';
+
+const MODAL_STEPS = {
+  ADDRESS_INPUT: 1,
+  CONFIRMATION: 2
+} as const;
+
+const MESSAGES = {
+  AES_KEY_REQUIRED: 'AES key is required to read token information',
+  NO_TOKEN_INFO: 'No token info available',
+  TOKEN_ALREADY_IMPORTED: 'Token already imported',
+  IMPORT_ERROR: 'Error importing token',
+  METAMASK_DISCONNECTED: 'Se perdió la conexión con MetaMask. Recarga la página.',
+  LOADING_BALANCE: 'Loading balance...',
+  VALIDATING: 'Validating...',
+  IMPORTING: 'Importing...',
+  CONFIRM_IMPORT: 'Would you like to import this token?'
+} as const;
+
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const SpinnerImage = styled.img`
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  animation: ${spin} 1s linear infinite;
+`;
+
+const LoadingSpinner: React.FC<{ text: string }> = ({ text }) => (
+  <>
+    <SpinnerImage src={SpinnerIcon} alt="Loading" />
+    {text}
+  </>
+);
 
 interface ImportTokenModalProps {
   open: boolean;
@@ -49,41 +88,35 @@ interface ModalState {
   isAddressValid: boolean;
   tokenInfo: TokenInfo | null;
   tokenInfoError: string | null;
-  step: 1 | 2;
+  tokenInfoLoading: boolean;
+  step: typeof MODAL_STEPS.ADDRESS_INPUT | typeof MODAL_STEPS.CONFIRMATION;
   balance: string;
   balanceLoading: boolean;
   importLoading: boolean;
 }
 
+const INITIAL_STATE: ModalState = {
+  address: '',
+  addressStatus: 'idle',
+  isAddressValid: false,
+  tokenInfo: null,
+  tokenInfoError: null,
+  tokenInfoLoading: false,
+  step: MODAL_STEPS.ADDRESS_INPUT,
+  balance: '',
+  balanceLoading: false,
+  importLoading: false
+};
+
 const useImportTokenModal = () => {
-  const [state, setState] = useState<ModalState>({
-    address: '',
-    addressStatus: 'idle',
-    isAddressValid: false,
-    tokenInfo: null,
-    tokenInfoError: null,
-    step: 1,
-    balance: '',
-    balanceLoading: false,
-    importLoading: false
-  });
+  const [state, setState] = useState<ModalState>(INITIAL_STATE);
 
   const updateState = useCallback((updates: Partial<ModalState>) => {
     setState(prev => ({ ...prev, ...updates }));
   }, []);
 
   const resetState = useCallback(() => {
-    setState({
-      address: '',
-      addressStatus: 'idle',
-      isAddressValid: false,
-      tokenInfo: null,
-      tokenInfoError: null,
-      step: 1,
-      balance: '',
-      balanceLoading: false,
-      importLoading: false
-    });
+    setState(INITIAL_STATE);
   }, []);
 
   return {
@@ -110,8 +143,8 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
   });
 
   const isNextButtonDisabled = useMemo(() => {
-    return !state.isAddressValid || state.importLoading;
-  }, [state.isAddressValid, state.importLoading]);
+    return !state.isAddressValid || state.importLoading || state.tokenInfoLoading;
+  }, [state.isAddressValid, state.importLoading, state.tokenInfoLoading]);
 
   const isImportButtonDisabled = useMemo(() => {
     return state.importLoading || !state.tokenInfo;
@@ -119,93 +152,82 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newAddress = e.target.value;
+    
+    const normalized = normalizeAddress(newAddress);
+    const isValid = !!normalized;
+    
     updateState({
       address: newAddress,
-      addressStatus: 'idle',
-      isAddressValid: false,
+      addressStatus: isValid || !newAddress ? 'idle' : 'error',
+      isAddressValid: isValid,
       tokenInfo: null,
-      tokenInfoError: null
+      tokenInfoError: null,
+      tokenInfoLoading: false
     });
   }, [updateState]);
 
-  const handleAddressBlur = useCallback(async () => {
-    if (!state.address) {
-      updateState({
-        tokenInfo: null,
-        tokenInfoError: null
-      });
-      return;
-    }
 
+  const handleNext = useCallback(async () => {
+    if (!state.isAddressValid || !state.address) return;
+    
     const normalized = normalizeAddress(state.address);
-    if (!normalized) {
-      updateState({
-        addressStatus: 'error',
-        isAddressValid: false,
-        tokenInfo: null,
-        tokenInfoError: null
-      });
-      return;
-    }
-
-    updateState({
-      addressStatus: 'idle',
-      isAddressValid: true
+    if (!normalized) return;
+    
+    updateState({ 
+      tokenInfoLoading: true,
+      tokenInfoError: null
     });
 
     try {    
       if (!userHasAESKey) {
+        updateState({ 
+          tokenInfoLoading: false,
+          tokenInfoError: MESSAGES.AES_KEY_REQUIRED
+        });
         return;
       }
 
       const tokenInfo = await getTokenInfo(normalized);
+      
       updateState({
         tokenInfo,
-        tokenInfoError: null
+        tokenInfoError: null,
+        tokenInfoLoading: false,
+        step: MODAL_STEPS.CONFIRMATION,
+        balanceLoading: true
       });
-    } catch (error) {
-      updateState({
-        tokenInfo: null,
-        tokenInfoError: 'Error reading token information'
-      });
-    }
-  }, [state.address, userHasAESKey, userAESKey, getTokenInfo, updateState]);
 
-  const handleNext = useCallback(async () => {
-    if (!state.tokenInfo || !state.address) return;
-    
-    updateState({ step: 2, balanceLoading: true });
-    
-    try {
-      // Get decrypted balance for display
       const balance = await decryptERC20Balance(state.address, userAESKey || undefined);
       
-      // Get encrypted balance for storage
-      const encryptedBalance = await decryptERC20Balance(state.address);
-      
       updateState({ 
-        balance: balance.toString()
+        balance: balance.toString(),
+        balanceLoading: false
       });
     } catch (error) {
-      updateState({ balance: '0' });
-    } finally {
-      updateState({ balanceLoading: false });
+      console.error('Error getting token info:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error reading token information';
+      updateState({
+        tokenInfo: null,
+        tokenInfoError: errorMessage,
+        tokenInfoLoading: false,
+        balance: '0',
+        balanceLoading: false
+      });
     }
-  }, [state.tokenInfo, state.address, userAESKey, decryptERC20Balance, updateState]);
+  }, [state.isAddressValid, state.address, userHasAESKey, getTokenInfo, decryptERC20Balance, updateState]);
 
   const handleBack = useCallback(() => {
-    updateState({ step: 1 });
+    updateState({ step: MODAL_STEPS.ADDRESS_INPUT });
   }, [updateState]);
 
   const handleImportClick = useCallback(async () => {
     if (!state.tokenInfo) {
-      updateState({ tokenInfoError: 'No token info available' });
+      updateState({ tokenInfoError: MESSAGES.NO_TOKEN_INFO });
       return;
     }
 
-    // Check if token already exists
     if (hasToken(state.address)) {
-      updateState({ tokenInfoError: 'Token already imported' });
+      updateState({ tokenInfoError: MESSAGES.TOKEN_ALREADY_IMPORTED });
       return;
     }
 
@@ -232,22 +254,19 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
           type: 'ERC20'
         };
         
-        // Add to localStorage
         addToken(importedToken);
-        
-        // Call the onImport callback if provided
         onImport?.(importedToken);
         
         handleClose();
       } else {
-        updateState({ tokenInfoError: 'Error importing token' });
+        updateState({ tokenInfoError: MESSAGES.IMPORT_ERROR });
       }
     } catch (error: any) {
       console.error('Import error:', error);
       if (error.message?.includes('Disconnected from MetaMask background')) {
-        updateState({ tokenInfoError: 'Se perdió la conexión con MetaMask. Recarga la página.' });
+        updateState({ tokenInfoError: MESSAGES.METAMASK_DISCONNECTED });
       } else {
-        updateState({ tokenInfoError: 'Error importing token' });
+        updateState({ tokenInfoError: MESSAGES.IMPORT_ERROR });
       }
     } finally {
       updateState({ importLoading: false });
@@ -260,7 +279,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
   return (
     <ModalBackdrop onClick={handleBackdropClick}>
       <AnimatedModalContainer onClick={e => e.stopPropagation()} onKeyDown={handleKeyDown} tabIndex={-1}>
-        {state.step === 1 && (
+        {state.step === MODAL_STEPS.ADDRESS_INPUT && (
           <>
             <ModalHeader>
               Import tokens
@@ -279,7 +298,6 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 placeholder="0x..."
                 value={state.address}
                 onChange={handleAddressChange}
-                onBlur={handleAddressBlur}
                 disabled={state.importLoading}
                 aria-describedby={state.addressStatus === 'error' ? 'address-error' : undefined}
               />
@@ -291,25 +309,8 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 />
               )}
               
-              {state.tokenInfo && (
-                <>
-                  <ModalLabel>Name</ModalLabel>
-                  <TokenInfoBox>
-                    <TokenInfoRow>
-                      <TokenInfoValue>{state.tokenInfo.name}</TokenInfoValue>
-                    </TokenInfoRow>
-                  </TokenInfoBox>
-                  
-                  <ModalLabel>Symbol</ModalLabel>
-                  <TokenInfoBox>
-                    <TokenInfoRow>
-                      <TokenInfoValue>{state.tokenInfo.symbol}</TokenInfoValue>
-                    </TokenInfoRow>
-                  </TokenInfoBox>
-                </>
-              )}
               
-              {state.tokenInfoError && (
+              {state.tokenInfoError && !state.tokenInfoLoading && (
                 <ErrorText 
                   message={state.tokenInfoError}
                 />
@@ -319,13 +320,17 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 disabled={isNextButtonDisabled} 
                 onClick={handleNext}
               >
-                Next
+                {state.tokenInfoLoading ? (
+                  <LoadingSpinner text={MESSAGES.VALIDATING} />
+                ) : (
+                  'Next'
+                )}
               </SendButton>
             </ImportTokenContent>
           </>
         )}
         
-        {state.step === 2 && state.tokenInfo && (
+        {state.step === MODAL_STEPS.CONFIRMATION && state.tokenInfo && (
           <>
             <ModalHeader>
               Import tokens
@@ -339,7 +344,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
             </ModalHeader>
             
             <CenteredText>
-              Would you like to import this token?
+              {MESSAGES.CONFIRM_IMPORT}
             </CenteredText>
             
             <TokenSummaryBox>
@@ -350,7 +355,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 <TokenSummaryName>{state.tokenInfo.name}</TokenSummaryName>
                 <TokenSummaryBalance>
                   {state.balanceLoading 
-                    ? 'Loading balance...' 
+                    ? MESSAGES.LOADING_BALANCE
                     : `${formatTokenBalance(state.balance, state.tokenInfo.decimals)} ${state.tokenInfo.symbol}`
                   }
                 </TokenSummaryBalance>
@@ -372,7 +377,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 disabled={isImportButtonDisabled}
                 type="button"
               >
-                {state.importLoading ? 'Importing...' : 'Import'}
+                {state.importLoading ? MESSAGES.IMPORTING : 'Import'}
               </SendButton>
             </StepActions>
           </>
