@@ -3,7 +3,14 @@
   "compilerOptions": {
     "baseUrl": "./",
     "resolveJsonModule": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
   },
-  "include": ["vite.config.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "include": [
+    "vite.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/vite-env.d.ts"
+  ],
 }
