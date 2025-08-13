@@ -22,7 +22,6 @@ import {
   TokenBalanceLeft,
   TokenBalanceLogoBox,
   TokenBalanceLogoBig,
-  TokenBalanceLogoSmall,
   TokenBalanceName,
   TokenBalanceRight,
   TokenBalanceAmount,
@@ -41,6 +40,7 @@ import ArrowBack from '../../assets/arrow-back.svg';
 import CopyIcon from '../../assets/copy.svg';
 import CopySuccessIcon from '../../assets/copy-success.svg';
 import VerticalMenuIcon from '../../assets/icons/vertical-menu.svg';
+import { CotiLogo } from '../../assets/icons';
 import { HeaderBar } from './styles';
 import { HeaderBarSlotLeft, HeaderBarSlotRight } from './styles/transfer';
 import TrashIcon from '../../assets/icons/trash.svg';
@@ -115,20 +115,6 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
     menuDropdown.close();
   }, [menuDropdown]);
 
-  const handleSendToken = useCallback(() => {
-    // TODO: Implement send token functionality
-    console.log('Send token clicked');
-    menuDropdown.close();
-  }, [menuDropdown]);
-
-  const handleSendClick = useCallback(() => {
-    setShowSendModal(true);
-  }, []);
-
-  const handleCloseSendModal = useCallback(() => {
-    setShowSendModal(false);
-  }, []);
-
   const handleHideToken = useCallback(() => {
     if (token) {
       removeToken(token.address);
@@ -188,8 +174,13 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
         <TokenBalanceRow>
           <TokenBalanceLeft>
             <TokenBalanceLogoBox>
-              <TokenBalanceLogoBig>{token.symbol[0]}</TokenBalanceLogoBig>
-              <TokenBalanceLogoSmall>{token.symbol[0]}</TokenBalanceLogoSmall>
+              <TokenBalanceLogoBig>
+                {token.symbol === 'COTI' ? (
+                  <CotiLogo />
+                ) : (
+                  token.symbol[0]
+                )}
+              </TokenBalanceLogoBig>
             </TokenBalanceLogoBox>
             <TokenBalanceName>{token.name}</TokenBalanceName>
           </TokenBalanceLeft>
@@ -208,7 +199,9 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
           <TokenDetailsLabel>Network</TokenDetailsLabel>
           <TokenDetailsValue>
             <TokenNameRow>
-              <TokenCircle>C</TokenCircle>
+              <TokenCircle>
+                <CotiLogo />
+              </TokenCircle>
               <TokenNameText>COTI</TokenNameText>
             </TokenNameRow>
         </TokenDetailsValue>

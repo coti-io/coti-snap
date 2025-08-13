@@ -1,34 +1,38 @@
-import React, { useRef, useEffect } from 'react';
-import jazzicon from 'jazzicon-ts';
+import React from 'react';
+import { FromIcon, ToIcon } from '../../assets/icons';
 
 interface JazziconComponentProps {
   address: string;
   size?: number;
+  type?: 'from' | 'to';
 }
 
-export const JazziconComponent: React.FC<JazziconComponentProps> = ({ 
-  address, 
-  size = 40 
+export const JazziconComponent: React.FC<JazziconComponentProps> = ({
+  size = 40,
+  type = 'from'
 }) => {
-  const iconRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (iconRef.current && address) {
-      iconRef.current.innerHTML = '';
-      const identicon = jazzicon(size, parseInt(address.slice(2, 10), 16));
-      iconRef.current.appendChild(identicon);
-    }
-  }, [address, size]);
+  const iconSrc = type === 'from' ? FromIcon : ToIcon;
 
   return (
     <div 
-      ref={iconRef} 
       style={{ 
         width: size, 
         height: size, 
         borderRadius: '50%',
-        display: 'inline-block'
+        display: 'inline-block',
+        overflow: 'hidden'
       }} 
-    />
+    >
+      <img 
+        src={iconSrc}
+        alt={`${type} address`}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          borderRadius: '50%'
+        }}
+      />
+    </div>
   );
 };

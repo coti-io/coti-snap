@@ -13,12 +13,9 @@ export const InstallWalletButton = () => (
 );
 
 export const HeaderButtons = () => {
-  const { isFlask, installedSnap } = useMetaMask();
+  const { isFlask, snapsDetected } = useMetaMask();
   const { isConnected } = useAccount();
   const { connectors, connect } = useConnect({ config });
-
-  const isMetaMaskInstalled =
-    typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
 
   // Determine which connector to use based on Flask detection
   const connectorId = isFlask ? CONNECTOR_MM_FLASK_EXPORT.ID : CONNECTOR_MM_REGULAR_EXPORT.ID;
@@ -29,7 +26,7 @@ export const HeaderButtons = () => {
         <WalletManager />
       ) : (
         <>
-          {!isMetaMaskInstalled ? (
+          {!snapsDetected ? (
             <InstallWalletButton />
           ) : (
             connectors.map(

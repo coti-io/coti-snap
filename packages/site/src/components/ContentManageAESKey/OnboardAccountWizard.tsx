@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { useAccount } from 'wagmi';
+import styled from 'styled-components';
 
 import EditIcon from '../../assets/edit.svg';
 import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK } from '../../config/onboard';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
-import { Button } from '../Button';
+import { ButtonAction, ButtonCancel } from '../Button';
 import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
 import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
 import { Loading } from '../Loading';
@@ -20,12 +21,18 @@ import {
   Link,
 } from './styles';
 
+const ContentTextSpaced = styled(ContentText)`
+  line-height: 1.6;
+`;
+
 interface OnboardAccountWizardProps {
   readonly handleOnboardAccount: () => void;
+  readonly handleCancelOnboard: () => void;
 }
 
 export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
   handleOnboardAccount,
+  handleCancelOnboard,
 }) => {
   const {
     setAESKey,
@@ -33,7 +40,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     settingAESKeyError,
     onboardContractAddress,
     handleOnChangeContactAddress,
-    handleCancelOnboard,
+    handleCancelOnboard: snapCancelOnboard,
   } = useSnap();
 
   const [isEditable, setIsEditable] = useState(false);
@@ -53,8 +60,8 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
 
   const handleCancel = (): void => {
     try {
+      snapCancelOnboard();
       handleCancelOnboard();
-      handleOnboardAccount();
     } catch (error) {
       console.error('Error during onboarding cancellation:', error);
     }
@@ -81,13 +88,13 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     ) : (
       <>
         <ContentTitle>Onboard account</ContentTitle>
-        <ContentText>
+        <ContentTextSpaced>
           You are about to interact with the{' '}
           <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>
             AccountOnboard.sol
           </Link>{' '}
           contract.
-        </ContentText>
+        </ContentTextSpaced>
         <ContentInput>
           <ContentText id="contract-address-description">AccountOnboard.sol address</ContentText>
           <EditableInputContainer
@@ -105,7 +112,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
               aria-label="AccountOnboard contract address"
               aria-describedby="contract-address-description"
             />
-            <Edit 
+            <Edit
               onClick={handleIconClick}
               aria-label="Edit contract address"
               title="Click to edit contract address"
@@ -115,16 +122,16 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
           </EditableInputContainer>
         </ContentInput>
         <ContentButtons>
-          <Button 
-            text="Cancel" 
-            fullWith={true} 
+          <ButtonCancel
+            text="Cancel"
+            fullWidth={true}
             onClick={handleCancel}
             aria-label="Cancel onboarding"
           />
-          <Button 
-            primary 
-            text="Onboard" 
-            fullWith={true} 
+          <ButtonAction
+            primary
+            text="Onboard"
+            fullWidth={true}
             onClick={handleOnboardClick}
             aria-label="Start onboarding process"
           />

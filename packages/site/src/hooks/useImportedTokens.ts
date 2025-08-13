@@ -48,7 +48,6 @@ export const useImportedTokens = () => {
       // Reload tokens from localStorage to ensure consistency
       const updatedTokens = getImportedTokens();
       setImportedTokensState(updatedTokens);
-      console.log('Updated tokens:', updatedTokens);
     } catch (error) {
       console.error('Error removing token:', error);
     }
@@ -57,7 +56,6 @@ export const useImportedTokens = () => {
   // Update token balance - removed since we no longer store encrypted balances
   const updateTokenBalance = useCallback((_address: string, _encryptedBalance: string) => {
     // This function is kept for compatibility but no longer persists encrypted balances
-    console.log('updateTokenBalance called but encrypted balances are no longer stored');
   }, []);
 
   // Clear all tokens

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 
-import { Button } from '../Button';
+import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
 import { OnboardAccountWizard } from './OnboardAccountWizard';
 
@@ -15,21 +15,21 @@ interface OnboardingState {
 
 const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your wallet could interact with private chain data, for example: your balance in a private ERC20 token.`;
 
-export const OnboardAccount: React.FC<OnboardAccountProps> = ({ 
-  onOnboardingComplete 
+export const OnboardAccount: React.FC<OnboardAccountProps> = ({
+  onOnboardingComplete
 }) => {
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
     isOnboarding: false,
     isCompleted: false
   });
 
-  const shouldShowWizard = useMemo(() => 
-    onboardingState.isOnboarding && !onboardingState.isCompleted, 
+  const shouldShowWizard = useMemo(() =>
+    onboardingState.isOnboarding && !onboardingState.isCompleted,
     [onboardingState]
   );
 
-  const shouldShowOnboardingIntro = useMemo(() => 
-    !onboardingState.isOnboarding && !onboardingState.isCompleted, 
+  const shouldShowOnboardingIntro = useMemo(() =>
+    !onboardingState.isOnboarding && !onboardingState.isCompleted,
     [onboardingState]
   );
 
@@ -45,15 +45,22 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = ({
       isOnboarding: false,
       isCompleted: true
     });
-    
+
     onOnboardingComplete?.();
   };
 
+  const handleOnboardingCancel = (): void => {
+    setOnboardingState({
+      isOnboarding: false,
+      isCompleted: false
+    });
+  };
 
   if (shouldShowWizard) {
     return (
-      <OnboardAccountWizard 
+      <OnboardAccountWizard
         handleOnboardAccount={handleOnboardingComplete}
+        handleCancelOnboard={handleOnboardingCancel}
       />
     );
   }
@@ -65,9 +72,9 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = ({
         <ContentText>
           {ONBOARDING_DESCRIPTION}
         </ContentText>
-        <Button 
-          primary 
-          text="Onboard account" 
+        <ButtonAction
+          primary
+          text="Onboard Account"
           onClick={handleStartOnboarding}
           aria-label="Start account onboarding process"
         />

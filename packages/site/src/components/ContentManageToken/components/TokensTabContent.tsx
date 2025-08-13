@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { ImportedToken } from '../../../types/token';
 import { TokenRowComponent } from './TokenRow';
-import { TransferContainer } from '../styles';
+import { TransferContainerMain } from '../styles';
 
 interface TokensTabContentProps {
   tokens: ImportedToken[];
@@ -13,6 +13,9 @@ interface TokensTabContentProps {
   cotiBalance?: string;
   propAESKey?: string | null | undefined;
   onSelectToken: (token: ImportedToken) => void;
+  isDecrypted: boolean;
+  onToggleDecryption: () => void;
+  balances: Record<string, string>;
 }
 
 export const TokensTabContent: React.FC<TokensTabContentProps> = React.memo(({ 
@@ -20,9 +23,12 @@ export const TokensTabContent: React.FC<TokensTabContentProps> = React.memo(({
   provider, 
   cotiBalance, 
   propAESKey, 
-  onSelectToken 
+  onSelectToken,
+  isDecrypted,
+  onToggleDecryption,
+  balances 
 }) => (
-  <TransferContainer>
+  <TransferContainerMain>
     {tokens.map((token, index) => (
       <TokenRowComponent 
         key={`${token.address}-${index}`} 
@@ -32,9 +38,12 @@ export const TokensTabContent: React.FC<TokensTabContentProps> = React.memo(({
         cotiBalance={cotiBalance}
         propAESKey={propAESKey}
         onSelectToken={onSelectToken}
+        isDecrypted={isDecrypted}
+        onToggleDecryption={onToggleDecryption}
+        tokenBalance={balances[token.symbol] || '0'}
       />
     ))}
-  </TransferContainer>
+  </TransferContainerMain>
 ));
 
 TokensTabContent.displayName = 'TokensTabContent';

@@ -21,6 +21,7 @@ export const useTokenBalances = ({
   const { decryptERC20Balance } = useTokenOperations(provider);
 
   const fetchBalances = useCallback(async () => {
+    
     if (!aesKey || tokens.length === 0) return;
 
     setIsLoading(true);

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ContentContainer } from '../styles';
+import { ContentBorderWrapper, ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
 import { DeleteAESKey } from './DeleteAESKey';
 import { ManageAESKey } from './ManageAESKey';
@@ -61,8 +61,10 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
   };
 
   return (
-    <ContentContainer>
-      {renderContent()}
-    </ContentContainer>
+    <ContentBorderWrapper>
+      <ContentContainer>
+        {renderContent()}
+      </ContentContainer>
+    </ContentBorderWrapper>
   );
 };

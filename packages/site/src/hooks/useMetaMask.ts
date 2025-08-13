@@ -15,7 +15,10 @@ export const useMetaMask = () => {
 
   const [isFlask, setIsFlask] = useState(false);
 
-  const snapsDetected = provider !== null;
+  const basicMetaMaskDetection = typeof window !== 'undefined' && 
+    typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
+  
+  const snapsDetected = provider !== null || basicMetaMaskDetection;
 
   /**
    * Detect if the version of MetaMask is Flask.

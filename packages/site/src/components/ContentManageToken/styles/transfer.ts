@@ -3,10 +3,17 @@ import ArrowDown from '../../../assets/arrow-down.svg';
 import { colors, spacing, typography, borderRadius, transitions, slideUpFadeIn } from './theme';
 
 export const SectionTitle = styled.div`
-  font-size: ${typography.sizes.xl};
+  font-size: 12px;
   font-weight: ${typography.weights.bold};
   margin-top: ${spacing.xxl};
   margin-bottom: ${spacing.sm};
+  color: #04133D99 !important;
+  
+  @media (max-width: 600px) {
+    font-size: 11px;
+    margin-top: ${spacing.lg};
+    margin-bottom: ${spacing.xs};
+  }
 `;
 
 export const AccountBox = styled.div.withConfig({
@@ -14,12 +21,9 @@ export const AccountBox = styled.div.withConfig({
 })<{ active?: boolean; error?: boolean }>`
   display: flex;
   align-items: center;
-  background: ${colors.background.primary};
+  background: #F4F5FC !important;
   border-radius: ${borderRadius.lg};
-  border: 1px solid
-    ${({ error, active }) =>
-      error ? colors.error : active ? colors.primary : colors.border.secondary};
-  padding: 14px 18px;
+  padding: 8px 18px;
   gap: 14px;
   margin-bottom: ${spacing.sm};
   cursor: pointer;
@@ -27,6 +31,12 @@ export const AccountBox = styled.div.withConfig({
   
   &:hover {
     background: ${colors.background.hover};
+  }
+  
+  @media (max-width: 600px) {
+    padding: 6px 14px;
+    gap: 10px;
+    margin-bottom: ${spacing.xs};
   }
 `;
 
@@ -39,6 +49,12 @@ export const AccountIcon = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 2.2rem;
+  
+  @media (max-width: 600px) {
+    width: 30px;
+    height: 30px;
+    font-size: 1.8rem;
+  }
 `;
 
 export const AccountDetails = styled.div`
@@ -48,9 +64,14 @@ export const AccountDetails = styled.div`
 
 export const AccountAddress = styled.div`
   font-size: ${typography.sizes.md};
-  color: ${colors.text.secondary};
+  color: #000000 !important;
   font-weight: ${typography.weights.normal};
   margin-top: ${spacing.sm};
+  
+  @media (max-width: 600px) {
+    font-size: ${typography.sizes.sm};
+    margin-top: ${spacing.xs};
+  }
 `;
 
 export const InputBox = styled.div`
@@ -68,6 +89,11 @@ export const InputBox = styled.div`
   &:focus-within {
     border: 1.5px solid ${colors.primary};
   }
+  
+  @media (max-width: 600px) {
+    padding: 14px ${spacing.md};
+    gap: ${spacing.xs};
+  }
 `;
 
 export const AddressInput = styled.input`
@@ -76,6 +102,11 @@ export const AddressInput = styled.input`
   font-size: ${typography.sizes.md};
   flex: 1;
   background: transparent;
+  color: #000000 !important;
+  
+  @media (max-width: 600px) {
+    font-size: ${typography.sizes.sm};
+  }
 `;
 
 export const AmountInput = styled.input`
@@ -84,8 +115,9 @@ export const AmountInput = styled.input`
   background: transparent;
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.normal};
-  color: ${colors.text.primary};
+  color: #1F2D67 !important;
   width: auto;
+  max-width: 120px;
   text-align: right;
   padding: 0 4px;
   appearance: textfield;
@@ -100,12 +132,22 @@ export const AmountInput = styled.input`
     outline: none;
     box-shadow: none;
   }
+  
+  @media (max-width: 600px) {
+    max-width: 80px;
+    font-size: 14px;
+  }
 `;
 
 export const BottomActions = styled.div`
   display: flex;
   justify-content: space-between;
   gap: ${spacing.lg};
+  
+  @media (max-width: 600px) {
+    flex-direction: column-reverse;
+    gap: 0px;
+  }
 `;
 
 export const CancelButton = styled.button`
@@ -163,6 +205,10 @@ export const HeaderBarSlotTitle = styled.div`
   text-align: center;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.xxxxl};
+  
+  @media (max-width: 600px) {
+    font-size: ${typography.sizes.xxl};
+  }
 `;
 
 export const HeaderBarSlotRight = styled.div`
@@ -182,16 +228,21 @@ export const BalanceSubTransfer = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'error'
 })<{ error?: boolean }>`
   font-size: ${typography.sizes.base};
-  color: ${({ error }) => (error ? colors.error : colors.text.tertiary)};
+  color: ${({ error }) => (error ? `${colors.error} !important` : "#04133D99 !important")};
   font-weight: ${typography.weights.normal};
   flex: 1;
   margin-bottom: ${spacing.md};
+  
+  @media (max-width: 600px) {
+    font-size: ${typography.sizes.sm};
+    margin-bottom: ${spacing.xs};
+  }
 `;
 
 export const MaxButton = styled.button`
   background: none;
   border: none;
-  color: ${colors.secondary};
+  color: #04133D99 !important;
   font-size: ${typography.sizes.base};
   font-weight: ${typography.weights.bold};
   cursor: pointer;
@@ -199,6 +250,10 @@ export const MaxButton = styled.button`
   
   &:hover {
     opacity: 0.8;
+  }
+  
+  @media (max-width: 600px) {
+    font-size: ${typography.sizes.sm};
   }
 `;
 
@@ -213,7 +268,13 @@ export const ArrowDownStyled = styled(ArrowDown)`
   margin-left: ${spacing.sm};
   width: 22px;
   height: 22px;
-  color: ${colors.text.primary};
+  color: #1F2D67 !important;
+  
+  @media (max-width: 600px) {
+    width: 18px;
+    height: 18px;
+    margin-left: ${spacing.xs};
+  }
 `;
 
 export const ClearIconButton = styled.button`
@@ -232,6 +293,11 @@ export const ClearIconButton = styled.button`
   
   &:hover {
     background: ${colors.background.tertiary};
+  }
+  
+  @media (max-width: 600px) {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -295,6 +361,7 @@ export const TokenModalHeader = styled.div`
   font-weight: ${typography.weights.bold};
   text-align: center;
   padding: ${spacing.xxxl} ${spacing.xxxl} 0 ${spacing.xxxl};
+  color: #000000 !important;
 `;
 
 export const TokenModalClose = styled.button`
@@ -329,7 +396,7 @@ export const TokenTab = styled.button.withConfig({
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.semibold};
   color: ${({ active }) => (active ? '#222' : colors.text.muted)};
-  border-bottom: 3px solid ${({ active }) => (active ? '#222' : colors.border.primary)};
+  border-bottom: 2px solid ${({ active }) => (active ? '#1E29F6' : colors.border.primary)};
   padding: ${spacing.md} 0 10px 0;
   cursor: pointer;
   transition: color ${transitions.normal}, border-bottom ${transitions.normal};
@@ -408,12 +475,12 @@ export const TokenListInfo = styled.div`
 export const TokenListName = styled.div`
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.bold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
 `;
 
 export const TokenListSymbol = styled.div`
   font-size: ${typography.sizes.sm};
-  color: ${colors.text.muted};
+  color: #000000 !important;
   font-weight: ${typography.weights.normal};
   align-self: flex-start;
   margin-top: 4px;
@@ -422,12 +489,13 @@ export const TokenListSymbol = styled.div`
 export const TokenListAmount = styled.div`
   margin-left: auto;
   text-align: right;
+  color: #000000 !important;
 `;
 
 export const TokenListValue = styled.div`
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.bold};
-  color: ${colors.text.primary};
+  color: #000000 !important;
 `;
 
 export const NoNFTsWrapper = styled.div`
@@ -440,14 +508,14 @@ export const NoNFTsWrapper = styled.div`
 `;
 
 export const NoNFTsText = styled.div`
-  color: ${colors.text.secondary};
+  color: #000000 !important;
   font-size: ${typography.sizes.xxl};
   font-weight: ${typography.weights.medium};
   margin-bottom: 18px;
 `;
 
 export const LearnMoreLink = styled.a`
-  color: ${colors.secondary};
+  color:rgb(8, 4, 239) !important;
   font-size: ${typography.sizes.xxl};
   font-weight: ${typography.weights.semibold};
   text-decoration: none;

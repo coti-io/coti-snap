@@ -46,7 +46,7 @@ import {
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
-  const { balance, tokenBalances, tokenView, AESKey } =
+  const { balance, tokenBalances, tokenView, aesKey } =
     await getStateByChainIdAndAddress();
   await snap.request({
     method: 'snap_updateInterface',
@@ -57,7 +57,7 @@ export const returnToHomePage = async (id: string) => {
           balance={BigInt(balance ?? 0)}
           tokenBalances={tokenBalances}
           tokenView={tokenView ?? TokenViewSelector.ERC20}
-          AESKey={AESKey}
+          aesKey={aesKey}
         />
       ),
     },
@@ -80,7 +80,7 @@ export const onInstall: OnInstallHandler = async () => {
     (await setStateByChainIdAndAddress({
       balance: '0',
       tokenBalances: [],
-      AESKey: null,
+      aesKey: null,
       tokenView: TokenViewSelector.ERC20,
     }));
 };
@@ -104,7 +104,7 @@ export const onHomePage: OnHomePageHandler = async () => {
         balance={balance}
         tokenBalances={tokenBalances}
         tokenView={TokenViewSelector.ERC20}
-        AESKey={state.AESKey}
+        aesKey={state.aesKey}
       />
     ),
   };
@@ -215,8 +215,9 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               ui: <Settings />,
             },
           });
-        } catch (error) {
-          console.error(error);
+        } catch {
+          await returnToHomePage(id);
+          return;
         }
         return;
       case 'token-cancel':
@@ -260,8 +261,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           await recalculateBalances();
           await returnToHomePage(id);
-        } catch (error) {
-          console.error(error);
+        } catch {
           await snap.request({
             method: 'snap_updateInterface',
             params: {
@@ -269,6 +269,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               ui: <ImportERC721 errorInForm={true} />,
             },
           });
+          return;
         }
         return;
       case 'token-erc20-submit':
@@ -304,7 +305,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           await importToken(address, name, symbol, decimals);
           await recalculateBalances();
           await returnToHomePage(id);
-        } catch (error) {
+        } catch {
           await snap.request({
             method: 'snap_updateInterface',
             params: {
@@ -312,6 +313,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               ui: <ImportERC20 errorInForm={true} />,
             },
           });
+          return;
         }
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
@@ -333,7 +335,6 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             },
           });
         } else {
-          console.error('Failed to fetch token details');
         }
     }
   }
@@ -355,7 +356,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (!getState.AESKey) {
+      if (!getState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -387,7 +388,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       if (encryptResult) {
         return JSON.stringify(
-          encrypt(encodeKey(getState.AESKey), encodeString(textToEncrypt)),
+          encrypt(encodeKey(getState.aesKey), encodeString(textToEncrypt)),
         );
       }
 
@@ -412,7 +413,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         r: { [key: string]: number };
       };
 
-      if (!getState.AESKey) {
+      if (!getState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -443,7 +444,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (decryptResult) {
         return JSON.stringify(
           decrypt(
-            encodeKey(getState.AESKey),
+            encodeKey(getState.aesKey),
             new Uint8Array([...Object.values(r)]),
             new Uint8Array([...Object.values(ciphertext)]),
           ),
@@ -452,14 +453,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'has-aes-key':
-      if (getState.AESKey) {
+      if (getState.aesKey) {
         return true;
       }
 
       return false;
 
     case 'get-aes-key':
-      if (!getState.AESKey) {
+      if (!getState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -475,8 +476,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (getState.AESKey) {
-        const revealAESKey = await snap.request({
+      if (getState.aesKey) {
+        const revealaesKey = await snap.request({
           method: 'snap_dialog',
           params: {
             type: 'confirmation',
@@ -489,15 +490,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           },
         });
 
-        if (revealAESKey) {
-          return getState.AESKey;
+        if (revealaesKey) {
+          return getState.aesKey;
         }
       }
 
       return null;
 
     case 'delete-aes-key':
-      if (!getState.AESKey) {
+      if (!getState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -529,7 +530,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       if (deleteResult) {
         await setStateByChainIdAndAddress({
           ...getState,
-          AESKey: null,
+          aesKey: null,
         });
         return true;
       }
@@ -555,10 +556,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (!getState.AESKey) {
+      if (!getState.aesKey) {
         await setStateByChainIdAndAddress({
           ...getState,
-          AESKey: newUserAesKey,
+          aesKey: newUserAesKey,
         });
 
         return true;

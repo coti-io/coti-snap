@@ -8,7 +8,7 @@ interface ErrorTextProps {
 }
 
 const ErrorTextContainer = styled.span`
-  color: #dc3545;
+  color: #A5135C !important; 
   font-size: 14px;
   font-weight: 500;
 `;

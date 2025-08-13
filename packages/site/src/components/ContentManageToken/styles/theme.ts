@@ -12,14 +12,14 @@ export const slideUpFadeIn = keyframes`
 `;
 
 export const colors = {
-  primary: '#4664ff',
+  primary: '#1E29F6',
   primaryHover: '#3350e6',
   primaryDark: '#2946c7',
   secondary: '#3d5afe',
   secondaryHover: '#2946c7',
   success: '#10b981',
   successHover: '#059669',
-  error: '#e53935',
+  error: '#A5135C',
   text: {
     primary: '#18191d',
     secondary: '#6b7280',

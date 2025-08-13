@@ -9,7 +9,7 @@ import {
 import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
 import { ContentManageToken } from '../components/ContentManageToken';
 import { DeleteAESKey } from '../components/ContentManageAESKey/DeleteAESKey';
-import { ContentContainer } from '../components/styles';
+import { ContentBorderWrapper, ContentContainer } from '../components/styles';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 import { SmartRouter } from './SmartRouter.js';
@@ -66,9 +66,11 @@ function DeleteAESKeyPage() {
   };
   
   return (
-    <ContentContainer>
-      <DeleteAESKey handleShowDelete={handleGoBack} />
-    </ContentContainer>
+    <ContentBorderWrapper>
+      <ContentContainer>
+        <DeleteAESKey handleShowDelete={handleGoBack} />
+      </ContentContainer>
+    </ContentBorderWrapper>
   );
 }
 
