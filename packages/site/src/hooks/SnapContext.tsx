@@ -12,6 +12,7 @@ import { useMetaMask } from './useMetaMask';
 export type setAESKeyErrorsType =
   | 'accountBalanceZero'
   | 'invalidAddress'
+  | 'userRejected'
   | 'unknownError'
   | null;
 
@@ -98,6 +99,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const setAESKey = async () => {
     setLoading(true);
+    setSettingAESKeyError(null);
 
     const hasPermissions = await getWalletPermissions();
 
@@ -149,6 +151,14 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       if (error instanceof Error) {
         if (error.message.includes('Account balance is 0')) {
           setSettingAESKeyError('accountBalanceZero');
+        } else if (
+          error.message.includes('user rejected') || 
+          error.message.includes('User rejected') ||
+          error.message.includes('ACTION_REJECTED') ||
+          error.message.includes('ethers-user-denied') ||
+          (error as any).code === 4001
+        ) {
+          setSettingAESKeyError('userRejected');
         } else {
           console.error('Error setting AES key:', error.message);
           setSettingAESKeyError('unknownError');

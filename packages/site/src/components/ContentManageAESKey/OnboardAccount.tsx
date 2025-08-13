@@ -1,7 +1,15 @@
 import React, { useState, useMemo } from 'react';
+import { useAccount } from 'wagmi';
 
 import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
+import { isLocal } from '../../config/snap';
+import { useSnap } from '../../hooks/SnapContext';
+import { useWrongChain } from '../../hooks';
+import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
+import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
+import { Loading } from '../Loading';
+import { Alert } from '../ContentManageToken/Alert';
 import { OnboardAccountWizard } from './OnboardAccountWizard';
 
 interface OnboardAccountProps {
@@ -18,26 +26,33 @@ const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your 
 export const OnboardAccount: React.FC<OnboardAccountProps> = ({
   onOnboardingComplete
 }) => {
+  const { setAESKey, loading, settingAESKeyError } = useSnap();
+  const { isConnected } = useAccount();
+  const { wrongChain } = useWrongChain();
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
     isOnboarding: false,
     isCompleted: false
   });
 
   const shouldShowWizard = useMemo(() =>
-    onboardingState.isOnboarding && !onboardingState.isCompleted,
+    onboardingState.isOnboarding && !onboardingState.isCompleted && isLocal(),
     [onboardingState]
   );
 
-  const shouldShowOnboardingIntro = useMemo(() =>
-    !onboardingState.isOnboarding && !onboardingState.isCompleted,
-    [onboardingState]
-  );
-
-  const handleStartOnboarding = (): void => {
-    setOnboardingState(prev => ({
-      ...prev,
-      isOnboarding: true
-    }));
+  const handleStartOnboarding = async (): Promise<void> => {
+    if (isLocal()) {
+      setOnboardingState(prev => ({
+        ...prev,
+        isOnboarding: true
+      }));
+    } else {
+      try {
+        await setAESKey();
+        handleOnboardingComplete();
+      } catch (error) {
+        console.error('Error during AES key setup:', error);
+      }
+    }
   };
 
   const handleOnboardingComplete = (): void => {
@@ -56,17 +71,19 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = ({
     });
   };
 
-  if (shouldShowWizard) {
-    return (
+  if (isConnected && wrongChain) {
+    return <ContentSwitchNetwork />;
+  }
+
+  return isConnected ? (
+    (!isLocal() && loading && !settingAESKeyError) ? (
+      <Loading title="Onboard account" actionText="Onboarding account" />
+    ) : shouldShowWizard ? (
       <OnboardAccountWizard
         handleOnboardAccount={handleOnboardingComplete}
         handleCancelOnboard={handleOnboardingCancel}
       />
-    );
-  }
-
-  if (shouldShowOnboardingIntro) {
-    return (
+    ) : (
       <>
         <ContentTitle>Onboard Account</ContentTitle>
         <ContentText>
@@ -77,10 +94,32 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = ({
           text="Onboard Account"
           onClick={handleStartOnboarding}
           aria-label="Start account onboarding process"
+          disabled={!isLocal() && loading}
         />
+        
+        {!isLocal() && settingAESKeyError === 'accountBalanceZero' && (
+          <Alert type="error">
+            Error onboarding account: Insufficient funds.
+          </Alert>
+        )}
+        {!isLocal() && settingAESKeyError === 'invalidAddress' && (
+          <Alert type="error">
+            Error to onboard account, check the contract address
+          </Alert>
+        )}
+        {!isLocal() && settingAESKeyError === 'userRejected' && (
+          <Alert type="error">
+            Transaction rejected by user. Please try again when ready.
+          </Alert>
+        )}
+        {!isLocal() && settingAESKeyError === 'unknownError' && (
+          <Alert type="error">
+            Error to onboard account, try again
+          </Alert>
+        )}
       </>
-    );
-  }
-
-  return null;
+    )
+  ) : (
+    <ContentConnectYourWallet />
+  );
 };

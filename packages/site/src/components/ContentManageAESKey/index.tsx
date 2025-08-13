@@ -25,7 +25,7 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
     showManage: false
   });
 
-  const shouldShowOnboarding = useMemo(() => !userHasAESKey && isLocal(), [userHasAESKey]);
+  const shouldShowOnboarding = useMemo(() => !userHasAESKey, [userHasAESKey]);
   const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showDelete && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
 
   const handleToggleDelete = () => {

@@ -4,6 +4,7 @@ import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useModal } from '../../hooks/useModal';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { normalizeAddress } from '../../utils/normalizeAddress';
+import { formatTokenBalance } from '../../utils/formatters';
 import { useSnap } from '../../hooks/SnapContext';
 import { ImportedToken } from '../../types/token';
 import { ERROR_MESSAGES } from '../../constants/token';
@@ -183,7 +184,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
       const encryptedBalance = await decryptERC20Balance(state.address);
       
       updateState({ 
-        balance: `${balance}`
+        balance: balance.toString()
       });
     } catch (error) {
       updateState({ balance: '0' });
@@ -350,7 +351,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 <TokenSummaryBalance>
                   {state.balanceLoading 
                     ? 'Loading balance...' 
-                    : `${state.balance} ${state.tokenInfo.symbol}`
+                    : `${formatTokenBalance(state.balance, state.tokenInfo.decimals)} ${state.tokenInfo.symbol}`
                   }
                 </TokenSummaryBalance>
               </TokenSummaryInfo>
