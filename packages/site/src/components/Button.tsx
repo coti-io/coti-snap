@@ -167,7 +167,7 @@ const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = ({
 };
 
 export const Button: React.FC<ButtonProps> = (props) => (
-  <BaseButton {...props} variant="default" />
+  <BaseButton {...props} variant="cancel" />
 );
 
 export const ButtonAction: React.FC<ButtonProps> = (props) => (
