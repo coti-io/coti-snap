@@ -8,7 +8,7 @@ import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useDropdown } from '../../hooks/useDropdown';
 import { formatAddressForDisplay } from '../../utils/tokenValidation';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { truncateBalance } from '../../utils/formatters';
+import { truncateBalance, formatTokenSymbol, formatBalance, formatTokenBalance } from '../../utils/formatters';
 import { 
   TokenDetailsContainer,
   TokenDetailsContent,
@@ -137,7 +137,14 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
   const tokenAddress = importedToken?.address || token.address;
 
   const shortAddress = tokenAddress ? formatAddressForDisplay(tokenAddress) : 'Native Token';
-  const formattedBalance = isDecrypting ? 'Loading...' : `${decryptedBalance}`;
+  
+  const formattedBalance = isDecrypting ? 'Loading...' : (() => {
+    if (decryptedBalance && decryptedBalance !== '0' && decryptedBalance !== '(encrypted)') {
+      const decimals = token.symbol === 'COTI' ? 18 : (token.decimals || 18);
+      return formatTokenBalance(decryptedBalance, decimals);
+    }
+    return formatBalance(decryptedBalance);
+  })();
 
   return (
     <>
@@ -188,7 +195,7 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
             <TokenBalanceAmount title={formattedBalance}>
               {truncateBalance(formattedBalance)}
             </TokenBalanceAmount>
-            <TokenBalanceSymbol>{token.symbol}</TokenBalanceSymbol>
+            <TokenBalanceSymbol>{token.address ? formatTokenSymbol(token.symbol) : token.symbol}</TokenBalanceSymbol>
           </TokenBalanceRight>
         </TokenBalanceRow>
       </BalanceContainer>

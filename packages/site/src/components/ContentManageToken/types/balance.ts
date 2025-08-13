@@ -3,10 +3,11 @@ export interface BaseBalanceProps {
   currency?: string;
   className?: string;
   showCurrency?: boolean;
+  decimals?: number;
+  isDecrypted?: boolean;
 }
 
 export interface BalanceProps extends BaseBalanceProps {
-  isDecrypted?: boolean;
   onToggleDecryption?: () => void;
 }
 
@@ -15,6 +16,8 @@ export interface BalanceDisplayProps {
   currency?: string | undefined;
   className?: string | undefined;
   showCurrency?: boolean;
+  decimals?: number;
+  isDecrypted?: boolean;
 }
 
 export type BalanceVariant = 'primary' | 'secondary' | 'token';
