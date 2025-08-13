@@ -96,7 +96,7 @@ interface ContentManageTokenProps {
 
 export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }) => {
   const { address } = useAccount();
-  const { data: balance } = useBalance({ address });
+  const { data: balance, refetch: refetchBalance } = useBalance({ address });
   const { provider } = useMetaMaskContext();
   const { getAESKey, userAESKey, userHasAESKey } = useSnap();
   
@@ -161,6 +161,11 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
     setTransferToken(null);
   };
 
+  const handleTransferSuccess = () => {
+    refetchBalance();
+    handleCloseTransfer();
+  };
+
   const handleCloseDeposit = () => {
     setModalState(prev => ({ ...prev, deposit: false }));
   };
@@ -201,6 +206,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
         balance={formattedBalance}
         aesKey={currentAESKey}
         initialToken={transferToken}
+        onTransferSuccess={handleTransferSuccess}
       />
     );
   }

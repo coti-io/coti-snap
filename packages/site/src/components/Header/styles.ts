@@ -211,7 +211,7 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
   border-radius: ${(props) => props.theme.radii.button};
   background-color: ${(props) =>
     props.$wrongChain
-      ? 'rgba(248, 110, 110, 0.2)'
+      ? '#ff1900'
       : 'rgba(255, 255, 255, 0.15)'};
   color: #FFFFFF;
   margin-top: auto;
@@ -223,7 +223,7 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
   &:hover {
     background-color: ${(props) =>
     props.$wrongChain
-      ? 'rgba(248, 110, 110, 0.3)'
+      ? '#e55a5a;'
       : 'rgba(255, 255, 255, 0.25)'};
 `;
 
