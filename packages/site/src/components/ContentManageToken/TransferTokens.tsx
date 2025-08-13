@@ -63,6 +63,8 @@ import ArrowBack from '../../assets/arrow-back.svg';
 import XIcon from '../../assets/x.svg';
 import SearchIcon from '../../assets/icons/search.svg';
 import { CotiLogo } from '../../assets/icons';
+import { formatTokenSymbol, formatBalance, formatTokenBalance } from '../../utils/formatters';
+import { parseUnits } from 'ethers';
 
 interface TransferTokensProps {
   onBack: () => void;
@@ -81,6 +83,7 @@ interface Token {
   contractAddress?: string;
   tokenId?: string;
   type?: 'ERC20' | 'ERC721' | 'ERC1155';
+  decimals?: number;
 }
 
 type AddressStatus = 'idle' | 'loading' | 'error';
@@ -95,7 +98,9 @@ const validateAddress = (address: string): boolean => {
 };
 
 const parseAmount = (amount: string): number => {
-  return parseFloat(amount) || 0;
+  if (!amount || amount === '') return 0;
+  const parsed = parseFloat(amount);
+  return isNaN(parsed) ? 0 : parsed;
 };
 
 const useAddressValidation = () => {
@@ -171,7 +176,16 @@ const TokenBalanceDisplay: React.FC<{
     return <TokenListValue>Loading...</TokenListValue>;
   }
 
-  return <TokenListValue>{balance} {token.symbol}</TokenListValue>;
+  const formattedBalance = (() => {
+    if (balance && balance !== '0') {
+      // COTI siempre tiene 18 decimales
+      const decimals = token.symbol === 'COTI' ? 18 : (token.decimals || 18);
+      return formatTokenBalance(balance, decimals);
+    }
+    return formatBalance(balance);
+  })();
+
+  return <TokenListValue>{formattedBalance} {token.address ? formatTokenSymbol(token.symbol) : token.symbol}</TokenListValue>;
 });
 
 TokenBalanceDisplay.displayName = 'TokenBalanceDisplay';
@@ -218,17 +232,17 @@ const TokenModal: React.FC<{
 
   const filteredItems = useMemo(() => {
     const currentItems = tokenTab === 'tokens' ? tokens : nfts;
-    
+
     if (!search || search.trim() === '') {
       return currentItems;
     }
 
     const searchTerm = search.toLowerCase().trim();
-    
+
     return currentItems.filter(item => {
       const nameMatch = item.name.toLowerCase().includes(searchTerm);
       const symbolMatch = item.symbol.toLowerCase().includes(searchTerm);
-      
+
       let addressMatch = false;
       if (item.address) {
         if (searchTerm.startsWith('0x')) {
@@ -237,12 +251,12 @@ const TokenModal: React.FC<{
           addressMatch = item.address.toLowerCase().includes(searchTerm);
         }
       }
-      
+
       let tokenIdMatch = false;
       if (tokenTab === 'nfts' && item.tokenId) {
         tokenIdMatch = item.tokenId.toLowerCase().includes(searchTerm);
       }
-      
+
       return nameMatch || symbolMatch || addressMatch || tokenIdMatch;
     });
   }, [tokens, nfts, tokenTab, search]);
@@ -256,24 +270,24 @@ const TokenModal: React.FC<{
           Select asset to send
           <TokenModalClose onClick={onClose} aria-label="Close">×</TokenModalClose>
         </TokenModalHeader>
-        
+
         <TokenTabs>
-          <TokenTab 
-            active={tokenTab === 'tokens'} 
+          <TokenTab
+            active={tokenTab === 'tokens'}
             onClick={() => handleTabChange('tokens')}
             type="button"
           >
             Tokens
           </TokenTab>
-          <TokenTab 
-            active={tokenTab === 'nfts'} 
+          <TokenTab
+            active={tokenTab === 'nfts'}
             onClick={() => handleTabChange('nfts')}
             type="button"
           >
             NFTs
           </TokenTab>
         </TokenTabs>
-        
+
         <TokenSearchBox className={searchActive || (search && search.length > 0) ? 'active' : ''}>
           <SearchIcon />
           <TokenSearchInput
@@ -284,24 +298,24 @@ const TokenModal: React.FC<{
             onBlur={handleSearchBlur}
           />
         </TokenSearchBox>
-        
+
         <TokenList>
           {filteredItems.length > 0 ? (
             filteredItems.map((item, idx) => {
-              const isSelected = tokenTab === 'nfts' 
+              const isSelected = tokenTab === 'nfts'
                 ? (selectedToken?.address === item.address && selectedToken?.tokenId === item.tokenId)
                 : (selectedToken?.symbol === item.symbol || (idx === 0 && !selectedToken && !search));
-              const displayName = tokenTab === 'nfts' && item.tokenId 
+              const displayName = tokenTab === 'nfts' && item.tokenId
                 ? item.name
                 : item.name;
-              const displaySymbol = tokenTab === 'nfts' && item.tokenId 
+              const displaySymbol = tokenTab === 'nfts' && item.tokenId
                 ? item.symbol
-                : item.symbol;
-              
+                : (item.address ? formatTokenSymbol(item.symbol) : item.symbol);
+
               return (
-                <TokenListItem 
-                  key={tokenTab === 'nfts' ? item.address : item.symbol} 
-                  selected={isSelected} 
+                <TokenListItem
+                  key={tokenTab === 'nfts' ? item.address : item.symbol}
+                  selected={isSelected}
                   type="button"
                   onClick={() => handleTokenSelect(item)}
                 >
@@ -335,8 +349,8 @@ const TokenModal: React.FC<{
                 {tokenTab === 'tokens' ? 'No tokens found' : 'No NFTs imported yet'}
               </NoNFTsText>
               {tokenTab === 'nfts' && (
-                <LearnMoreLink 
-                  href="https://support.metamask.io/manage-crypto/nfts/nft-tokens-in-your-metamask-wallet" 
+                <LearnMoreLink
+                  href="https://support.metamask.io/manage-crypto/nfts/nft-tokens-in-your-metamask-wallet"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -353,9 +367,9 @@ const TokenModal: React.FC<{
 
 TokenModal.displayName = 'TokenModal';
 
-export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({ 
-  onBack, 
-  address, 
+export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
+  onBack,
+  address,
   balance,
   aesKey,
   initialToken
@@ -364,7 +378,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const [amount, setAmount] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  
+
   // Initialize with the passed token if available
   useEffect(() => {
     if (initialToken && !selectedToken) {
@@ -375,7 +389,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         usd: 0,
         address: initialToken.address,
         contractAddress: initialToken.contractAddress,
-        tokenId: initialToken.tokenId
+        tokenId: initialToken.tokenId,
+        decimals: initialToken.decimals ?? 18
       };
       setSelectedToken(formattedToken);
     }
@@ -404,14 +419,15 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const { tokens, nfts } = useMemo(() => {
     const erc20Tokens = getERC20TokensList();
     const cotiTokenKey = 'COTI-';
-    const cotiToken: Token = { 
-      symbol: 'COTI', 
-      name: 'COTI', 
-      amount: tokenBalances[cotiTokenKey] || balance || '0', 
-      usd: 0, 
-      address: ''
+    const cotiToken: Token = {
+      symbol: 'COTI',
+      name: 'COTI',
+      amount: tokenBalances[cotiTokenKey] || balance || '0',
+      usd: 0,
+      address: '',
+      decimals: 18
     };
-    
+
     const importedTokensFormatted: Token[] = erc20Tokens.map(token => {
       const tokenKey = `${token.symbol}-${token.address}`;
       return {
@@ -419,14 +435,15 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         name: token.name,
         amount: tokenBalances[tokenKey] || '0',
         usd: 0,
-        address: token.address
+        address: token.address,
+        decimals: token.decimals ?? 18
       };
     });
 
     const allTokens = [cotiToken, ...importedTokensFormatted];
-    
+
     // Filter NFTs from imported tokens (by type ERC721/ERC1155 and address format)
-    let nftTokens: Token[] = importedTokens.filter(t => 
+    let nftTokens: Token[] = importedTokens.filter(t =>
       (t.type === 'ERC721' || t.type === 'ERC1155') && t.address.includes('-')
     ).map(nft => {
       const [contractAddress, tokenId] = nft.address.split('-');
@@ -438,7 +455,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         address: nft.address,
         contractAddress: contractAddress || '',
         tokenId: tokenId || '',
-        type: nft.type as 'ERC721' | 'ERC1155'
+        type: nft.type as 'ERC721' | 'ERC1155',
+        decimals: nft.decimals ?? 18
       };
     });
 
@@ -449,20 +467,20 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         nftTokens = [selectedNFT, ...otherNFTs];
       }
     }
-    
+
     let finalTokens = allTokens;
     if (selectedToken && !selectedToken.tokenId) {
       const otherTokens = allTokens.filter(t => t.symbol !== selectedToken.symbol);
       finalTokens = [selectedToken, ...otherTokens];
     }
-    
+
     return {
       tokens: finalTokens,
       nfts: nftTokens
     };
   }, [getERC20TokensList, importedTokens, selectedToken, tokenBalances, balance]);
 
-  const currentToken = selectedToken || tokens[0] || { symbol: 'COTI', name: 'COTI', amount: '0', usd: 0 };
+  const currentToken = selectedToken || tokens[0] || { symbol: 'COTI', name: 'COTI', amount: '0', usd: 0, decimals: 18 };
 
   const balanceNum = useMemo(() => parseAmount(currentBalance), [currentBalance]);
   const amountNum = useMemo(() => parseAmount(amount), [amount]);
@@ -471,10 +489,14 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     if (currentToken?.tokenId && currentToken?.type === 'ERC721') {
       return true;
     }
-    return !!amount && !isNaN(amountNum) && amountNum > 0 && amountNum <= balanceNum;
+    // Allow empty amount while typing
+    if (!amount || amount === '') return false;
+    // Allow decimal point at the end while typing
+    if (amount.endsWith('.')) return false;
+    return !isNaN(amountNum) && amountNum > 0 && amountNum <= balanceNum;
   }, [amount, amountNum, balanceNum, currentToken?.tokenId, currentToken?.type]);
 
-  const canContinue = useMemo(() => 
+  const canContinue = useMemo(() =>
     addressValidation.isValid && isAmountValid && txStatus !== 'loading',
     [addressValidation.isValid, isAmountValid, txStatus]
   );
@@ -483,7 +505,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     const newAddress = e.target.value;
     setAddressInput(newAddress);
     addressValidation.validate(newAddress);
-    
+
     if (!aesKey && newAddress.length > 0 && userHasAESKey) {
       await getAESKey();
     }
@@ -500,7 +522,11 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   }, [addressValidation]);
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+    const value = e.target.value;
+    // Allow empty value, numbers, and decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
   }, []);
 
   const handleSetMaxAmount = useCallback(() => {
@@ -522,28 +548,28 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   // Function to get balance for a specific token (for modal display)
   const getTokenBalance = useCallback(async (token: Token): Promise<string> => {
     if (!browserProvider || !tokenOps) return '0';
-    
+
     const tokenKey = `${token.symbol}-${token.address || ''}`;
-    
+
     if (tokenBalances[tokenKey]) {
       return tokenBalances[tokenKey];
     }
-    
+
     try {
       let tokenBalance: string;
-      
+
       if (token.symbol === 'COTI' || !token.address) {
         tokenBalance = balance;
       } else {
         const result = await tokenOps.decryptERC20Balance(token.address, aesKey || '');
         tokenBalance = result.toString();
       }
-      
+
       setTokenBalances(prev => ({
         ...prev,
         [tokenKey]: tokenBalance
       }));
-      
+
       return tokenBalance;
     } catch (error) {
       return '0';
@@ -552,7 +578,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
   const fetchTokenBalance = useCallback(async (token: Token) => {
     if (!browserProvider || !tokenOps) return;
-    
+
     setLoadingBalance(true);
     try {
       if (token.symbol === 'COTI' || !token.address) {
@@ -584,7 +610,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
   useEffect(() => {
     const tokenKey = `${currentToken?.symbol || 'COTI'}-${currentToken?.address || ''}`;
-    
+
     if (currentToken && browserProvider && tokenOps && loadedTokenAddress !== tokenKey) {
       const loadBalance = async () => {
         setLoadingBalance(true);
@@ -610,7 +636,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           setLoadingBalance(false);
         }
       };
-      
+
       loadBalance();
     }
   }, [currentToken?.symbol, currentToken?.address, currentToken?.type, currentToken?.contractAddress, currentToken?.tokenId, browserProvider, tokenOps, balance, aesKey, loadedTokenAddress]);
@@ -623,11 +649,13 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
     try {
       let success = false;
-      
+
       if (currentToken.symbol === 'COTI' || !currentToken.address) {
-        success = await tokenOps.transferCOTI({ 
-          to: addressInput, 
-          amount 
+        const amountInWei = parseUnits(amount, 18);
+
+        success = await tokenOps.transferCOTI({
+          to: addressInput,
+          amount: amountInWei.toString()
         });
       } else if (currentToken.tokenId && currentToken.type === 'ERC721') {
         success = await tokenOps.transferERC721({
@@ -646,10 +674,13 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
           amount: amount
         });
       } else {
+        const decimals = currentToken.decimals ?? 18;
+        const amountInWei = parseUnits(amount, decimals);
+
         success = await tokenOps.transferERC20({
           tokenAddress: currentToken.address,
           to: addressInput,
-          amount,
+          amount: amountInWei.toString(),
           aesKey: aesKey || ''
         });
       }
@@ -724,24 +755,32 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
                     <AmountInput
                       type="number"
                       min="0"
+                      step="any"
                       placeholder="0"
                       value={amount}
                       onChange={handleAmountChange}
                     />
-                    {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : currentToken.symbol}
+                    {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : (currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol)}
                   </>
                 )}
               </SendAmount>
             </TokenRowFlex>
           </AccountBox>
-          
+
           <BalanceRow>
             <BalanceSubTransfer error={insufficientFunds}>
               {currentToken?.tokenId && currentToken?.type === 'ERC721' ? (
                 `Balance: 1 NFT`
               ) : (
                 <>
-                  {loadingBalance ? 'Loading balance...' : `Balance: ${currentBalance}${currentToken?.tokenId && currentToken?.type === 'ERC1155' ? ` Tokens` : ''}`}
+                  {loadingBalance ? 'Loading balance...' : (() => {
+                    const formattedBalance = currentBalance && currentBalance !== '0' && currentToken ? (() => {
+                      const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
+                      return formatTokenBalance(currentBalance, decimals);
+                    })() : formatBalance(currentBalance);
+
+                    return `Balance: ${formattedBalance}${currentToken?.tokenId && currentToken?.type === 'ERC1155' ? ` Tokens` : (currentToken?.address ? ` ${formatTokenSymbol(currentToken.symbol)}` : ` ${currentToken?.symbol || ''}`)}`;
+                  })()}
                   {insufficientFunds && (
                     <ErrorText>
                       {' '}Insufficient funds
@@ -807,7 +846,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
                 </TokenLogoBig>
               </TokenLogos>
               <TokenName>
-                {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : currentToken.symbol}
+                {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : (currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol)}
                 {currentToken.tokenId && (
                   <TokenId tokenId={currentToken.tokenId} />
                 )}
@@ -819,7 +858,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
               ) : currentToken?.tokenId && currentToken?.type === 'ERC1155' ? (
                 `${amount || '0'} NFT`
               ) : (
-                `${amount || '0'} ${currentToken.symbol}`
+                `${amount || '0'} ${currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol}`
               )}
             </SendAmount>
           </TokenRowFlex>
@@ -829,22 +868,22 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
       {addressValidation.status === 'loading' && addressInput && (
         <Alert type="loading">Loading...</Alert>
       )}
-      
+
       {addressValidation.status === 'error' && addressInput && (
         <Alert type="error">No resolution for domain provided</Alert>
       )}
 
       <BottomActions>
-        <SendButton 
-          onClick={handleCancel} 
+        <SendButton
+          onClick={handleCancel}
           type="button"
           backgroundColor="#fff"
           textColor="#1E29F6"
         >
           Cancel
         </SendButton>
-        <SendButton 
-          disabled={!canContinue} 
+        <SendButton
+          disabled={!canContinue}
           onClick={handleContinue}
           type="button"
           backgroundColor="#1E29F6"
