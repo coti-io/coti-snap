@@ -60,6 +60,9 @@ jobs:
         run: |
           cd packages/snap
           yarn build
+        env:
+          SNAP_ENV: mainnet
+          NODE_ENV: production
 
       - name: Update shasum in manifest
         run: |
