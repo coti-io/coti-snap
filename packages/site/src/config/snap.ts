@@ -10,10 +10,10 @@ const buildSnapOrigin = (): string => {
     if (isLocal()) {
         return 'local:http://localhost:8080';
     } else if (isProduction()) {
-        return 'npm:@coti-io/coti-snap';
+        return 'npm:@yarulabs/coti-snap';
     } else {
         console.warn('VITE_NODE_ENV must be either "local" or "production"');
-        return 'npm:@coti-io/coti-snap';
+        return 'npm:@yarulabs/coti-snap';
     }
 };
 

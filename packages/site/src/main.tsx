@@ -39,7 +39,13 @@ export const Root: FunctionComponent<RootProps> = ({ children }) => {
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <MetaMaskProvider>
-            <SnapProvider>{children}</SnapProvider>
+            <SnapProvider>
+              <GlobalBackground>
+                <Wrapper>
+                  {children}
+                </Wrapper>
+              </GlobalBackground>
+            </SnapProvider>
           </MetaMaskProvider>
         </QueryClientProvider>
       </WagmiProvider>
@@ -52,11 +58,7 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Root>
-      <GlobalBackground>
-        <Wrapper>
-          <App />
-        </Wrapper>
-      </GlobalBackground>
+      <App />
       <GlobalStyle />
     </Root>
   </StrictMode>,

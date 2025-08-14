@@ -59,7 +59,10 @@ jobs:
       - name: Build Snap
         run: |
           cd packages/snap
-          yarn build
+          yarn build:mainnet
+        env:
+          SNAP_ENV: mainnet
+          NODE_ENV: production
 
       - name: Update shasum in manifest
         run: |
@@ -73,3 +76,12 @@ jobs:
           git add packages/snap/package.json packages/snap/snap.manifest.json
           git commit -m "chore: bump snap version to ${{ steps.version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push
+
+      - name: Publish to NPM
+        run: |
+          cd packages/snap
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          SNAP_ENV: mainnet
+          NODE_ENV: production
