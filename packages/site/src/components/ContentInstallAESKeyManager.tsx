@@ -22,7 +22,9 @@ const SpinnerImage = styled.img`
 `;
 
 export const ContentInstallAESKeyManager = () => {
-  const requestSnap = useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
+  const requestSnap = import.meta.env.VITE_NODE_ENV === 'local'
+    ? useRequestSnap()
+    : useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
   const { getSnap } = useMetaMask();
   const [isInstalling, setIsInstalling] = useState(false);
 
