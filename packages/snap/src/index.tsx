@@ -31,7 +31,7 @@ import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
 import {
   getStateByChainIdAndAddress,
-  setStateByChainIdAndAddress,
+  setStateByChainIdAndAddress
 } from './utils/snap';
 import {
   checkChainId,
@@ -453,7 +453,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'has-aes-key':
-      if (getState.aesKey) {
+      const currentState = await getStateByChainIdAndAddress();
+      if (currentState.aesKey) {
         return true;
       }
 
@@ -556,16 +557,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (!getState.aesKey) {
-        await setStateByChainIdAndAddress({
-          ...getState,
-          aesKey: newUserAesKey,
-        });
+      const currentStateForSet = await getStateByChainIdAndAddress();
 
-        return true;
-      }
+      await setStateByChainIdAndAddress({
+        ...currentStateForSet,
+        aesKey: newUserAesKey,
+      });
 
-      return null;
+      return true;
 
     case 'connect-to-wallet':
       await ethereum.request({ method: 'eth_requestAccounts' });
