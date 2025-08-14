@@ -19,11 +19,10 @@ const Title = styled.h2`
 `;
 
 const Description = styled.p`
-  font-size: 1.4rem;
+  font-size: 16px;
   color: #18191d !important;;
   margin-bottom: 24px;
   line-height: 1.5;
-  font-size: 14px;
   font-weight: 450;
 `;
 

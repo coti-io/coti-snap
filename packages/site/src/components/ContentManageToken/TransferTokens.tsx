@@ -482,9 +482,26 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
   const currentToken = selectedToken || tokens[0] || { symbol: 'COTI', name: 'COTI', amount: '0', usd: 0, decimals: 18 };
 
-  const balanceNum = useMemo(() => parseAmount(currentBalance), [currentBalance]);
+  const balanceNum = useMemo(() => {
+    if (!currentBalance || currentBalance === '0') return 0;
+    if (!currentToken) return parseAmount(currentBalance);
+    
+    const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
+    const formattedBalance = formatTokenBalance(currentBalance, decimals);
+    return parseAmount(formattedBalance);
+  }, [currentBalance, currentToken]);
+  
   const amountNum = useMemo(() => parseAmount(amount), [amount]);
   const insufficientFunds = useMemo(() => amountNum > balanceNum, [amountNum, balanceNum]);
+  
+  const formattedMaxBalance = useMemo(() => {
+    if (!currentBalance || currentBalance === '0') return '0';
+    if (!currentToken) return formatBalance(currentBalance);
+    
+    const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
+    return formatTokenBalance(currentBalance, decimals);
+  }, [currentBalance, currentToken]);
+  
   const isAmountValid = useMemo(() => {
     if (currentToken?.tokenId && currentToken?.type === 'ERC721') {
       return true;
@@ -527,8 +544,18 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   }, []);
 
   const handleSetMaxAmount = useCallback(() => {
-    setAmount(currentBalance || '0');
-  }, [currentBalance]);
+    if (!currentBalance || currentBalance === '0') {
+      setAmount('0');
+      return;
+    }
+    
+    const formattedBalance = currentToken ? (() => {
+      const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
+      return formatTokenBalance(currentBalance, decimals);
+    })() : formatBalance(currentBalance);
+    
+    setAmount(formattedBalance);
+  }, [currentBalance, currentToken]);
 
   const handleClearAmount = useCallback(() => {
     setAmount('');
@@ -790,7 +817,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
               )}
             </BalanceSubTransfer>
             {!(currentToken?.tokenId && currentToken?.type === 'ERC721') && (
-              amount === currentBalance && amount !== '' ? (
+              amount === formattedMaxBalance && amount !== '' && amount !== '0' ? (
                 <MaxButton onClick={handleClearAmount} type="button">
                   Clear
                 </MaxButton>

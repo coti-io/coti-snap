@@ -298,6 +298,22 @@ export const CenteredTabsWrapper = styled.div`
   align-items: center;
   margin-top: ${spacing.lg};
   width: 100%;
+  height: 300px;
+  
+  @media (max-width: 600px) {
+    height: 350px;
+  }
+`;
+
+export const TabContentContainer = styled.div`
+  width: 100%;
+  height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  @media (max-width: 600px) {
+    height: 250px;
+  }
 `;
 
 export const HeaderBar = styled.div`
@@ -440,7 +456,6 @@ export const TokenRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: auto;
   min-height: 80px;
   cursor: pointer;
   
@@ -482,6 +497,7 @@ export const TokenLogoBig = styled.div`
   font-size: ${typography.sizes.xl};
   color: #000000 !important;
   font-weight: ${typography.weights.medium};
+  background:#f9f9f9 !important;
   position: absolute;
   left: 0;
   top: 0;
@@ -528,7 +544,6 @@ export const TokenValues = styled.div`
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
-  min-width: 110px;
   text-align: right;
 `;
 
@@ -544,11 +559,9 @@ export const TokenAmount = styled.span`
   font-weight: ${typography.weights.bold};
   color: #1F2D67 !important;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  display: inline-block;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  text-align: right;
+  width: 100%;
 `;
 
 export const NFTGrid = styled.div`
@@ -618,10 +631,15 @@ export const TransferContainer = styled.div`
 
 export const TransferContainerMain = styled.div`
   box-shadow: none;
-  padding: 0 ${spacing.lg};
+  padding: 0;
   background: none;
   width: 100%;
   max-width: 100%;
+  height: auto;
+  
+  @media (max-width: 600px) {
+    padding: 0 ${spacing.sm};
+  }
 `;
 
 export const SendAmount = styled.div`

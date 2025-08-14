@@ -82,7 +82,8 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
   if (/^\d+$/.test(balance)) {
     try {
       const balanceNumber = BigInt(balance);
-      const divisor = BigInt(10 ** decimals);
+      const numDecimals = typeof decimals === 'bigint' ? Number(decimals) : decimals;
+      const divisor = BigInt(10) ** BigInt(numDecimals);
       const wholePart = balanceNumber / divisor;
       const fractionalPart = balanceNumber % divisor;
 
@@ -91,7 +92,7 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
       }
 
       const wholeStr = wholePart.toString();
-      const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
+      const fractionalStr = fractionalPart.toString().padStart(numDecimals, '0');
 
       let trimmedFractional = fractionalStr.replace(/0+$/, '');
 

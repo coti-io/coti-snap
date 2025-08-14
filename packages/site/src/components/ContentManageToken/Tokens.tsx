@@ -22,6 +22,7 @@ import {
   Tab, 
   IconButton, 
   TokensLoadingContainer,
+  TabContentContainer,
 } from './styles';
 import {
   TokensTabContent,
@@ -205,34 +206,36 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
           </HeaderActions>
         </HeaderBar>
 
-        {activeTab === 'tokens' ? (
-          isLoading ? (
-            <TokensLoadingContainer>
-              Loading tokens...
-            </TokensLoadingContainer>
+        <TabContentContainer>
+          {activeTab === 'tokens' ? (
+            isLoading ? (
+              <TokensLoadingContainer>
+                Loading tokens...
+              </TokensLoadingContainer>
+            ) : (
+              <TokensTabContent 
+                tokens={sortedTokens}
+                userHasAESKey={userHasAESKey}
+                userAESKey={userAESKey}
+                getAESKey={getAESKey}
+                provider={provider}
+                cotiBalance={balance}
+                propAESKey={aesKey}
+                onSelectToken={onSelectToken || setSelectedToken}
+                isDecrypted={isDecrypted}
+                onToggleDecryption={handleToggleDecryption}
+                balances={balances}
+              />
+            )
           ) : (
-            <TokensTabContent 
-              tokens={sortedTokens}
-              userHasAESKey={userHasAESKey}
-              userAESKey={userAESKey}
-              getAESKey={getAESKey}
-              provider={provider}
-              cotiBalance={balance}
-              propAESKey={aesKey}
-              onSelectToken={onSelectToken || setSelectedToken}
-              isDecrypted={isDecrypted}
-              onToggleDecryption={handleToggleDecryption}
-              balances={balances}
+            <NFTsTabContent 
+              nfts={sortedNFTs}
+              onOpenImportNFTModal={handleOpenImportNFTModal} 
+              onRefreshNFTs={refreshTokens}
+              onSelectNFT={onSelectNFT || setSelectedNFT}
             />
-          )
-        ) : (
-          <NFTsTabContent 
-            nfts={sortedNFTs}
-            onOpenImportNFTModal={handleOpenImportNFTModal} 
-            onRefreshNFTs={refreshTokens}
-            onSelectNFT={onSelectNFT || setSelectedNFT}
-          />
-        )}
+          )}
+        </TabContentContainer>
       </CenteredTabsWrapper>
 
       <ImportTokenModal 

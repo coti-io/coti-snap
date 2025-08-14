@@ -64,6 +64,6 @@ The minimum resources to run the dApp itself are:
 
 ## Production Use
 
-1. Go to `src/config/snap.ts` and change the url to the url where the snap is hosted.
+1. Create a `.env.local` file (copy from `.env.example`) and set `VITE_NODE_ENV=production` to use the npm package snap.
 2. Go to `src/config/wagmi.ts` and change `CONNECTOR_MM` from `CONNECTOR_MM_FLASK` to `CONNECTOR_MM_REGULAR` to use regular MM instead of MM Flask.
 

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useSnap } from '../../hooks/SnapContext';
-import { Button } from '../Button';
+import { ButtonCancelWhite, ButtonDeleteRed } from '../Button';
 import { Loading } from '../Loading';
 import { ContentText, ContentTitle } from '../styles';
 import { ContentBoldText, ContentButtons } from './styles';
@@ -18,6 +18,7 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
   const handleDeleteClick = async (): Promise<void> => {
     try {
       await deleteAESKey();
+      handleShowDelete();
     } catch (error) {
       console.error('Error during AES key deletion:', error);
     }
@@ -44,16 +45,15 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
         network.
       </ContentText>
       <ContentButtons>
-        <Button 
+        <ButtonCancelWhite 
           text="Cancel" 
-          fullWith 
+          fullWidth 
           onClick={handleShowDelete}
           aria-label="Cancel deletion"
         />
-        <Button 
-          error 
+        <ButtonDeleteRed 
           text="Delete" 
-          fullWith 
+          fullWidth 
           onClick={handleDeleteClick}
           aria-label="Confirm deletion of AES key"
         />

@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { ContentBorderWrapper, ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
-import { DeleteAESKey } from './DeleteAESKey';
 import { ManageAESKey } from './ManageAESKey';
 import { OnboardAccount } from './OnboardAccount';
 
@@ -13,29 +11,21 @@ interface ContentManageAESKeyProps {
 }
 
 interface AESKeyState {
-  readonly showDelete: boolean;
   readonly showManage: boolean;
 }
 
 export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {
-  const navigate = useNavigate();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({
-    showDelete: false,
     showManage: false
   });
 
   const shouldShowOnboarding = useMemo(() => !userHasAESKey, [userHasAESKey]);
-  const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showDelete && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
-
-  const handleToggleDelete = () => {
-    navigate('/delete');
-  };
+  const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
 
   const handleToggleManage = () => {
     setAesKeyState(prev => ({
       ...prev,
-      showManage: !prev.showManage,
-      showDelete: false
+      showManage: !prev.showManage
     }));
   };
 
@@ -43,10 +33,6 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
   const renderContent = (): JSX.Element | null => {
     if (shouldShowOnboarding) {
       return <OnboardAccount />;
-    }
-
-    if (aesKeyState.showDelete) {
-      return <DeleteAESKey handleShowDelete={handleToggleDelete} />;
     }
 
     if (aesKeyState.showManage) {

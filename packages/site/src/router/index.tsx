@@ -8,7 +8,6 @@ import {
 } from '../components';
 import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
 import { ContentManageToken } from '../components/ContentManageToken';
-import { DeleteAESKey } from '../components/ContentManageAESKey/DeleteAESKey';
 import { ContentBorderWrapper, ContentContainer } from '../components/styles';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
@@ -58,21 +57,6 @@ function TokenManagement() {
   return <ContentManageToken aesKey={userAESKey} />;
 }
 
-function DeleteAESKeyPage() {
-  const navigate = useNavigate();
-  
-  const handleGoBack = () => {
-    navigate('/wallet');
-  };
-  
-  return (
-    <ContentBorderWrapper>
-      <ContentContainer>
-        <DeleteAESKey handleShowDelete={handleGoBack} />
-      </ContentContainer>
-    </ContentBorderWrapper>
-  );
-}
 
 function RootRedirect() {
   const { isConnected } = useAccount();
@@ -144,18 +128,6 @@ export const router = createBrowserRouter([
             <NetworkProtectedRoute>
               <SnapProtectedRoute>
                 <TokenManagement />
-              </SnapProtectedRoute>
-            </NetworkProtectedRoute>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'delete',
-        element: (
-          <ProtectedRoute>
-            <NetworkProtectedRoute>
-              <SnapProtectedRoute>
-                <DeleteAESKeyPage />
               </SnapProtectedRoute>
             </NetworkProtectedRoute>
           </ProtectedRoute>
