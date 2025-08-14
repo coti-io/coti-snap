@@ -59,6 +59,7 @@ jobs:
       - name: Build Snap
         run: |
           cd packages/snap
+          yarn clean
           yarn build:mainnet
         env:
           SNAP_ENV: mainnet
