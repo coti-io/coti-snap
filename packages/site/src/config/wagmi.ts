@@ -23,12 +23,17 @@ export const CONNECTOR_MM: CONNECTOR = CONNECTOR_MM_REGULAR;
 export const CONNECTOR_MM_FLASK_EXPORT = CONNECTOR_MM_FLASK;
 export const CONNECTOR_MM_REGULAR_EXPORT = CONNECTOR_MM_REGULAR;
 
-export const CHAIN_ID = 7082400;
+const isLocal = import.meta.env.VITE_NODE_ENV === 'local';
 
-export const COTI = defineChain({
-  id: CHAIN_ID,
+export const COTI_TESTNET_CHAIN_ID = 7082400;
+export const COTI_MAINNET_CHAIN_ID = 2632500;
+
+export const CHAIN_ID = isLocal ? COTI_TESTNET_CHAIN_ID : COTI_MAINNET_CHAIN_ID;
+
+const COTI_TESTNET = defineChain({
+  id: COTI_TESTNET_CHAIN_ID,
   name: 'COTI Testnet',
-  caipNetworkId: 'eip155:123456789',
+  caipNetworkId: 'eip155:7082400',
   chainNamespace: 'eip155',
   nativeCurrency: {
     decimals: 18,
@@ -47,9 +52,34 @@ export const COTI = defineChain({
   contracts: {},
 });
 
+const COTI_MAINNET = defineChain({
+  id: COTI_MAINNET_CHAIN_ID,
+  name: 'COTI Mainnet',
+  caipNetworkId: 'eip155:2632500',
+  chainNamespace: 'eip155',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'COTI',
+    symbol: 'COTI',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://mainnet.coti.io/rpc'],
+      webSocket: ['wss://mainnet.coti.io/ws'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Explorer', url: 'https://mainnet.cotiscan.io' },
+  },
+  contracts: {},
+});
+
+export const COTI = isLocal ? COTI_TESTNET : COTI_MAINNET;
+
 export const config = createConfig({
   chains: [COTI],
   transports: {
-    [COTI.id]: http(),
+    [COTI_TESTNET_CHAIN_ID]: http(),
+    [COTI_MAINNET_CHAIN_ID]: http(),
   },
 });
