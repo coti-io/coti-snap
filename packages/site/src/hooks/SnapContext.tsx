@@ -1,7 +1,7 @@
 import type { Eip1193Provider } from '@coti-io/coti-ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 
@@ -49,6 +49,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     useState<setAESKeyErrorsType>(null);
   const [onboardContractAddress, setOnboardContractAddress] =
     useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const getWalletPermissions = async () => {
     const permissions: any[] = (await invokeSnap({
@@ -171,6 +172,8 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       if (result) {
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
+      } else {
+        console.error('setAESKey failed - snap returned:', result);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -194,24 +197,6 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const hasAESKey = async () => {
-    setLoading(true);
-    const result = await invokeSnap({
-      method: 'has-aes-key',
-    });
-
-    if (result) {
-      setUserHasAesKEY(result as boolean);
-      setLoading(false);
-      return true;
-    }
-
-    setUserHasAesKEY(false);
-    setLoading(false);
-
-    return false;
   };
 
   const getAESKey = async () => {
@@ -241,11 +226,14 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (installedSnap) {
-      hasAESKey().catch((error) => {
-        console.error('Error in hasAESKey', error);
-      });
+    if (installedSnap) {      
+      setUserHasAesKEY(false);
       setUserAesKEY(null);
+      setSettingAESKeyError(null);
+        if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   }, [installedSnap, address]);
 

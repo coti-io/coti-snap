@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 
 import { ButtonAction } from '../Button';
@@ -23,17 +23,24 @@ const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your 
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
   const { setAESKey, loading, settingAESKeyError } = useSnap();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { wrongChain } = useWrongChain();
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
     isOnboarding: false,
     isCompleted: false
   });
 
-  const shouldShowWizard = useMemo(() =>
-    onboardingState.isOnboarding && !onboardingState.isCompleted && isLocal(),
-    [onboardingState]
-  );
+  useEffect(() => {
+    setOnboardingState({
+      isOnboarding: false,
+      isCompleted: false
+    });
+  }, [address]);
+
+  const shouldShowWizard = useMemo(() => {
+    const showWizard = onboardingState.isOnboarding && !onboardingState.isCompleted && isLocal();
+    return showWizard;
+  }, [onboardingState]);
 
   const handleStartOnboarding = async (): Promise<void> => {
     if (isLocal()) {
@@ -46,7 +53,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
         await setAESKey();
         handleOnboardingComplete();
       } catch (error) {
-        console.error('Error during AES key setup:', error);
+        console.error('OnboardAccount: Error during AES key setup:', error);
       }
     }
   };

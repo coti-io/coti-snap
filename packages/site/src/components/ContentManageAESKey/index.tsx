@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 
 import { ContentBorderWrapper, ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
@@ -14,10 +15,17 @@ interface AESKeyState {
   readonly showManage: boolean;
 }
 
-export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {
+export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {  
+  const { address } = useAccount();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({
     showManage: false
   });
+
+  useEffect(() => {
+    setAesKeyState({
+      showManage: false
+    });
+  }, [address]);
 
   const shouldShowOnboarding = useMemo(() => !userHasAESKey, [userHasAESKey]);
   const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
