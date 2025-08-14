@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useSnap } from '../../hooks/SnapContext';
 import { ButtonCancelWhite, ButtonDeleteRed } from '../Button';
@@ -15,12 +14,11 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
   handleShowDelete,
 }) => {
   const { deleteAESKey, loading } = useSnap();
-  const navigate = useNavigate();
 
   const handleDeleteClick = async (): Promise<void> => {
     try {
       await deleteAESKey();
-      navigate('/wallet');
+      handleShowDelete();
     } catch (error) {
       console.error('Error during AES key deletion:', error);
     }

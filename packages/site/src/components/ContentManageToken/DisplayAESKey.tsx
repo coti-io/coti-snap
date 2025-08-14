@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { SendButton } from './styles';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import CopyIcon from '../../assets/copy.svg';
@@ -127,11 +126,11 @@ const DeleteButton = styled(SendButton)`
   background-color: #dc3545;
   color: #FFFFFF;
   border: 2px solid #dc3545;
+  transition: none;
   
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #c82333;
     border-color: #bd2130;
-    border: 2px solid #FFFFFF !important;
   }
   
   &:active {
@@ -140,18 +139,20 @@ const DeleteButton = styled(SendButton)`
   }
 `;
 
+
 interface DisplayAESKeyProps {
   aesKey: string;
   onLaunchDApp: () => void;
+  onDeleteAESKey: () => void;
 }
 
 export const DisplayAESKey: React.FC<DisplayAESKeyProps> = ({
   aesKey,
-  onLaunchDApp
+  onLaunchDApp,
+  onDeleteAESKey
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const { copied, copyToClipboard } = useCopyToClipboard({ successDuration: 1500 });
-  const navigate = useNavigate();
 
   const handleReveal = () => {
     setIsRevealed(!isRevealed);
@@ -162,7 +163,7 @@ export const DisplayAESKey: React.FC<DisplayAESKeyProps> = ({
   };
 
   const handleDelete = () => {
-    navigate('/delete');
+    onDeleteAESKey();
   };
 
   const displayKey = isRevealed ? aesKey : '•'.repeat(aesKey.length);

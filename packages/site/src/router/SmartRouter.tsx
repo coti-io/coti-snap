@@ -47,7 +47,7 @@ export function SmartRouter() {
 
     const currentPath = window.location.pathname;
     
-    const protectedRoutes = ['/wallet', '/tokens', '/delete'];
+    const protectedRoutes = ['/wallet', '/tokens'];
     const isOnProtectedRoute = protectedRoutes.includes(currentPath);
     
     if (!isConnected) {

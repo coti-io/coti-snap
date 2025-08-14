@@ -1,5 +1,4 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 
 import CheckIcon from '../../assets/check.svg';
 import CopyIcon from '../../assets/copy.svg';
@@ -14,6 +13,7 @@ import {
   ContentInput,
   IconContainer,
 } from './styles';
+import { DeleteAESKey } from './DeleteAESKey';
 
 interface ManageAESKeyProps {
   readonly handleShowDelete: () => void;
@@ -23,7 +23,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
   handleShowDelete,
 }) => {
   const { userAESKey, getAESKey, loading } = useSnap();
-  const navigate = useNavigate();
+  const [showDeleteState, setShowDeleteState] = useState(false);
 
   const { copied: isCopied, copyToClipboard } = useCopyToClipboard({ 
     successDuration: 2000
@@ -43,6 +43,14 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
     }
   };
 
+  const handleDeleteClick = (): void => {
+    setShowDeleteState(true);
+  };
+
+  const handleCancelDelete = (): void => {
+    setShowDeleteState(false);
+  };
+
   if (loading) {
     return (
       <Loading
@@ -50,6 +58,10 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
         actionText="Approve in your wallet to reveal your AES key"
       />
     );
+  }
+
+  if (showDeleteState) {
+    return <DeleteAESKey handleShowDelete={handleCancelDelete} />;
   }
 
   return (
@@ -94,7 +106,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
       <Button 
         text="Delete" 
         primary={false} 
-        onClick={() => navigate('/delete')}
+        onClick={handleDeleteClick}
         aria-label="Delete AES key"
       />
     </>

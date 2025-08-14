@@ -12,9 +12,7 @@ import { Loading } from '../Loading';
 import { Alert } from '../ContentManageToken/Alert';
 import { OnboardAccountWizard } from './OnboardAccountWizard';
 
-interface OnboardAccountProps {
-  readonly onOnboardingComplete?: () => void;
-}
+interface OnboardAccountProps {}
 
 interface OnboardingState {
   readonly isOnboarding: boolean;
@@ -23,9 +21,7 @@ interface OnboardingState {
 
 const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your wallet could interact with private chain data, for example: your balance in a private ERC20 token.`;
 
-export const OnboardAccount: React.FC<OnboardAccountProps> = ({
-  onOnboardingComplete
-}) => {
+export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
   const { setAESKey, loading, settingAESKeyError } = useSnap();
   const { isConnected } = useAccount();
   const { wrongChain } = useWrongChain();
@@ -60,8 +56,6 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = ({
       isOnboarding: false,
       isCompleted: true
     });
-
-    onOnboardingComplete?.();
   };
 
   const handleOnboardingCancel = (): void => {
