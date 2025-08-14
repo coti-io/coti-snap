@@ -18,19 +18,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.16.0'
+          node-version: '18.20.4'
           registry-url: 'https://registry.npmjs.org/'
-          cache: 'yarn'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Verify Yarn version
+        run: yarn --version
 
       - name: Install Dependencies
-        run: yarn install
+        run: |
+          yarn install --immutable
+          yarn allow-scripts
 
       - name: Auto-increment version
         id: version
@@ -50,11 +57,14 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           
+          # Install json-cli if not available
+          npm install -g json
+          
           # Update package.json
-          npx json -I -f package.json -e "this.version='$NEW_VERSION'"
+          json -I -f package.json -e "this.version='$NEW_VERSION'"
           
           # Update snap.manifest.json
-          npx json -I -f snap.manifest.json -e "this.version='$NEW_VERSION'"
+          json -I -f snap.manifest.json -e "this.version='$NEW_VERSION'"
 
       - name: Build Snap
         run: |
