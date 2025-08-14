@@ -6,7 +6,7 @@ import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc721Abi from '../abis/ERC721.json';
 import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
-import { CHAIN_ID } from '../config';
+import { getCurrentNetworkConfig } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import {
@@ -197,8 +197,21 @@ export const checkChainId = async (): Promise<boolean> => {
   const provider = new BrowserProvider(ethereum);
 
   const chainId = await provider.getNetwork();
-
-  return chainId.chainId.toString() === CHAIN_ID;
+  const currentChainId = chainId.chainId.toString();
+  
+  const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
+    
+  if (currentChainId === COTI_TESTNET_CHAIN_ID) {
+    setEnvironment('testnet');
+    return true;
+  }
+  
+  if (currentChainId === COTI_MAINNET_CHAIN_ID) {
+    setEnvironment('mainnet');
+    return true;
+  }
+  
+  return false;
 };
 
 export const checkIfERC20Unique = async (address: string): Promise<boolean> => {
@@ -221,9 +234,10 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
 
   const provider = new BrowserProvider(ethereum);
 
-  const signer = await provider.getSigner();
-  const signerAddress = await signer.getAddress();
-  const balance = await provider.getBalance(signerAddress);
+  try {
+    const signer = await provider.getSigner();
+    const signerAddress = await signer.getAddress();
+    const balance = await provider.getBalance(signerAddress);
 
   const tokenBalances: Tokens = await Promise.all(
     tokens.map(async (token) => {
@@ -273,12 +287,18 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
     }),
   );
 
-  await setStateByChainIdAndAddress({
-    ...state,
-    balance: balance.toString(),
-    tokenBalances,
-  });
-  return { balance, tokenBalances };
+    await setStateByChainIdAndAddress({
+      ...state,
+      balance: balance.toString(),
+      tokenBalances,
+    });
+    return { balance, tokenBalances };
+  } catch (error) {
+    return { 
+      balance: BigInt(0), 
+      tokenBalances: tokens.map(token => ({ ...token, balance: null }))
+    };
+  }
 };
 
 export const importToken = async (
