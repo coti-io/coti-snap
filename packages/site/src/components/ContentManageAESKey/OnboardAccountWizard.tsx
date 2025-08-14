@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
@@ -42,12 +42,16 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     handleCancelOnboard: snapCancelOnboard,
   } = useSnap();
 
+  const { address } = useAccount();
   const [isEditable, setIsEditable] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    setIsEditable(false);
+  }, [address]);
+
   const handleIconClick = (): void => {
     setIsEditable(true);
-    // Focus the input after making it editable
     setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
@@ -70,7 +74,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     try {
       await setAESKey();
     } catch (error) {
-      console.error('Error during AES key setup:', error);
+      console.error('OnboardAccountWizard: Error during AES key setup:', error);
     }
   };
 

@@ -7,8 +7,6 @@ import {
   ContentSwitchNetwork,
 } from '../components';
 import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
-import { ContentManageToken } from '../components/ContentManageToken';
-import { ContentBorderWrapper, ContentContainer } from '../components/styles';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 import { SmartRouter } from './SmartRouter.js';
@@ -52,9 +50,10 @@ function Dashboard() {
 }
 
 function TokenManagement() {
-  const { userAESKey } = useSnap();
-  
-  return <ContentManageToken aesKey={userAESKey} />;
+  const { userHasAESKey, userAESKey } = useSnap();
+  return (
+    <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+  );
 }
 
 
