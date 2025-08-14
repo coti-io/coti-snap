@@ -324,22 +324,44 @@ export const HeaderBar = styled.div`
   padding: ${spacing.sm} 0 0 0;
 `;
 
-export const NetworkBadge = styled.div`
-  background: none;
-  color: #000000 !important;
-  font-size: ${typography.sizes.lg};
-  font-weight: ${typography.weights.medium};
-  border-radius: ${spacing.lg};
-  padding: ${spacing.sm};
+export const NetworkBadge = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'badgeColor' && prop !== 'textColor' && prop !== 'borderColor' && prop !== 'isTestnet'
+})<{ badgeColor?: string; textColor?: string; borderColor?: string; isTestnet?: boolean }>`
   display: flex;
   align-items: center;
+  justify-content: center;
+  font-family: 'Sofia Pro', sans-serif;
+  font-size: ${typography.sizes.base};
+  font-weight: ${typography.weights.bold};
+  line-height: 1.2;
+  color: ${({ textColor }) => textColor || '#FFFFFF'};
+  background-color: ${({ badgeColor }) => badgeColor || 'rgba(255, 255, 255, 0.15)'};
+  border: 1px solid ${({ borderColor }) => borderColor || 'rgba(255, 255, 255, 0.3)'};
+  border-radius: 12px;
+  padding: 8px 16px;
   gap: ${spacing.xs};
-  transition: background ${transitions.fast};
   cursor: pointer;
-  
+  transition: all 0.2s ease-in-out;
+  min-height: 2.8rem;
+  user-select: none;
+
   &:hover {
-    background: ${colors.background.tertiary};
+    filter: brightness(1.1) saturate(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
+
+  &:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+`;
+
+export const NetworkBadgeDevLabel = styled.span`
+  margin-left: 8px;
+  font-size: 0.75em;
+  opacity: 0.8;
+  font-weight: ${typography.weights.normal};
 `;
 
 export const HeaderActions = styled.div`
