@@ -34,6 +34,8 @@ export function SmartRouter() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const currentPath = window.location.pathname;
+    
     if (!isConnected) {
       navigate('/connect', { replace: true });
       return;
@@ -49,8 +51,7 @@ export function SmartRouter() {
       return;
     }
 
-    const currentPath = window.location.pathname;
-    if (currentPath === '/connect' || currentPath === '/network' || currentPath === '/install' || currentPath === '/') {
+    if (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install') {
       navigate('/wallet', { replace: true });
     }
   }, [isConnected, wrongChain, installedSnap, navigate]);

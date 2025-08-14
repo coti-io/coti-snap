@@ -119,17 +119,42 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
-
       const signer = await provider.getSigner();
 
-      await signer
-        .signMessage(
-          'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.',
-        )
-        .then(async () => {
+      await signer.signMessage(
+        'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.',
+      );
+
+      let retryCount = 0;
+      const maxRetries = 3;
+      let aesKey = null;
+
+      while (retryCount < maxRetries && aesKey === null) {
+        try {
           await signer.generateOrRecoverAes(onboardContractAddress);
-        });
-      const aesKey = signer.getUserOnboardInfo()?.aesKey;
+          aesKey = signer.getUserOnboardInfo()?.aesKey;
+          
+          if (aesKey === null) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            }
+          }
+        } catch (providerError: any) {
+          if (
+            providerError.message?.includes('Block tracker destroyed') ||
+            providerError.message?.includes('connection') ||
+            providerError.code === 'UNKNOWN_ERROR'
+          ) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+              continue;
+            }
+          }
+          throw providerError;
+        }
+      }
 
       if (aesKey === null) {
         setLoading(false);
