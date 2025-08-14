@@ -131,6 +131,7 @@ const DeleteButton = styled(SendButton)`
   &:hover {
     background-color: #c82333;
     border-color: #bd2130;
+    border: 2px solid #FFFFFF !important;
   }
   
   &:active {

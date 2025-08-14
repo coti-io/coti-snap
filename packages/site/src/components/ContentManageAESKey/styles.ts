@@ -100,6 +100,8 @@ export const ContentBoldText = styled.p`
   line-height: 1.2;
   font-weight: bold;
   margin: 0;
+  color: #000000 !important;
+  text-align: center;
 `;
 
 

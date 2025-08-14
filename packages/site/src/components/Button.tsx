@@ -90,8 +90,8 @@ const getVariantStyles = (variant: ButtonVariant) => {
             ? 'none'
             : '1px solid rgba(255, 255, 255, 0.3)'
         };
-        border-radius: ${props => props.theme.radii.button};
-        padding: 12px 40px;
+        border-radius: 12px;
+        padding: 16px 40px;
 
         &:hover:not(:disabled) {
           background-color: ${props => {
@@ -177,3 +177,105 @@ export const ButtonAction: React.FC<ButtonProps> = (props) => (
 export const ButtonCancel: React.FC<ButtonProps> = (props) => (
   <BaseButton {...props} variant="cancel" />
 );
+
+const WhiteBlueButton = styled(StyledButton)`
+  background-color: #FFFFFF;
+  color: #1E29F6;
+  border: 2px solid #1E29F6;
+  
+  &:hover:not(:disabled) {
+    background-color: #1E29F6;
+    border: 2px solid #1E29F6;
+    color: #f8f9fa !important;
+  }
+  
+  &:active {
+    background-color: #e9ecef;
+  }
+  
+  &:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border-color: #dee2e6;
+  }
+`;
+
+const RedButton = styled(StyledButton)`
+  background-color: #ff1900;
+  color: #FFFFFF;
+  transition: none;
+  
+  &:hover:not(:disabled) {
+    background-color: #c82333;
+    border-color: #bd2130;
+  }
+  
+  &:active {
+    background-color: #bd2130;
+    border-color: #b21e2f;
+  }
+  
+  &:disabled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+  }
+`;
+
+export const ButtonCancelWhite: React.FC<ButtonProps> = ({
+  text,
+  primary = false,
+  error = false,
+  fullWidth = false,
+  onClick,
+  disabled = false,
+  icon,
+  iconLeft,
+  iconRight,
+}) => {
+  const leftIcon = iconLeft || icon;
+
+  return (
+    <WhiteBlueButton
+      $variant="default"
+      $primary={primary}
+      $error={error}
+      $fullWidth={fullWidth}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
+      {text}
+      {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
+    </WhiteBlueButton>
+  );
+};
+
+export const ButtonDeleteRed: React.FC<ButtonProps> = ({
+  text,
+  primary = false,
+  error = false,
+  fullWidth = false,
+  onClick,
+  disabled = false,
+  icon,
+  iconLeft,
+  iconRight,
+}) => {
+  const leftIcon = iconLeft || icon;
+
+  return (
+    <RedButton
+      $variant="default"
+      $primary={primary}
+      $error={error}
+      $fullWidth={fullWidth}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
+      {text}
+      {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
+    </RedButton>
+  );
+};
