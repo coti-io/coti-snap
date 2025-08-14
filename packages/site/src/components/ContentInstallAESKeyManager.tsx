@@ -22,7 +22,7 @@ const SpinnerImage = styled.img`
 `;
 
 export const ContentInstallAESKeyManager = () => {
-  const requestSnap = useRequestSnap();
+  const requestSnap = useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
   const { getSnap } = useMetaMask();
   const [isInstalling, setIsInstalling] = useState(false);
 
@@ -30,7 +30,6 @@ export const ContentInstallAESKeyManager = () => {
     try {
       setIsInstalling(true);
       await requestSnap();
-      // Refresh snap status after installation
       await getSnap();
     } catch (error) {
       console.error('Failed to install snap:', error);
