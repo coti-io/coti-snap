@@ -8,6 +8,7 @@ import { ImportedToken } from '../../types/token';
 import { ImportTokenModal } from './ImportTokenModal';
 import { ImportNFTModal } from './ImportNFTModal';
 import { sortTokens } from '../../utils/tokenHelpers';
+import { getCurrentNetworkConfig } from '../../config/networks';
 import {
   DownArrow,
   FilterIcon,
@@ -15,7 +16,8 @@ import {
 } from '../../assets/icons';
 import { 
   HeaderBar, 
-  NetworkBadge, 
+  NetworkBadge,
+  NetworkBadgeDevLabel,
   HeaderActions, 
   CenteredTabsWrapper, 
   TabsWrapper, 
@@ -166,8 +168,17 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
         </TabsWrapper>
 
         <HeaderBar>
-          <NetworkBadge>
-            COTI TESTNET <DownArrow />
+          <NetworkBadge 
+            badgeColor={getCurrentNetworkConfig().badgeColor}
+            textColor={getCurrentNetworkConfig().color}
+            borderColor={getCurrentNetworkConfig().color}
+            isTestnet={getCurrentNetworkConfig().isTestnet}
+          >
+            {getCurrentNetworkConfig().displayName} 
+            {getCurrentNetworkConfig().isTestnet && (
+              <NetworkBadgeDevLabel>(DEV)</NetworkBadgeDevLabel>
+            )}
+            <DownArrow />
           </NetworkBadge>
           <HeaderActions style={headerActionsStyle}>
             <IconButton 
