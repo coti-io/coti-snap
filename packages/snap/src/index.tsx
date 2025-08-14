@@ -33,6 +33,7 @@ import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress
 } from './utils/snap';
+import { setEnvironment } from './config';
 import {
   checkChainId,
   hideToken,
@@ -85,29 +86,44 @@ export const onInstall: OnInstallHandler = async () => {
     }));
 };
 
-export const onHomePage: OnHomePageHandler = async () => {
+export const onHomePage: OnHomePageHandler = async () => {  
   const chainCheck = await checkChainId();
   if (!chainCheck) {
     return {
       content: <WrongChain />,
     };
   }
-  const { balance, tokenBalances } = await recalculateBalances();
-  const state = await getStateByChainIdAndAddress();
-  await setStateByChainIdAndAddress({
-    ...state,
-    tokenView: TokenViewSelector.ERC20,
-  });
-  return {
-    content: (
-      <Home
-        balance={balance}
-        tokenBalances={tokenBalances}
-        tokenView={TokenViewSelector.ERC20}
-        aesKey={state.aesKey}
-      />
-    ),
-  };
+    
+  try {
+    const { balance, tokenBalances } = await recalculateBalances();
+    const state = await getStateByChainIdAndAddress();
+    await setStateByChainIdAndAddress({
+      ...state,
+      tokenView: TokenViewSelector.ERC20,
+    });
+    return {
+      content: (
+        <Home
+          balance={balance}
+          tokenBalances={tokenBalances}
+          tokenView={TokenViewSelector.ERC20}
+          aesKey={state.aesKey}
+        />
+      ),
+    };
+  } catch (error) {
+    const state = await getStateByChainIdAndAddress();
+    return {
+      content: (
+        <Home
+          balance={BigInt(0)}
+          tokenBalances={[]}
+          tokenView={TokenViewSelector.ERC20}
+          aesKey={state.aesKey}
+        />
+      ),
+    };
+  }
 };
 
 export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
@@ -578,6 +594,27 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       return permissions ?? [];
 
+    case 'set-environment':
+      const { environment } = request.params as { environment: 'testnet' | 'mainnet' };
+      
+      if (!environment || (environment !== 'testnet' && environment !== 'mainnet')) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: (
+              <Box>
+                <Heading>Error</Heading>
+                <Text>Invalid environment. Must be 'testnet' or 'mainnet'.</Text>
+              </Box>
+            ),
+          },
+        });
+        return false;
+      }
+      
+      setEnvironment(environment);
+      return true;
     default:
       throw new Error('Method not found.');
   }

@@ -1,6 +1,10 @@
 import { Box, Heading, Text } from '@metamask/snaps-sdk/jsx';
+import { getCurrentNetworkConfig } from '../config';
 
 export const WrongChain = () => {
+  const networkConfig = getCurrentNetworkConfig();
+  const networkName = networkConfig.networkName;
+
   return (
     <Box direction="vertical" alignment="center">
       <Box direction="horizontal" alignment="center">
@@ -11,7 +15,7 @@ export const WrongChain = () => {
       </Box>
       <Box direction="horizontal" alignment="center">
         <Text color="warning" alignment="center">
-          Please switch to COTI Testnet chain to view your tokens.
+          Please switch to {networkName} chain to view your tokens.
         </Text>
       </Box>
     </Box>

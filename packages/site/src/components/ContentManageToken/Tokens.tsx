@@ -17,7 +17,6 @@ import {
 import { 
   HeaderBar, 
   NetworkBadge,
-  NetworkBadgeDevLabel,
   HeaderActions, 
   CenteredTabsWrapper, 
   TabsWrapper, 
@@ -175,9 +174,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
             isTestnet={getCurrentNetworkConfig().isTestnet}
           >
             {getCurrentNetworkConfig().displayName} 
-            {getCurrentNetworkConfig().isTestnet && (
-              <NetworkBadgeDevLabel>(DEV)</NetworkBadgeDevLabel>
-            )}
+            {getCurrentNetworkConfig().isTestnet}
             <DownArrow />
           </NetworkBadge>
           <HeaderActions style={headerActionsStyle}>
