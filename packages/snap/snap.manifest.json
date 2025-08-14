@@ -7,11 +7,7 @@
     "url": "https://github.com/coti-io/coti-snap.git"
   },
   "source": {
-<<<<<<< HEAD
     "shasum": "3TlczTkKSCTRqGpYhFkfwuAXYN9FPlCROPIO+kRh8m0=",
-=======
-    "shasum": "PGRR8NfVWysmctFU2C5pMnzwWmXVTKtqZ1ipgh1Fxqo=",
->>>>>>> d3ba823 (fix: reset aes key and states when wallet is changed)
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
