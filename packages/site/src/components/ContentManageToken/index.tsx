@@ -6,6 +6,7 @@ import styled, { keyframes } from 'styled-components';
 import { QuickAccessButton, QuickAccessGroup, QuickAccessItem, QuickAccessLabel, MainStack } from './styles';
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { RequestAESKey } from './RequestAESKey';
+import { DisplayAESKey } from './DisplayAESKey';
 import { Tokens } from './Tokens';
 import NFTDetails from './NFTDetails';
 import TokenDetails from './TokenDetails';
@@ -102,6 +103,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   
   const currentAESKey = userAESKey || aesKey;
   const [isRequestingAESKey, setIsRequestingAESKey] = useState(false);
+  const [showAESKeyDisplay, setShowAESKeyDisplay] = useState(false);
 
   const [modalState, setModalState] = useState<ModalState>({
     transfer: false,
@@ -175,6 +177,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
       setIsRequestingAESKey(true);
       try {
         await getAESKey();
+        setShowAESKeyDisplay(true);
       } catch (error) {
       } finally {
         setIsRequestingAESKey(false);
@@ -182,17 +185,32 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
     }
   };
 
+  const handleLaunchDApp = () => {
+    setShowAESKeyDisplay(false);
+  };
+
 
   if (shouldShowConnectWallet) {
     return <Loading title="Loading..." actionText="" />;
   }
 
-  if (!currentAESKey && userHasAESKey) {
+  if (!currentAESKey && userHasAESKey && !showAESKeyDisplay) {
     return (
       <MainStack>
         <RequestAESKey 
           onRequestAESKey={handleRequestAESKey}
           isRequesting={isRequestingAESKey}
+        />
+      </MainStack>
+    );
+  }
+
+  if (showAESKeyDisplay && currentAESKey) {
+    return (
+      <MainStack>
+        <DisplayAESKey 
+          aesKey={currentAESKey}
+          onLaunchDApp={handleLaunchDApp}
         />
       </MainStack>
     );
