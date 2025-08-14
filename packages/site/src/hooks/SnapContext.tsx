@@ -225,6 +225,28 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
+  const syncedRef = useRef(false);
+  useEffect(() => {
+    const syncEnvironmentWithSnap = async () => {
+      if (installedSnap && !syncedRef.current) {
+        try {
+          syncedRef.current = true;
+          const environment = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
+          
+          await invokeSnap({
+            method: 'set-environment',
+            params: { environment },
+          });
+          
+        } catch (error) {
+          syncedRef.current = false;
+        }
+      }
+    };
+
+    syncEnvironmentWithSnap();
+  }, [installedSnap]);
+
   useEffect(() => {
     if (installedSnap) {      
       setUserHasAesKEY(false);

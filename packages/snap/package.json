@@ -30,6 +30,8 @@
     "allow-scripts": "yarn workspace root allow-scripts",
     "build": "mm-snap build",
     "build:clean": "yarn clean && yarn build",
+    "build:testnet": "SNAP_ENV=testnet NODE_ENV=production mm-snap build",
+    "build:mainnet": "SNAP_ENV=mainnet NODE_ENV=production mm-snap build",
     "clean": "rimraf dist",
     "lint": "yarn lint:eslint && yarn lint:misc --check",
     "lint:eslint": "eslint . --cache --ext js,ts",
@@ -37,7 +39,8 @@
     "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' --ignore-path .gitignore",
     "prepublishOnly": "mm-snap manifest",
     "serve": "mm-snap serve",
-    "start": "mm-snap watch",
+    "start": "SNAP_ENV=local NODE_ENV=development mm-snap watch",
+    "start:testnet": "SNAP_ENV=testnet NODE_ENV=development mm-snap watch",
     "test": "jest"
   },
   "dependencies": {
