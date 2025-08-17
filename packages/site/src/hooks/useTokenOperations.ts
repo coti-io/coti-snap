@@ -292,18 +292,48 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   // Token Information
   const getTokenInfo = useCallback(async (address: string): Promise<TokenInfo> => {
     return withLoading(async () => {
-      const contract = await getContract(address, PRIVATE_ERC20_ABI, true) as unknown as IERC20;
-      const [name, symbol, decimals] = await Promise.all([
-        contract.name(),
-        contract.symbol(),
-        contract.decimals()
-      ]);
-      
-      if (!name || !symbol || decimals === undefined || decimals === null) {
-        throw new Error('Invalid token contract');
+      try {
+        // First check if the address contains contract code
+        const provider = getBrowserProvider();
+        const code = await provider.getCode(address);
+        if (code === '0x') {
+          throw new Error('This address does not contain a smart contract. Please verify the token contract address.');
+        }
+        
+        const contract = await getContract(address, PRIVATE_ERC20_ABI, true) as unknown as IERC20;
+        
+        // Try to call each method individually to provide better error messages
+        let name: string, symbol: string, decimals: number;
+        
+        try {
+          name = await contract.name();
+        } catch (error) {
+          throw new Error('Contract does not implement name() method or returned invalid data. This may not be a valid ERC20 token.');
+        }
+        
+        try {
+          symbol = await contract.symbol();
+        } catch (error) {
+          throw new Error('Contract does not implement symbol() method or returned invalid data. This may not be a valid ERC20 token.');
+        }
+        
+        try {
+          decimals = await contract.decimals();
+        } catch (error) {
+          throw new Error('Contract does not implement decimals() method or returned invalid data. This may not be a valid ERC20 token.');
+        }
+        
+        if (!name || !symbol || decimals === undefined || decimals === null) {
+          throw new Error('Invalid token contract: missing required token information');
+        }
+        
+        return { address, name, symbol, decimals };
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('could not decode result data')) {
+          throw new Error('This contract address does not appear to be a valid ERC20 token. Please verify the address is correct.');
+        }
+        throw error;
       }
-      
-      return { address, name, symbol, decimals };
     });
   }, [withLoading, getContract]);
 

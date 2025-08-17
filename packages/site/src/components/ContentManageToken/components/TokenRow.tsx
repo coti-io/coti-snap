@@ -33,18 +33,13 @@ export const TokenRowComponent: React.FC<TokenRowProps> = React.memo(({
   onToggleDecryption,
   tokenBalance
 }) => {
-  const tokenKey = useMemo(() =>
-    token.address || `${token.symbol}-${index}`,
-    [token.address, token.symbol, index]
-  );
-
   const isCotiToken = useMemo(() =>
     !token.address && token.symbol === 'COTI',
     [token.address, token.symbol]
   );
 
   return (
-    <TokenRow key={tokenKey} onClick={() => onSelectToken(token)}>
+    <TokenRow onClick={() => onSelectToken(token)}>
       <TokenInfo>
         <TokenLogos>
           <TokenLogoBig>
