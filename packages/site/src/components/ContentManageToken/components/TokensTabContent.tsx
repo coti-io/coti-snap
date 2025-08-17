@@ -29,20 +29,24 @@ export const TokensTabContent: React.FC<TokensTabContentProps> = React.memo(({
   balances 
 }) => (
   <TransferContainerMain>
-    {tokens.map((token, index) => (
-      <TokenRowComponent 
-        key={`${token.address}-${index}`} 
-        token={token} 
-        index={index}
-        provider={provider}
-        cotiBalance={cotiBalance}
-        propAESKey={propAESKey}
-        onSelectToken={onSelectToken}
-        isDecrypted={isDecrypted}
-        onToggleDecryption={onToggleDecryption}
-        tokenBalance={balances[token.symbol] || '0'}
-      />
-    ))}
+    {tokens.map((token, index) => {
+      const tokenKey = token.address || `coti-${token.symbol}`;
+      const balanceKey = token.address || token.symbol;
+      return (
+        <TokenRowComponent 
+          key={tokenKey} 
+          token={token} 
+          index={index}
+          provider={provider}
+          cotiBalance={cotiBalance}
+          propAESKey={propAESKey}
+          onSelectToken={onSelectToken}
+          isDecrypted={isDecrypted}
+          onToggleDecryption={onToggleDecryption}
+          tokenBalance={balances[balanceKey] || '0'}
+        />
+      );
+    })}
   </TransferContainerMain>
 ));
 
