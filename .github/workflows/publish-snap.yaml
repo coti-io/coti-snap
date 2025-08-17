@@ -69,8 +69,12 @@ jobs:
       - name: Build Snap
         run: |
           cd packages/snap
+<<<<<<< HEAD
           yarn clean
           yarn build:mainnet
+=======
+          yarn build
+>>>>>>> upstream/main
         env:
           SNAP_ENV: mainnet
           NODE_ENV: production

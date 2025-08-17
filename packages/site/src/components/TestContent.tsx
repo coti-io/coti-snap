@@ -5,7 +5,7 @@ import { ContentBorderWrapper, ContentContainer } from './styles';
 
 export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
   const { installedSnap } = useMetaMask();
-  const requestSnap = useRequestSnap();
+  const requestSnap = useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
   const invokeSnap = useInvokeSnap();
 
   const handleEncryptClick = async () => {
