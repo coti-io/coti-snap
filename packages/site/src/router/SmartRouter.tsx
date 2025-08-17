@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import { useMetaMask, useWrongChain } from '../hooks';
 import { Header } from '../components';
+import { Footer } from '../components/Footer';
 
 const Container = styled.div`
   display: flex;
@@ -74,6 +75,7 @@ export function SmartRouter() {
     <Container>
       <Header />
       <Outlet />
+      <Footer />
     </Container>
   );
 }
