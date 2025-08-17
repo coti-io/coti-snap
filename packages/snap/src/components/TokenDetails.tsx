@@ -12,6 +12,7 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 import type { Token } from 'src/types';
 import { TokenViewSelector } from '../types';
+import { formatTokenBalance } from '../utils/token';
 
 import defaultToken from '../../images/default.svg';
 import logo from '../../images/logo.svg';
@@ -60,7 +61,7 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           </Box>
           <Box direction="vertical" alignment="end">
             <Text>
-              {token.balance} {token.symbol}
+              {formatTokenBalance(token.balance, token.decimals)} {token.symbol}
             </Text>
           </Box>
         </Box>
