@@ -1,0 +1,157 @@
+/* Smooth transitions to prevent visual flash */
+.content-transition-enter {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.content-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.content-transition-exit {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.content-transition-exit-active {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+.tokens-container {
+    min-height: 400px;
+    transition: all 200ms ease-out;
+}
+
+.balance-container {
+    transition: all 200ms ease-out;
+}
+
+.button-transition {
+    transition: all 150ms ease-out;
+}
+
+.loading-placeholder {
+    opacity: 0.7;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 0.7;
+    }
+}
+
+button {
+    transition: all 150ms ease-out !important;
+    will-change: transform, opacity, background-color;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.component-mount {
+    animation: fadeInUp 300ms ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.interactive-element {
+    contain: layout style;
+    will-change: transform;
+}
+
+.dropdown-enter {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+}
+
+.dropdown-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: all 200ms ease-out;
+}
+
+.dropdown-exit {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.dropdown-exit-active {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+    transition: all 150ms ease-in;
+}
+
+.wallet-dropdown {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    contain: layout style;
+    will-change: transform, opacity;
+}
+
+.wallet-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown-container {
+    position: relative;
+    contain: layout;
+}
+
+.dropdown-button {
+    transition: all 150ms ease-out;
+    will-change: background-color, transform;
+}
+
+.dropdown-button:hover {
+    transform: translateY(-1px);
+}
+
+.dropdown-button:active {
+    transform: translateY(0);
+}
+
+.mobile-dropdown {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+    contain: layout style;
+    will-change: transform, opacity;
+}
+
+.mobile-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}

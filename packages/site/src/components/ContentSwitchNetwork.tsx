@@ -1,4 +1,5 @@
 import { useSwitchChain } from 'wagmi';
+import { useCallback, memo, useTransition } from 'react';
 
 import { CHAIN_ID } from '../config/wagmi';
 import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from './styles';
@@ -37,11 +38,15 @@ const StyledButton = styled.button`
   }
 `;
 
-export const ContentSwitchNetwork = () => {
+export const ContentSwitchNetwork = memo(() => {
   const { switchChain } = useSwitchChain();
-  const handleSwitchChain = () => {
-    switchChain({ chainId: CHAIN_ID });
-  };
+  const [, startTransition] = useTransition();
+  
+  const handleSwitchChain = useCallback(() => {
+    startTransition(() => {
+      switchChain({ chainId: CHAIN_ID });
+    });
+  }, [switchChain]);
 
   return (
     <ContentBorderWrapper>
@@ -55,4 +60,6 @@ export const ContentSwitchNetwork = () => {
       </ContentContainer>
     </ContentBorderWrapper>
   );
-};
+});
+
+ContentSwitchNetwork.displayName = 'ContentSwitchNetwork';

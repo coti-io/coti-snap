@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
@@ -34,6 +34,7 @@ export function SmartRouter() {
   const { installedSnap } = useMetaMask();
   const navigate = useNavigate();
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -47,28 +48,32 @@ export function SmartRouter() {
     if (!hasInitialized) return;
 
     const currentPath = window.location.pathname;
-    
+
     const protectedRoutes = ['/wallet', '/tokens'];
     const isOnProtectedRoute = protectedRoutes.includes(currentPath);
-    
-    if (!isConnected) {
-      navigate('/connect', { replace: true });
-      return;
-    }
 
-    if (wrongChain) {
-      navigate('/network', { replace: true });
-      return;
-    }
+    startTransition(() => {
+      if (!isConnected) {
+        navigate('/connect', { replace: true });
+        return;
+      }
 
-    if (!installedSnap) {
-      navigate('/install', { replace: true });
-      return;
-    }
+      if (wrongChain) {
+        navigate('/network', { replace: true });
+        return;
+      }
 
-    if (!isOnProtectedRoute && (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install')) {
-      navigate('/wallet', { replace: true });
-    }
+      if (!installedSnap) {
+        navigate('/install', { replace: true });
+        return;
+      }
+
+      if (!isOnProtectedRoute && (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install')) {
+        setTimeout(() => {
+          navigate('/wallet', { replace: true });
+        }, 50);
+      }
+    });
   }, [hasInitialized, isConnected, wrongChain, installedSnap, navigate]);
 
   return (

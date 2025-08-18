@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useTransition } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Metamask from '../assets/metamask_fox.svg';
 import SpinnerIcon from '../assets/spinner.png';
@@ -27,18 +27,27 @@ export const ContentInstallAESKeyManager = () => {
     : useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
   const { getSnap } = useMetaMask();
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleInstallSnap = async () => {
+  const handleInstallSnap = useCallback(async () => {
     try {
       setIsInstalling(true);
+      
+      startTransition(() => {
+        // This will make the navigation and subsequent re-renders non-blocking
+      });
+      
       await requestSnap();
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       await getSnap();
     } catch (error) {
       console.error('Failed to install snap:', error);
     } finally {
       setIsInstalling(false);
     }
-  };
+  }, [requestSnap, getSnap]);
 
   return (
     <ContentBorderWrapper>
@@ -50,11 +59,11 @@ export const ContentInstallAESKeyManager = () => {
         </ContentTextInstall>
 
         <ButtonAction
-          text={isInstalling ? "Installing" : "Install with MetaMask"}
+          text={isInstalling || isPending ? "Installing" : "Install with MetaMask"}
           primary
           onClick={handleInstallSnap}
-          disabled={isInstalling}
-          iconLeft={isInstalling ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
+          disabled={isInstalling || isPending}
+          iconLeft={isInstalling || isPending ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
           iconRight={<Metamask />}
         />
       </ContentContainer>
