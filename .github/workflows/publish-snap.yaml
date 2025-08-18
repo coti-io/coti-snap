@@ -18,26 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '18.20.4'
+          node-version: '18.16.0'
           registry-url: 'https://registry.npmjs.org/'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Verify Yarn version
-        run: yarn --version
+          cache: 'yarn'
 
       - name: Install Dependencies
-        run: |
-          yarn install --immutable
-          yarn allow-scripts
+        run: yarn install --frozen-lockfile
 
       - name: Auto-increment version
         id: version
@@ -57,24 +50,16 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           
-          # Install json-cli if not available
-          npm install -g json
-          
           # Update package.json
-          json -I -f package.json -e "this.version='$NEW_VERSION'"
+          npx json -I -f package.json -e "this.version='$NEW_VERSION'"
           
           # Update snap.manifest.json
-          json -I -f snap.manifest.json -e "this.version='$NEW_VERSION'"
+          npx json -I -f snap.manifest.json -e "this.version='$NEW_VERSION'"
 
       - name: Build Snap
         run: |
           cd packages/snap
-<<<<<<< HEAD
-          yarn clean
-          yarn build:mainnet
-=======
           yarn build
->>>>>>> upstream/main
         env:
           SNAP_ENV: mainnet
           NODE_ENV: production
@@ -91,12 +76,3 @@ jobs:
           git add packages/snap/package.json packages/snap/snap.manifest.json
           git commit -m "chore: bump snap version to ${{ steps.version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push
-
-      - name: Publish to NPM
-        run: |
-          cd packages/snap
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          SNAP_ENV: mainnet
-          NODE_ENV: production
