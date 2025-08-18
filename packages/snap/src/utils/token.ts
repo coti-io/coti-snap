@@ -100,6 +100,52 @@ export const getERC721Details = async (
 };
 
 /**
+ * Checks if the current user owns a specific ERC721 token
+ * @param address - The contract address of the ERC721 token
+ * @param tokenId - The token ID to check
+ * @returns Promise<boolean> - true if user owns the token, false otherwise
+ */
+export const checkERC721Ownership = async (
+  address: string,
+  tokenId: string,
+): Promise<boolean> => {
+  try {
+    const provider = new BrowserProvider(ethereum);
+    const signer = await provider.getSigner();
+    const userAddress = await signer.getAddress();
+    
+    let contract = new ethers.Contract(address, erc721Abi, provider);
+    
+    try {
+      if (!contract.ownerOf) {
+        throw new Error('ownerOf method not available');
+      }
+      
+      const owner = await contract.ownerOf(BigInt(tokenId));
+      return owner.toLowerCase() === userAddress.toLowerCase();
+    } catch (standardError) {
+      try {
+        contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
+        
+        if (!contract.ownerOf) {
+          throw new Error('ownerOf method not available in confidential contract');
+        }
+        
+        const owner = await contract.ownerOf(BigInt(tokenId));
+        return owner.toLowerCase() === userAddress.toLowerCase();
+      } catch (confidentialError) {
+        console.error('Standard ERC721 ownership check failed:', standardError);
+        console.error('Confidential ERC721 ownership check failed:', confidentialError);
+        return false;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking ERC721 ownership:', error);
+    return false;
+  }
+};
+
+/**
  * Determines the type of token (ERC-20, ConfidentialERC20, or NFT) for a given contract address.
  * @param address - The contract address of the token.
  * @returns An object containing the token type and whether it is confidential.
