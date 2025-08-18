@@ -30,7 +30,7 @@ const Description = styled.p`
 const Link = styled.a`
   color: ${({ theme }) => theme.colors.text?.muted};
   text-decoration: underline;
-  
+
   &:hover {
     color: ${({ theme }) => theme.colors.text?.default};
   }
@@ -39,7 +39,7 @@ const Link = styled.a`
 export function Footer() {
   return (
     <FooterContainer>
-      <Title>Powered by Metamask Snaps</Title>
+      <Title>Powered by MetaMask Snaps. MetaMask® is a trademark of ConsenSys.</Title>
       <Description>
         © 2025 COTI{' '}
         <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">
