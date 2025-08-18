@@ -402,7 +402,7 @@ export const MenuItem = styled.button`
   border: none;
   outline: none;
   font-size: ${typography.sizes.lg};
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: ${typography.weights.medium};
   padding: ${spacing.md};
   cursor: pointer;
@@ -410,6 +410,11 @@ export const MenuItem = styled.button`
   
   &:hover {
     background: ${colors.background.secondary};
+  }
+  
+  svg {
+    color: #000000 !important;
+    stroke: #000000 !important;
   }
 `;
 
@@ -1290,7 +1295,7 @@ export const NFTCornerIcon = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: ${colors.text.primary};
+  color: #000000 !important;
   font-weight: 500;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   border: 2px solid #fff;
@@ -1344,7 +1349,7 @@ export const NFTDetailsRow = styled.div`
 `;
 
 export const NFTDetailsLabel = styled.span`
-  color: ${colors.text.secondary};
+  color: #000000 !important;
   font-weight: ${typography.weights.semibold};
   font-size: ${typography.sizes.xl};
   flex: 1;
@@ -1383,7 +1388,7 @@ export const NFTDetailsCopyButton = styled.button`
 `;
 
 export const NFTDetailsDisclaimer = styled.div`
-  color: ${colors.text.secondary};
+  color: #000000 !important;
   font-size: ${typography.sizes.xs};
   margin: 0;
   text-align: left;
