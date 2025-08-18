@@ -64,10 +64,41 @@ jobs:
           SNAP_ENV: mainnet
           NODE_ENV: production
 
+      - name: Verify Build Output
+        run: |
+          cd packages/snap
+          if [ ! -f "dist/bundle.js" ]; then
+            echo "Error: dist/bundle.js not found after build"
+            exit 1
+          fi
+          if [ ! -f "snap.manifest.json" ]; then
+            echo "Error: snap.manifest.json not found"
+            exit 1
+          fi
+          echo "Build output verified successfully"
+
       - name: Update shasum in manifest
         run: |
           cd packages/snap
           yarn prepublishOnly
+
+      - name: Publish to NPM
+        run: |
+          cd packages/snap
+          # Check if package is already published
+          if npm view . version > /dev/null 2>&1; then
+            echo "Package already exists on NPM, checking if version is different..."
+            PUBLISHED_VERSION=$(npm view . version)
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            if [ "$PUBLISHED_VERSION" = "$CURRENT_VERSION" ]; then
+              echo "Version $CURRENT_VERSION already published, skipping..."
+              exit 0
+            fi
+          fi
+          echo "Publishing version $CURRENT_VERSION to NPM..."
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Commit version changes
         run: |
