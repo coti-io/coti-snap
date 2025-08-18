@@ -90,6 +90,7 @@ const useImportNFTForm = () => {
     errors,
     isLoading,
     nftInfo,
+    nftInfoError,
     tokenTypeDetected,
     updateField,
     validateField,
@@ -116,6 +117,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
     errors,
     isLoading,
     nftInfo,
+    nftInfoError,
     updateField,
     validateField,
     validateForm,
@@ -193,7 +195,19 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
         setNftInfo(info);
       } catch (error) {
         console.error('Failed to fetch NFT info:', error);
-        setNftInfoError('Failed to fetch NFT information from contract');
+        let errorMessage = 'Failed to fetch NFT information from contract';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('missing revert data') || 
+              error.message.includes('CALL_EXCEPTION') ||
+              error.message.includes('Invalid NFT contract')) {
+            errorMessage = 'Invalid NFT contract address. Please verify this is a valid ERC721/ERC1155 token on the current network.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        setNftInfoError(errorMessage);
         setNftInfo(null);
         setTokenTypeDetected(null);
       }
@@ -253,7 +267,18 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
       onClose();
     } catch (error) {
       console.error('Failed to import NFT:', error);
-      setErrors(prev => ({ ...prev, address: ERROR_MESSAGES.IMPORT_FAILED }));
+      let errorMessage: string = ERROR_MESSAGES.IMPORT_FAILED;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('missing revert data') || 
+            error.message.includes('CALL_EXCEPTION')) {
+          errorMessage = 'Invalid NFT contract address. Please verify this is a valid ERC721/ERC1155 token on the current network.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setErrors(prev => ({ ...prev, address: errorMessage }));
     } finally {
       setIsLoading(false);
     }
@@ -296,6 +321,13 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
             message={errors.address}
             className="address-error"
           />
+          
+          {nftInfoError && (
+            <ErrorText 
+              message={nftInfoError}
+              className="nft-info-error"
+            />
+          )}
           
           <LabelRow>
             Token ID{' '}

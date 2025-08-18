@@ -1,6 +1,6 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
-import { BrowserProvider, Contract, ethers, ZeroAddress } from 'ethers';
+import { BrowserProvider, Contract, ethers, formatUnits, ZeroAddress } from 'ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
@@ -345,4 +345,34 @@ export const truncateAddress = (address: string, length = 6): string => {
     return address;
   }
   return `${address.slice(0, length)}...${address.slice(-length)}`;
+};
+
+/**
+ * Formats a token balance from wei format to human-readable format
+ * @param balance - The token balance in wei format (as string)
+ * @param decimals - The number of decimals for the token
+ * @param maxDecimals - Maximum number of decimal places to show (default: 4)
+ * @returns Formatted balance string
+ */
+export const formatTokenBalance = (
+  balance: string | null,
+  decimals: string | null,
+  maxDecimals = 4
+): string => {
+  if (!balance || balance === '0' || !decimals) {
+    return '0';
+  }
+
+  try {
+    const formatted = formatUnits(balance, parseInt(decimals, 10));
+    const dotIndex = formatted.indexOf('.');
+    
+    if (dotIndex === -1) {
+      return formatted;
+    }
+    
+    return formatted.slice(0, dotIndex + maxDecimals + 1);
+  } catch {
+    return '0';
+  }
 };

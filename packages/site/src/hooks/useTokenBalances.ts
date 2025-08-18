@@ -36,10 +36,10 @@ export const useTokenBalances = ({
         if (token.address && token.symbol !== 'COTI') {
           try {
             const balance = await decryptERC20Balance(token.address, aesKey);
-            newBalances[token.symbol] = balance.toString();
+            newBalances[token.address] = balance.toString();
           } catch (error) {
             console.error(`Error fetching balance for ${token.symbol}:`, error);
-            newBalances[token.symbol] = '0';
+            newBalances[token.address] = '0';
           }
         }
       }

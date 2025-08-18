@@ -205,13 +205,25 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
       });
     } catch (error) {
       console.error('Error getting token info:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error reading token information';
+      let errorMessage = 'Error reading token information';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('missing revert data') || 
+            error.message.includes('CALL_EXCEPTION') ||
+            error.message.includes('Invalid token contract')) {
+          errorMessage = 'Invalid token contract address. Please verify this is a valid ERC20 token on the current network.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       updateState({
         tokenInfo: null,
         tokenInfoError: errorMessage,
         tokenInfoLoading: false,
         balance: '0',
-        balanceLoading: false
+        balanceLoading: false,
+        step: MODAL_STEPS.ADDRESS_INPUT
       });
     }
   }, [state.isAddressValid, state.address, userHasAESKey, getTokenInfo, decryptERC20Balance, updateState]);
