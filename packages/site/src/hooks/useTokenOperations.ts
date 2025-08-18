@@ -124,47 +124,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     return new ethers.Contract(address, abi, contractProvider);
   }, [getBrowserProvider]);
 
-  // ERC20 Operations
-  const transferERC20 = useCallback(async ({ tokenAddress, to, amount, aesKey }: TransferParams & { amount: string; aesKey: string }) => {
-    return withLoading(async () => {
-      if (!amount) throw new Error('Amount is required for ERC20 transfer');
-      if (!aesKey) throw new Error('AES key is required for ERC20 transfer');
-      if (!ethers.isAddress(to)) throw new Error('Invalid recipient address');
-      const signer = await getBrowserProvider().getSigner();
-      signer.setAesKey(aesKey);
-      const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
-      const encryptedAmount = await signer.encryptValue(
-        ethers.toBigInt(amount),
-        tokenAddress,
-        getSelector("transfer(address,(uint256,bytes))")
-      ) as itUint;
-      const tx = await (contract as any)["transfer(address,(uint256,bytes))"](
-        to, 
-        encryptedAmount, 
-        { gasLimit: 12000000 }
-      );
-      await tx.wait();
-      return true;
-    });
-  }, [withLoading, getBrowserProvider]);
-
-  const getERC20Details = useCallback(async (tokenAddress: string): Promise<TokenDetails> => {
-    return withLoading(async () => {
-      const contract = await getContract(tokenAddress, PRIVATE_ERC20_ABI);
-      const [name, symbol, decimals] = await Promise.all([
-        (contract as any).name(),
-        (contract as any).symbol(),
-        (contract as any).decimals()
-      ]);
-      
-      if (!name || !symbol || decimals === undefined) {
-        throw new Error('Could not retrieve contract details');
-      }
-      
-      return { name, symbol, decimals };
-    });
-  }, [withLoading, getContract]);
-
   const getTokenConfidentialStatus = useCallback(async (tokenAddress: string): Promise<boolean> => {
     try {
       const browserProvider = getBrowserProvider();
@@ -196,6 +155,61 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       throw new Error(`Failed to analyze token: ${error}`);
     }
   }, [getBrowserProvider]);
+
+  // ERC20 Operations
+  const transferERC20 = useCallback(async ({ tokenAddress, to, amount, aesKey }: TransferParams & { amount: string; aesKey?: string }) => {
+    return withLoading(async () => {
+      if (!amount) throw new Error('Amount is required for ERC20 transfer');
+      if (!ethers.isAddress(to)) throw new Error('Invalid recipient address');
+      
+      const isConfidential = await getTokenConfidentialStatus(tokenAddress);
+      const signer = await getBrowserProvider().getSigner();
+      
+      if (isConfidential) {
+        if (!aesKey) throw new Error('AES key is required for private ERC20 transfer');
+        signer.setAesKey(aesKey);
+        const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
+        const encryptedAmount = await signer.encryptValue(
+          ethers.toBigInt(amount),
+          tokenAddress,
+          getSelector("transfer(address,(uint256,bytes))")
+        ) as itUint;
+        const tx = await (contract as any)["transfer(address,(uint256,bytes))"](
+          to, 
+          encryptedAmount, 
+          { gasLimit: 12000000 }
+        );
+        await tx.wait();
+      } else {
+        const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+        const tx = await (contract as any)["transfer(address,uint256)"](
+          to, 
+          ethers.toBigInt(amount), 
+          { gasLimit: 12000000 }
+        );
+        await tx.wait();
+      }
+      
+      return true;
+    });
+  }, [withLoading, getBrowserProvider, getTokenConfidentialStatus]);
+
+  const getERC20Details = useCallback(async (tokenAddress: string): Promise<TokenDetails> => {
+    return withLoading(async () => {
+      const contract = await getContract(tokenAddress, PRIVATE_ERC20_ABI);
+      const [name, symbol, decimals] = await Promise.all([
+        (contract as any).name(),
+        (contract as any).symbol(),
+        (contract as any).decimals()
+      ]);
+      
+      if (!name || !symbol || decimals === undefined) {
+        throw new Error('Could not retrieve contract details');
+      }
+      
+      return { name, symbol, decimals };
+    });
+  }, [withLoading, getContract]);
 
   const decryptERC20Balance = useCallback(async (tokenAddress: string, aesKey?: string) => {
     return withLoading(async () => {      
