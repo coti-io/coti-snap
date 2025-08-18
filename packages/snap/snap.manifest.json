@@ -11,7 +11,7 @@
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
-        "packageName": "@yarulabs/coti-snap",
+        "packageName": "@coti-io/coti-snap",
         "iconPath": "images/icon.svg",
         "registry": "https://registry.npmjs.org/"
       }
