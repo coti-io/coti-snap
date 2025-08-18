@@ -146,13 +146,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   };
 
   const handleNFTSendClick = (nft: ImportedToken) => {
-    setTransferToken({
-      address: '',
-      name: 'COTI',
-      symbol: 'COTI',
-      decimals: 18,
-      type: 'ERC20'
-    });
+    setTransferToken(nft);
     setModalState(prev => ({ ...prev, transfer: true }));
   };
 

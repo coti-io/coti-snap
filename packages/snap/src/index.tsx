@@ -287,11 +287,11 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           
           const erc721Info = await getERC721Details(address);
-          if (address && tokenId && erc721Info) {
+          if (address && tokenId) {
             await importToken(
               address,
-              erc721Info.name ?? address,
-              erc721Info.symbol ?? truncateAddress(address),
+              erc721Info?.name ?? `Token ${tokenId}`,
+              erc721Info?.symbol ?? truncateAddress(address),
               '',
               tokenId,
             );
