@@ -448,7 +448,7 @@ export const TokenListItemBar = styled.div`
   bottom: 4px;
   width: 5px;
   border-radius: ${borderRadius.md};
-  background: ${colors.secondary};
+  background: #000000 !important;
 `;
 
 export const TokenListItem = styled.button.withConfig({

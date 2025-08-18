@@ -234,8 +234,10 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
         return;
       }
 
-      const nftSymbol = nftInfo?.symbol || (formData.tokenType === 'ERC1155' ? 'ERC1155' : 'NFT');
-      const nftName = nftInfo?.name || `${formData.tokenType}`;
+      const contractSymbol = nftInfo?.symbol && nftInfo.symbol.trim() !== '' ? nftInfo.symbol : null;
+      const contractName = nftInfo?.name && nftInfo.name.trim() !== '' ? nftInfo.name : null;
+      const nftSymbol = contractSymbol || (formData.tokenType === 'ERC1155' ? 'ERC1155' : 'ERC721');
+      const nftName = contractName || `${formData.tokenType} Collection`;
 
       if (formData.tokenType === 'ERC721') {
         await addNFTToMetaMask({ 
@@ -255,12 +257,14 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
         });
       }
 
-      addToken({
+      const tokenToSave = {
         address: tokenKey,
         name: `${nftName} #${formData.tokenId}`,
         symbol: nftSymbol,
         type: formData.tokenType
-      });
+      };
+
+      addToken(tokenToSave);
 
       if (onImport) onImport();
       resetForm();

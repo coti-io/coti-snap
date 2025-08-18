@@ -43,7 +43,8 @@ import {
   getERC721Details,
   truncateAddress,
   checkIfERC20Unique,
-  checkIfERC721Unique
+  checkIfERC721Unique,
+  checkERC721Ownership
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -261,28 +262,65 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           const address = erc721formState['erc721-address'] as string;
           const tokenId = erc721formState['erc721-id'] as string;
+          
           const tokenIsUnique = await checkIfERC721Unique(address, tokenId);
           if (!tokenIsUnique) {
             throw new Error('Token already exists');
           }
+          
+          const userOwnsToken = await checkERC721Ownership(address, tokenId);
+          if (!userOwnsToken) {
+            await snap.request({
+              method: 'snap_dialog',
+              params: {
+                type: 'alert',
+                content: (
+                  <Box>
+                    <Heading>Token Not Owned</Heading>
+                    <Text>You don't own this NFT. Only tokens you own can be imported.</Text>
+                  </Box>
+                ),
+              },
+            });
+            await returnToHomePage(id);
+            return;
+          }
+          
           const erc721Info = await getERC721Details(address);
-          if (address && tokenId && erc721Info) {
+          if (address && tokenId) {
             await importToken(
               address,
-              erc721Info.name ?? address,
-              erc721Info.symbol ?? truncateAddress(address),
+              erc721Info?.name ?? `Token ${tokenId}`,
+              erc721Info?.symbol ?? truncateAddress(address),
               '',
               tokenId,
             );
           }
           await recalculateBalances();
           await returnToHomePage(id);
-        } catch {
+        } catch (error) {          
+          if (error instanceof Error && error.message === 'Token already exists') {
+            await snap.request({
+              method: 'snap_dialog',
+              params: {
+                type: 'alert',
+                content: (
+                  <Box>
+                    <Heading>Duplicate Token</Heading>
+                    <Text>This token is already in your list.</Text>
+                  </Box>
+                ),
+              },
+            });
+            await returnToHomePage(id);
+            return;
+          }
+          
           await snap.request({
             method: 'snap_updateInterface',
             params: {
               id,
-              ui: <ImportERC721 errorInForm={true} />,
+              ui: <ImportERC721 errorInForm={true} errorType="general" />,
             },
           });
           return;

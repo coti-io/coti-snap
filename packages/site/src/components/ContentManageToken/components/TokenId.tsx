@@ -17,7 +17,7 @@ interface TokenIdContainerProps {
 const variantStyles = {
   inline: css`
     margin-left: ${spacing.sm};
-    color: ${colors.text.muted};
+    color: #000000 !important;
     font-size: ${typography.sizes.md};
     font-weight: ${typography.weights.normal};
     opacity: 0.8;

@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react';
 import { Eip1193Provider, ethers } from 'ethers';
-import { BrowserProvider, ctUint, Contract, itUint } from '@coti-io/coti-ethers';
+import { BrowserProvider, Contract, itUint } from '@coti-io/coti-ethers';
+import { decryptUint } from '@coti-io/coti-sdk-typescript';
 import { abi as PRIVATE_ERC20_ABI } from '../abis/ERC20Confidential.json';
 import { abi as PRIVATE_ERC721_ABI } from '../abis/ERC721Confidential.json';
+import { abi as ERC721_ABI } from '../abis/ERC721.json';
 import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
+import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { removeImportedToken } from '../utils/localStorage';
 
 // Helper function to get function selector
@@ -122,29 +125,75 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     return new ethers.Contract(address, abi, contractProvider);
   }, [getBrowserProvider]);
 
+  const getTokenConfidentialStatus = useCallback(async (tokenAddress: string): Promise<boolean> => {
+    try {
+      const browserProvider = getBrowserProvider();
+      const code = await browserProvider.getCode(tokenAddress);
+
+      if (code === '0x') {
+        throw new Error('No contract deployed at this address');
+      }
+
+      const confidentialSelectors = [
+        ethers.id('accountEncryptionAddress(address)').slice(0, 10),
+        ethers.id('transfer(address,(uint256,bytes))').slice(0, 10),
+      ];
+
+      let hasConfidentialMethods = false;
+      for (const selector of confidentialSelectors) {
+        if (code.includes(selector.slice(2))) {
+          hasConfidentialMethods = true;
+          break;
+        }
+      }
+
+      if (hasConfidentialMethods) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      throw new Error(`Failed to analyze token: ${error}`);
+    }
+  }, [getBrowserProvider]);
+
   // ERC20 Operations
-  const transferERC20 = useCallback(async ({ tokenAddress, to, amount, aesKey }: TransferParams & { amount: string; aesKey: string }) => {
+  const transferERC20 = useCallback(async ({ tokenAddress, to, amount, aesKey }: TransferParams & { amount: string; aesKey?: string }) => {
     return withLoading(async () => {
       if (!amount) throw new Error('Amount is required for ERC20 transfer');
-      if (!aesKey) throw new Error('AES key is required for ERC20 transfer');
       if (!ethers.isAddress(to)) throw new Error('Invalid recipient address');
+
+      const isConfidential = await getTokenConfidentialStatus(tokenAddress);
       const signer = await getBrowserProvider().getSigner();
-      signer.setAesKey(aesKey);
-      const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
-      const encryptedAmount = await signer.encryptValue(
-        ethers.toBigInt(amount),
-        tokenAddress,
-        getSelector("transfer(address,(uint256,bytes))")
-      ) as itUint;
-      const tx = await (contract as any)["transfer(address,(uint256,bytes))"](
-        to, 
-        encryptedAmount, 
-        { gasLimit: 12000000 }
-      );
-      await tx.wait();
+
+      if (isConfidential) {
+        if (!aesKey) throw new Error('AES key is required for private ERC20 transfer');
+        signer.setAesKey(aesKey);
+        const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
+        const encryptedAmount = await signer.encryptValue(
+          ethers.toBigInt(amount),
+          tokenAddress,
+          getSelector("transfer(address,(uint256,bytes))")
+        ) as itUint;
+        const tx = await (contract as any)["transfer(address,(uint256,bytes))"](
+          to,
+          encryptedAmount,
+          { gasLimit: 12000000 }
+        );
+        await tx.wait();
+      } else {
+        const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+        const tx = await (contract as any)["transfer(address,uint256)"](
+          to,
+          ethers.toBigInt(amount),
+          { gasLimit: 12000000 }
+        );
+        await tx.wait();
+      }
+
       return true;
     });
-  }, [withLoading, getBrowserProvider]);
+  }, [withLoading, getBrowserProvider, getTokenConfidentialStatus]);
 
   const getERC20Details = useCallback(async (tokenAddress: string): Promise<TokenDetails> => {
     return withLoading(async () => {
@@ -154,85 +203,142 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         (contract as any).symbol(),
         (contract as any).decimals()
       ]);
-      
+
       if (!name || !symbol || decimals === undefined) {
         throw new Error('Could not retrieve contract details');
       }
-      
+
       return { name, symbol, decimals };
     });
   }, [withLoading, getContract]);
 
   const decryptERC20Balance = useCallback(async (tokenAddress: string, aesKey?: string) => {
     return withLoading(async () => {
-      const contract = await getContract(tokenAddress, PRIVATE_ERC20_ABI, true);
-      const signer = await getBrowserProvider().getSigner();
-      
-      if (!contract || !contract.balanceOf) {
-        throw new Error('Contract or balanceOf method not available');
-      }
-      
-      const balanceOfMethod = contract["balanceOf(address)"];
-      if (!balanceOfMethod) {
-        throw new Error('balanceOf method not available on contract');
-      }
-      
-      const ctBalance = await balanceOfMethod(await signer.getAddress()) as ctUint;
-      
-      
-      if (aesKey) {
-        if (ctBalance === 0n || Number(ctBalance) === 0) {
+      const isConfidential = await getTokenConfidentialStatus(tokenAddress);
+      const browserProvider = getBrowserProvider();
+      const signer = await browserProvider.getSigner();
+      const signerAddress = await signer.getAddress();
+
+      if (isConfidential) {
+        const tokenContract = new ethers.Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
+        let tokenBalance = null;
+        try {
+          const balanceOfMethod = tokenContract["balanceOf(address)"];
+          if (balanceOfMethod) {
+            tokenBalance = await balanceOfMethod(signerAddress);
+          }
+        } catch (error) {
+          tokenBalance = null;
+        }
+
+        if (tokenBalance && aesKey) {
+          const decryptedBalance = decryptUint(tokenBalance, aesKey);
+          return decryptedBalance;
+        } else if (tokenBalance && !aesKey) {
+          return BigInt(tokenBalance.toString());
+        } else {
           return 0n;
         }
-        
-        signer.setAesKey(aesKey);
-        const decrypted = await signer.decryptValue(BigInt(ctBalance));
-        return decrypted;
       } else {
-        return ctBalance;
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, browserProvider);
+        let tokenBalance = null;
+        try {
+          const balanceOfMethod = tokenContract["balanceOf(address)"];
+          if (balanceOfMethod) {
+            tokenBalance = await balanceOfMethod(signerAddress);
+          }
+        } catch (error) {
+          tokenBalance = null;
+        }
+        return tokenBalance ? BigInt(tokenBalance.toString()) : 0n;
       }
     });
-  }, [withLoading, getContract, getBrowserProvider]);
+  }, [withLoading, getBrowserProvider, getTokenConfidentialStatus]);
 
-  // ERC721 Operations
+  const getNFTConfidentialStatus = useCallback(async (tokenAddress: string): Promise<boolean> => {
+    try {
+      const browserProvider = getBrowserProvider();
+      const code = await browserProvider.getCode(tokenAddress);
+
+      if (code === '0x') {
+        throw new Error('No contract deployed at this address');
+      }
+
+      const confidentialSelectors = [
+        ethers.id('mint(address,(tuple(uint256[]),bytes[]))').slice(0, 10),
+        ethers.id('tokenURI(uint256)').slice(0, 10),
+      ];
+
+      let hasConfidentialMethods = false;
+      for (const selector of confidentialSelectors) {
+        if (code.includes(selector.slice(2))) {
+          hasConfidentialMethods = true;
+          break;
+        }
+      }
+
+      if (hasConfidentialMethods) {
+        try {
+          const confidentialContract = new ethers.Contract(tokenAddress, PRIVATE_ERC721_ABI, browserProvider);
+          if (confidentialContract.tokenURI) {
+            await confidentialContract.tokenURI(BigInt(0));
+          }
+          return true;
+        } catch {
+          return true;
+        }
+      } else {
+        return false;
+      }
+    } catch (error) {
+      throw new Error(`Failed to analyze NFT: ${error}`);
+    }
+  }, [getBrowserProvider]);
+
   const transferERC721 = useCallback(async ({ tokenAddress, to, tokenId }: TransferParams & { tokenId: string }) => {
     return withLoading(async () => {
       if (!tokenId) throw new Error('Token ID is required for ERC721 transfer');
-      
-      const contract = await getContract(tokenAddress, PRIVATE_ERC721_ABI, true);
+
+      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+      const contract = await getContract(tokenAddress, abi, true);
       const signer = await getBrowserProvider().getSigner();
       const tx = await (contract as any).transferFrom(await signer.getAddress(), to, tokenId);
-      
+
       if (!tx) throw new Error('Transaction could not be initiated');
       await tx.wait();
       const nftKey = tokenAddress + '-' + tokenId;
       removeImportedToken(nftKey);
       return true;
     });
-  }, [withLoading, getContract, getBrowserProvider]);
+  }, [withLoading, getContract, getBrowserProvider, getNFTConfidentialStatus]);
 
   const getERC721Balance = useCallback(async (tokenAddress: string, account: string): Promise<string> => {
     return withLoading(async () => {
-      const contract = await getContract(tokenAddress, PRIVATE_ERC721_ABI);
+      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+      const contract = await getContract(tokenAddress, abi);
       const balance = await (contract as any).balanceOf(account);
-      
+
       if (!balance) throw new Error('Could not retrieve balance');
       return balance.toString();
     });
-  }, [withLoading, getContract]);
+  }, [withLoading, getContract, getNFTConfidentialStatus]);
 
   const getERC721Details = useCallback(async (tokenAddress: string): Promise<TokenDetails> => {
     return withLoading(async () => {
-      const contract = await getContract(tokenAddress, PRIVATE_ERC721_ABI);
+      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+      const contract = await getContract(tokenAddress, abi);
       const [name, symbol] = await Promise.all([
         (contract as any).name(),
         (contract as any).symbol()
       ]);
-      
+
       if (!name || !symbol) throw new Error('Could not retrieve contract details');
       return { name, symbol };
     });
-  }, [withLoading, getContract]);
+  }, [withLoading, getContract, getNFTConfidentialStatus]);
 
   // ERC1155 Operations
   const transferERC1155 = useCallback(async ({ tokenAddress, to, tokenId, amount }: TransferParams & { tokenId: string; amount: string }) => {
@@ -268,7 +374,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     return withLoading(async () => {
       const contract = await getContract(tokenAddress, ERC1155_ABI);
       const uri = await (contract as any).uri(tokenId);
-      
+
       if (!uri) throw new Error('Could not retrieve token URI');
       return { uri };
     });
@@ -282,51 +388,38 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         to,
         value: ethers.parseEther(amount)
       });
-      
+
       if (!tx) throw new Error('Transaction could not be initiated');
       await tx.wait();
       return true;
     });
   }, [withLoading, getBrowserProvider]);
 
-  // Token Information
   const getTokenInfo = useCallback(async (address: string): Promise<TokenInfo> => {
     return withLoading(async () => {
       try {
-        // First check if the address contains contract code
         const provider = getBrowserProvider();
         const code = await provider.getCode(address);
         if (code === '0x') {
           throw new Error('This address does not contain a smart contract. Please verify the token contract address.');
         }
-        
-        const contract = await getContract(address, PRIVATE_ERC20_ABI, true) as unknown as IERC20;
-        
-        // Try to call each method individually to provide better error messages
-        let name: string, symbol: string, decimals: number;
-        
-        try {
-          name = await contract.name();
-        } catch (error) {
-          throw new Error('Contract does not implement name() method or returned invalid data. This may not be a valid ERC20 token.');
+
+        const isConfidential = await getTokenConfidentialStatus(address);
+        const abi = isConfidential ? PRIVATE_ERC20_ABI : ERC20_ABI;
+        const contract = new ethers.Contract(address, abi, provider);
+
+        if (!contract.name || !contract.symbol || !contract.decimals) {
+          throw new Error('Contract does not implement required ERC20 methods');
         }
-        
-        try {
-          symbol = await contract.symbol();
-        } catch (error) {
-          throw new Error('Contract does not implement symbol() method or returned invalid data. This may not be a valid ERC20 token.');
-        }
-        
-        try {
-          decimals = await contract.decimals();
-        } catch (error) {
-          throw new Error('Contract does not implement decimals() method or returned invalid data. This may not be a valid ERC20 token.');
-        }
-        
+
+        const name = await contract.name();
+        const symbol = await contract.symbol();
+        const decimals = await contract.decimals();
+
         if (!name || !symbol || decimals === undefined || decimals === null) {
           throw new Error('Invalid token contract: missing required token information');
         }
-        
+
         return { address, name, symbol, decimals };
       } catch (error) {
         if (error instanceof Error && error.message.includes('could not decode result data')) {
@@ -335,24 +428,52 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         throw error;
       }
     });
-  }, [withLoading, getContract]);
+  }, [withLoading, getBrowserProvider, getTokenConfidentialStatus]);
 
   // NFT Information
   const getNFTInfo = useCallback(async (address: string): Promise<NFTInfo> => {
     return withLoading(async () => {
-      const contract = await getContract(address, PRIVATE_ERC721_ABI, true) as unknown as IERC721;
-      const [name, symbol] = await Promise.all([
-        contract.name(),
-        contract.symbol()
-      ]);
-      
-      if (!name || !symbol) {
-        throw new Error('Invalid NFT contract');
+      const isConfidential = await getNFTConfidentialStatus(address);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+
+      try {
+        const contract = await getContract(address, abi, true) as unknown as IERC721;
+        const [name, symbol] = await Promise.all([
+          contract.name(),
+          contract.symbol()
+        ]);
+
+        const cleanName = name?.trim() || '';
+        const cleanSymbol = symbol?.trim() || '';
+
+        if (!cleanName || !cleanSymbol) {
+          throw new Error('Invalid NFT contract');
+        }
+
+        return { address, name: cleanName, symbol: cleanSymbol };
+      } catch (error) {
+        const fallbackAbi = isConfidential ? ERC721_ABI : PRIVATE_ERC721_ABI;
+        try {
+          const fallbackContract = await getContract(address, fallbackAbi, true) as unknown as IERC721;
+          const [name, symbol] = await Promise.all([
+            fallbackContract.name(),
+            fallbackContract.symbol()
+          ]);
+
+          const cleanName = name?.trim() || '';
+          const cleanSymbol = symbol?.trim() || '';
+
+          if (!cleanName || !cleanSymbol) {
+            throw new Error('Invalid NFT contract');
+          }
+
+          return { address, name: cleanName, symbol: cleanSymbol };
+        } catch (fallbackError) {
+          throw new Error('Invalid NFT contract - unable to read name and symbol');
+        }
       }
-      
-      return { address, name, symbol };
     });
-  }, [withLoading, getContract]);
+  }, [withLoading, getContract, getNFTConfidentialStatus]);
 
   // MetaMask Integration
   const addTokenToMetaMask = useCallback(async ({ address, symbol, decimals, image }: ImportTokenParams) => {

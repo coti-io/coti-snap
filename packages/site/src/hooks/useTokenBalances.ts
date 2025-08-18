@@ -22,7 +22,7 @@ export const useTokenBalances = ({
 
   const fetchBalances = useCallback(async () => {
     
-    if (!aesKey || tokens.length === 0) return;
+    if (tokens.length === 0) return;
 
     setIsLoading(true);
     const newBalances: Record<string, string> = {};
@@ -35,7 +35,7 @@ export const useTokenBalances = ({
       for (const token of tokens) {
         if (token.address && token.symbol !== 'COTI') {
           try {
-            const balance = await decryptERC20Balance(token.address, aesKey);
+            const balance = await decryptERC20Balance(token.address, aesKey || undefined);
             newBalances[token.address] = balance.toString();
           } catch (error) {
             console.error(`Error fetching balance for ${token.symbol}:`, error);
