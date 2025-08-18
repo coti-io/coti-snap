@@ -233,6 +233,8 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
           syncedRef.current = true;
           const environment = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
           
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
           await invokeSnap({
             method: 'set-environment',
             params: { environment },
@@ -244,20 +246,22 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    syncEnvironmentWithSnap();
-  }, [installedSnap]);
+    if (installedSnap) {
+      setTimeout(syncEnvironmentWithSnap, 0);
+    }
+  }, [installedSnap, invokeSnap]);
 
   useEffect(() => {
-    if (installedSnap) {      
+    if (address) {      
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
-        if (timeoutRef.current) {
+      if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
     }
-  }, [installedSnap, address]);
+  }, [address]);
 
   return (
     <SnapContext.Provider

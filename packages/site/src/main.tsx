@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import styled, { ThemeProvider } from 'styled-components';
 import { WagmiProvider } from 'wagmi';
 
+import './components/ContentManageToken/transitions.css';
 import App from './App.js';
 import { GlobalBackground } from './components/GlobalBackground';
 import { dark, GlobalStyle, light } from './config/theme.js';

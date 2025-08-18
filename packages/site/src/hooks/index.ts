@@ -5,3 +5,4 @@ export * from './useRequest';
 export * from './useRequestSnap';
 export * from './useWrongChain';
 export * from './useCotiSnapInstalled';
+export * from './useOptimizedDropdown';

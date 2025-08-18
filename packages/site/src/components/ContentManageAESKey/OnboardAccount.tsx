@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo, useTransition } from 'react';
 import { useAccount } from 'wagmi';
 
 import { ButtonAction } from '../Button';
@@ -21,10 +21,11 @@ interface OnboardingState {
 
 const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your wallet could interact with private chain data, for example: your balance in a private ERC20 token.`;
 
-export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
+export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   const { setAESKey, loading, settingAESKeyError } = useSnap();
   const { isConnected, address } = useAccount();
   const { wrongChain } = useWrongChain();
+  const [, startTransition] = useTransition();
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
     isOnboarding: false,
     isCompleted: false
@@ -42,13 +43,17 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
     return showWizard;
   }, [onboardingState]);
 
-  const handleStartOnboarding = async (): Promise<void> => {
-    if (isLocal()) {
-      setOnboardingState(prev => ({
-        ...prev,
-        isOnboarding: true
-      }));
-    } else {
+  const handleStartOnboarding = useCallback(async (): Promise<void> => {
+    startTransition(() => {
+      if (isLocal()) {
+        setOnboardingState(prev => ({
+          ...prev,
+          isOnboarding: true
+        }));
+      }
+    });
+    
+    if (!isLocal()) {
       try {
         await setAESKey();
         handleOnboardingComplete();
@@ -56,14 +61,16 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
         console.error('OnboardAccount: Error during AES key setup:', error);
       }
     }
-  };
+  }, [isLocal, setAESKey, startTransition]);
 
-  const handleOnboardingComplete = (): void => {
-    setOnboardingState({
-      isOnboarding: false,
-      isCompleted: true
+  const handleOnboardingComplete = useCallback((): void => {
+    startTransition(() => {
+      setOnboardingState({
+        isOnboarding: false,
+        isCompleted: true
+      });
     });
-  };
+  }, [startTransition]);
 
   const handleOnboardingCancel = (): void => {
     setOnboardingState({
@@ -123,4 +130,6 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = () => {
   ) : (
     <ContentConnectYourWallet />
   );
-};
+});
+
+OnboardAccount.displayName = 'OnboardAccount';

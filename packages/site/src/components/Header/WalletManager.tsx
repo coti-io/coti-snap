@@ -1,45 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, memo, useTransition } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 
 import { truncateString } from '../../utils';
 import { Chain } from './Chain';
 import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
+import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 
-export const WalletManager = () => {
+export const WalletManager = memo(() => {
   const { address } = useAccount();
-
   const { disconnect } = useDisconnect();
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [, startTransition] = useTransition();
+  const { isOpen, toggle, close, dropdownRef } = useOptimizedDropdown({
+    closeOnOutsideClick: true,
+  });
 
-  const toggleDropdown = () => setIsVisible(!isVisible);
-
-  const handleDisconnect = () => {
-    disconnect();
-    setIsVisible(false);
-  };
-
-  const handleClickOutside = (vnt: MouseEvent) => {
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(vnt.target as Node)
-    ) {
-      setIsVisible(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const handleDisconnect = useCallback(() => {
+    startTransition(() => {
+      disconnect();
+    });
+    close();
+  }, [disconnect, close]);
 
   return (
     <>
-      <ConnectedDetails $wrongChain={false} onClick={toggleDropdown}>
+      <ConnectedDetails $wrongChain={false} onClick={toggle}>
         {address ? truncateString(address) : 'no address'}
-        <Dropdown ref={dropdownRef} $isVisible={isVisible}>
+        <Dropdown ref={dropdownRef} $isVisible={isOpen}>
           <DisconnectButton onClick={handleDisconnect}>
             Disconnect
           </DisconnectButton>
@@ -48,4 +34,6 @@ export const WalletManager = () => {
       <Chain />
     </>
   );
-};
+});
+
+WalletManager.displayName = 'WalletManager';

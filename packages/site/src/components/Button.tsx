@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useTransition } from 'react';
 import styled, { css } from 'styled-components';
 
 // Types
@@ -124,9 +124,12 @@ const StyledButton = styled.button<StyledButtonProps>`
   line-height: 1.2;
   color: ${COLORS.white};
   min-height: 4.2rem;
+  height: 4.2rem; /* Fixed height to prevent layout shift */
   flex: ${props => props.$fullWidth ? '1' : 'none'};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+  contain: layout style;
 
   ${props => getVariantStyles(props.$variant)}
 
@@ -136,7 +139,7 @@ const StyledButton = styled.button<StyledButtonProps>`
   }
 `;
 
-const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = ({
+const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = memo(({
   text,
   variant,
   primary = false,
@@ -148,7 +151,16 @@ const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = ({
   iconLeft,
   iconRight,
 }) => {
+  const [isPending, startTransition] = useTransition();
   const leftIcon = iconLeft || icon;
+
+  const handleClick = useCallback(() => {
+    if (onClick && !disabled) {
+      startTransition(() => {
+        onClick();
+      });
+    }
+  }, [onClick, disabled]);
 
   return (
     <StyledButton
@@ -156,27 +168,35 @@ const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = ({
       $primary={primary}
       $error={error}
       $fullWidth={fullWidth}
-      onClick={onClick}
-      disabled={disabled}
+      onClick={handleClick}
+      disabled={disabled || isPending}
     >
       {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
-      {text}
+      {isPending ? 'Loading...' : text}
       {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
     </StyledButton>
   );
-};
+});
 
-export const Button: React.FC<ButtonProps> = (props) => (
+BaseButton.displayName = 'BaseButton';
+
+export const Button: React.FC<ButtonProps> = memo((props) => (
   <BaseButton {...props} variant="default" />
-);
+));
 
-export const ButtonAction: React.FC<ButtonProps> = (props) => (
+Button.displayName = 'Button';
+
+export const ButtonAction: React.FC<ButtonProps> = memo((props) => (
   <BaseButton {...props} variant="action" />
-);
+));
 
-export const ButtonCancel: React.FC<ButtonProps> = (props) => (
+ButtonAction.displayName = 'ButtonAction';
+
+export const ButtonCancel: React.FC<ButtonProps> = memo((props) => (
   <BaseButton {...props} variant="cancel" />
-);
+));
+
+ButtonCancel.displayName = 'ButtonCancel';
 
 const WhiteBlueButton = styled(StyledButton)`
   background-color: #FFFFFF;
@@ -222,7 +242,7 @@ const RedButton = styled(StyledButton)`
   }
 `;
 
-export const ButtonCancelWhite: React.FC<ButtonProps> = ({
+export const ButtonCancelWhite: React.FC<ButtonProps> = memo(({
   text,
   primary = false,
   error = false,
@@ -233,7 +253,16 @@ export const ButtonCancelWhite: React.FC<ButtonProps> = ({
   iconLeft,
   iconRight,
 }) => {
+  const [isPending, startTransition] = useTransition();
   const leftIcon = iconLeft || icon;
+
+  const handleClick = useCallback(() => {
+    if (onClick && !disabled) {
+      startTransition(() => {
+        onClick();
+      });
+    }
+  }, [onClick, disabled]);
 
   return (
     <WhiteBlueButton
@@ -241,17 +270,19 @@ export const ButtonCancelWhite: React.FC<ButtonProps> = ({
       $primary={primary}
       $error={error}
       $fullWidth={fullWidth}
-      onClick={onClick}
-      disabled={disabled}
+      onClick={handleClick}
+      disabled={disabled || isPending}
     >
       {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
-      {text}
+      {isPending ? 'Loading...' : text}
       {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
     </WhiteBlueButton>
   );
-};
+});
 
-export const ButtonDeleteRed: React.FC<ButtonProps> = ({
+ButtonCancelWhite.displayName = 'ButtonCancelWhite';
+
+export const ButtonDeleteRed: React.FC<ButtonProps> = memo(({
   text,
   primary = false,
   error = false,
@@ -262,7 +293,16 @@ export const ButtonDeleteRed: React.FC<ButtonProps> = ({
   iconLeft,
   iconRight,
 }) => {
+  const [isPending, startTransition] = useTransition();
   const leftIcon = iconLeft || icon;
+
+  const handleClick = useCallback(() => {
+    if (onClick && !disabled) {
+      startTransition(() => {
+        onClick();
+      });
+    }
+  }, [onClick, disabled]);
 
   return (
     <RedButton
@@ -270,12 +310,14 @@ export const ButtonDeleteRed: React.FC<ButtonProps> = ({
       $primary={primary}
       $error={error}
       $fullWidth={fullWidth}
-      onClick={onClick}
-      disabled={disabled}
+      onClick={handleClick}
+      disabled={disabled || isPending}
     >
       {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
-      {text}
+      {isPending ? 'Loading...' : text}
       {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
     </RedButton>
   );
-};
+});
+
+ButtonDeleteRed.displayName = 'ButtonDeleteRed';

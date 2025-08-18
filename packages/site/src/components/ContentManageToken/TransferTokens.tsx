@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect, memo, useTransition } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { ContentTitle } from '../styles';
 import { IconButton, SendButton, TransferContainer } from './styles';
@@ -379,6 +379,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   initialToken,
   onTransferSuccess
 }) => {
+  const [, startTransition] = useTransition();
   const [addressInput, setAddressInput] = useState('');
   const [amount, setAmount] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(false);
@@ -566,22 +567,26 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   }, []);
 
   const handleSetMaxAmount = useCallback(() => {
-    if (!currentBalance || currentBalance === '0') {
-      setAmount('0');
-      return;
-    }
+    startTransition(() => {
+      if (!currentBalance || currentBalance === '0') {
+        setAmount('0');
+        return;
+      }
 
-    const formattedBalance = currentToken ? (() => {
-      const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
-      return formatTokenBalance(currentBalance, decimals);
-    })() : formatBalance(currentBalance);
+      const formattedBalance = currentToken ? (() => {
+        const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
+        return formatTokenBalance(currentBalance, decimals);
+      })() : formatBalance(currentBalance);
 
-    setAmount(formattedBalance);
-  }, [currentBalance, currentToken]);
+      setAmount(formattedBalance);
+    });
+  }, [currentBalance, currentToken, startTransition]);
 
   const handleClearAmount = useCallback(() => {
-    setAmount('');
-  }, []);
+    startTransition(() => {
+      setAmount('');
+    });
+  }, [startTransition]);
 
   const handleOpenTokenModal = useCallback(() => {
     setShowTokenModal(true);
@@ -749,8 +754,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   }, [provider, canContinue, tokenOps, addressInput, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess]);
 
   const handleCancel = useCallback(() => {
-    onBack();
-  }, [onBack]);
+    startTransition(() => {
+      onBack();
+    });
+  }, [onBack, startTransition]);
 
   return (
     <TransferContainer>

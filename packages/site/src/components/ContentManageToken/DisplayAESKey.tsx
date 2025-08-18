@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo, useTransition } from 'react';
 import styled from 'styled-components';
 import { SendButton } from './styles';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
@@ -146,25 +146,32 @@ interface DisplayAESKeyProps {
   onDeleteAESKey: () => void;
 }
 
-export const DisplayAESKey: React.FC<DisplayAESKeyProps> = ({
+export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(({
   aesKey,
   onLaunchDApp,
   onDeleteAESKey
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
+  const [, startTransition] = useTransition();
   const { copied, copyToClipboard } = useCopyToClipboard({ successDuration: 1500 });
 
-  const handleReveal = () => {
-    setIsRevealed(!isRevealed);
-  };
+  const handleReveal = useCallback(() => {
+    startTransition(() => {
+      setIsRevealed(!isRevealed);
+    });
+  }, [isRevealed]);
 
-  const handleCopy = () => {
-    copyToClipboard(aesKey);
-  };
+  const handleCopy = useCallback(() => {
+    startTransition(() => {
+      copyToClipboard(aesKey);
+    });
+  }, [copyToClipboard, aesKey]);
 
-  const handleDelete = () => {
-    onDeleteAESKey();
-  };
+  const handleDelete = useCallback(() => {
+    startTransition(() => {
+      onDeleteAESKey();
+    });
+  }, [onDeleteAESKey]);
 
   const displayKey = isRevealed ? aesKey : '•'.repeat(aesKey.length);
 
@@ -197,4 +204,6 @@ export const DisplayAESKey: React.FC<DisplayAESKeyProps> = ({
       </ButtonContainer>
     </Container>
   );
-};
+});
+
+DisplayAESKey.displayName = 'DisplayAESKey';
