@@ -63,7 +63,7 @@ export const MobileMenuButton = styled.button`
 `;
 
 export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
-  display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  display: flex;
   position: absolute;
   top: 100%;
   right: 0;
@@ -78,8 +78,20 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
   margin-top: 10px;
   min-width: 200px;
   
+  opacity: ${(props) => (props.$isVisible ? '1' : '0')};
+  visibility: ${(props) => (props.$isVisible ? 'visible' : 'hidden')};
+  transform: ${(props) => 
+    props.$isVisible 
+      ? 'translateY(0) scale(1)' 
+      : 'translateY(-10px) scale(0.95)'
+  };
+  transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  
+  contain: layout style;
+  will-change: transform, opacity;
+  
   ${({ theme }) => theme.mediaQueries.small} {
-    display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+    display: flex;
   }
   
   @media screen and (min-width: 601px) {
@@ -158,7 +170,7 @@ export const Dropdown = styled.div<{ $isVisible: boolean }>`
   position: absolute;
   top: 100%;
   left: 0;
-  display: ${(props) => (props.$isVisible ? 'flex' : 'none')};
+  display: flex;
   flex-direction: column;
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
@@ -168,6 +180,19 @@ export const Dropdown = styled.div<{ $isVisible: boolean }>`
   z-index: 10;
   gap: 8px;
   margin-top: 10px;
+  min-width: 160px;
+  
+  opacity: ${(props) => (props.$isVisible ? '1' : '0')};
+  visibility: ${(props) => (props.$isVisible ? 'visible' : 'hidden')};
+  transform: ${(props) => 
+    props.$isVisible 
+      ? 'translateY(0) scale(1)' 
+      : 'translateY(-10px) scale(0.95)'
+  };
+  transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  
+  contain: layout style;
+  will-change: transform, opacity;
 `;
 
 export const DisconnectButton = styled.button`

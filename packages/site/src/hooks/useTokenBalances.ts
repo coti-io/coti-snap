@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { ImportedToken } from '../types/token';
 import { useTokenOperations } from './useTokenOperations';
@@ -19,10 +19,22 @@ export const useTokenBalances = ({
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { decryptERC20Balance } = useTokenOperations(provider);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const tokenAddresses = useMemo(() => 
+    tokens.map(token => token.address).join(','), 
+    [tokens]
+  );
 
   const fetchBalances = useCallback(async () => {
-    
     if (tokens.length === 0) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
 
     setIsLoading(true);
     const newBalances: Record<string, string> = {};
@@ -32,28 +44,58 @@ export const useTokenBalances = ({
         newBalances.COTI = cotiBalance;
       }
 
-      for (const token of tokens) {
-        if (token.address && token.symbol !== 'COTI') {
-          try {
-            const balance = await decryptERC20Balance(token.address, aesKey || undefined);
-            newBalances[token.address] = balance.toString();
-          } catch (error) {
-            console.error(`Error fetching balance for ${token.symbol}:`, error);
-            newBalances[token.address] = '0';
+      const batchSize = 3;
+      for (let i = 0; i < tokens.length; i += batchSize) {
+        if (signal.aborted) return;
+        
+        const batch = tokens.slice(i, i + batchSize);
+        const batchPromises = batch.map(async (token) => {
+          if (token.address && token.symbol !== 'COTI') {
+            try {
+              const balance = await decryptERC20Balance(token.address, aesKey || undefined);
+              return { address: token.address, balance: balance.toString() };
+            } catch (error) {
+              console.error(`Error fetching balance for ${token.symbol}:`, error);
+              return { address: token.address, balance: '0' };
+            }
           }
+          return null;
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        batchResults.forEach(result => {
+          if (result) {
+            newBalances[result.address] = result.balance;
+          }
+        });
+
+        if (i + batchSize < tokens.length) {
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
       }
 
-      setBalances(newBalances);
+      if (!signal.aborted) {
+        setBalances(newBalances);
+      }
     } catch (error) {
-      console.error('Error fetching token balances:', error);
+      if (!signal.aborted) {
+        console.error('Error fetching token balances:', error);
+      }
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) {
+        setIsLoading(false);
+      }
     }
-  }, [tokens, aesKey, cotiBalance, decryptERC20Balance]);
+  }, [tokenAddresses, aesKey, cotiBalance, decryptERC20Balance, tokens]);
 
   useEffect(() => {
     fetchBalances();
+    
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchBalances]);
 
   return {

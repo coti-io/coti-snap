@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, memo, useTransition } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { config, CONNECTOR_MM, CONNECTOR_MM_FLASK_EXPORT, CONNECTOR_MM_REGULAR_EXPORT } from '../../config/wagmi';
 import { useMetaMask, useWrongChain } from '../../hooks';
+import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 import { truncateString } from '../../utils';
 import { Chain } from './Chain';
 import { 
@@ -15,10 +16,11 @@ import {
 } from './styles';
 import MenuIcon from '../../assets/menu.png';
 
-export const MobileMenu = () => {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+export const MobileMenu = memo(() => {
+  const [, startTransition] = useTransition();
+  const { isOpen, toggle, close, dropdownRef, buttonRef } = useOptimizedDropdown({
+    closeOnOutsideClick: true,
+  });
   
   const { isFlask, snapsDetected } = useMetaMask();
   const { isConnected, address } = useAccount();
@@ -28,43 +30,27 @@ export const MobileMenu = () => {
 
   const connectorId = isFlask ? CONNECTOR_MM_FLASK_EXPORT.ID : CONNECTOR_MM_REGULAR_EXPORT.ID;
 
-  const toggleDropdown = () => setIsVisible(!isVisible);
+  const handleDisconnect = useCallback(() => {
+    startTransition(() => {
+      disconnect();
+    });
+    close();
+  }, [disconnect, close]);
 
-  const handleDisconnect = () => {
-    disconnect();
-    setIsVisible(false);
-  };
-
-  const handleConnect = (connector: any) => {
-    connect({ connector });
-    setIsVisible(false);
-  };
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(event.target as Node) &&
-      buttonRef.current &&
-      !buttonRef.current.contains(event.target as Node)
-    ) {
-      setIsVisible(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const handleConnect = useCallback((connector: any) => {
+    startTransition(() => {
+      connect({ connector });
+    });
+    close();
+  }, [connect, close]);
 
   return (
     <>
-      <MobileMenuButton ref={buttonRef} onClick={toggleDropdown}>
+      <MobileMenuButton ref={buttonRef} onClick={toggle}>
         <img src={MenuIcon} alt="Menu" />
       </MobileMenuButton>
       
-      <MobileMenuDropdown ref={dropdownRef} $isVisible={isVisible}>
+      <MobileMenuDropdown ref={dropdownRef} $isVisible={isOpen}>
         {isConnected ? (
           <>
             <MobileAddressDisplay>
@@ -101,4 +87,6 @@ export const MobileMenu = () => {
       </MobileMenuDropdown>
     </>
   );
-};
+});
+
+MobileMenu.displayName = 'MobileMenu';

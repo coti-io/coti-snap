@@ -12,6 +12,10 @@ const FooterContainer = styled.footer`
   text-align: center;
   padding: 24px 16px;
   gap: 8px;
+  height: 120px; /* Fixed height to prevent layout shift */
+  box-sizing: border-box;
+  contain: layout style;
+  z-index: 10;
 `;
 
 const Title = styled.h3`

@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { formatUnits } from 'ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import styled, { keyframes } from 'styled-components';
+import './transitions.css';
 import { QuickAccessButton, QuickAccessGroup, QuickAccessItem, QuickAccessLabel, MainStack } from './styles';
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { RequestAESKey } from './RequestAESKey';
@@ -20,6 +21,7 @@ import { useSnap } from '../../hooks/SnapContext';
 import { truncateString } from '../../utils';
 import { Loading } from '../Loading';
 import { DeleteAESKey } from '../ContentManageAESKey/DeleteAESKey';
+import { ContentWrapper } from './ContentWrapper';
 
 interface ModalState {
   transfer: boolean;
@@ -54,7 +56,7 @@ const AnimatedModalWrapper = styled.div`
   animation: ${slideUpFadeIn} 0.32s cubic-bezier(0.4, 0.8, 0.4, 1) both;
 `;
 
-const QuickAccessActions = ({ onSendClick, onReceiveClick }: {
+const QuickAccessActions = memo(({ onSendClick, onReceiveClick }: {
   onSendClick: () => void;
   onReceiveClick: () => void;
 }) => (
@@ -72,9 +74,11 @@ const QuickAccessActions = ({ onSendClick, onReceiveClick }: {
       <QuickAccessLabel>Receive</QuickAccessLabel>
     </QuickAccessItem>
   </QuickAccessGroup>
-);
+));
 
-const DepositModal = ({ isOpen, onClose, address }: {
+QuickAccessActions.displayName = 'QuickAccessActions';
+
+const DepositModal = memo(({ isOpen, onClose, address }: {
   isOpen: boolean;
   onClose: () => void;
   address: string;
@@ -90,13 +94,15 @@ const DepositModal = ({ isOpen, onClose, address }: {
       </AnimatedModalWrapper>
     </ModalBackdrop>
   );
-};
+});
+
+DepositModal.displayName = 'DepositModal';
 
 interface ContentManageTokenProps {
   aesKey?: string | null;
 }
 
-export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }) => {
+export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aesKey }) => {
   const { address } = useAccount();
   const { data: balance, refetch: refetchBalance } = useBalance({ address });
   const { provider } = useMetaMaskContext();
@@ -136,39 +142,39 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   const isWalletConnected = address && balance && provider;
   const shouldShowConnectWallet = !isWalletConnected;
 
-  const handleSendClick = () => {
+  const handleSendClick = useCallback(() => {
     setModalState(prev => ({ ...prev, transfer: true }));
-  };
+  }, []);
 
-  const handleTokenSendClick = (token: ImportedToken) => {
+  const handleTokenSendClick = useCallback((token: ImportedToken) => {
     setTransferToken(token);
     setModalState(prev => ({ ...prev, transfer: true }));
-  };
+  }, []);
 
-  const handleNFTSendClick = (nft: ImportedToken) => {
+  const handleNFTSendClick = useCallback((nft: ImportedToken) => {
     setTransferToken(nft);
     setModalState(prev => ({ ...prev, transfer: true }));
-  };
+  }, []);
 
-  const handleReceiveClick = () => {
+  const handleReceiveClick = useCallback(() => {
     setModalState(prev => ({ ...prev, deposit: true }));
-  };
+  }, []);
 
-  const handleCloseTransfer = () => {
+  const handleCloseTransfer = useCallback(() => {
     setModalState(prev => ({ ...prev, transfer: false }));
     setTransferToken(null);
-  };
+  }, []);
 
-  const handleTransferSuccess = () => {
+  const handleTransferSuccess = useCallback(() => {
     refetchBalance();
     handleCloseTransfer();
-  };
+  }, [refetchBalance, handleCloseTransfer]);
 
-  const handleCloseDeposit = () => {
+  const handleCloseDeposit = useCallback(() => {
     setModalState(prev => ({ ...prev, deposit: false }));
-  };
+  }, []);
 
-  const handleRequestAESKey = async () => {
+  const handleRequestAESKey = useCallback(async () => {
     if (!currentAESKey && userHasAESKey) {
       setIsRequestingAESKey(true);
       try {
@@ -179,19 +185,19 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
         setIsRequestingAESKey(false);
       }
     }
-  };
+  }, [currentAESKey, userHasAESKey, getAESKey]);
 
-  const handleLaunchDApp = () => {
+  const handleLaunchDApp = useCallback(() => {
     setShowAESKeyDisplay(false);
-  };
+  }, []);
 
-  const handleDeleteAESKey = () => {
+  const handleDeleteAESKey = useCallback(() => {
     setShowDeleteConfirmation(true);
-  };
+  }, []);
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setShowDeleteConfirmation(false);
-  };
+  }, []);
 
 
   if (shouldShowConnectWallet) {
@@ -273,7 +279,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
   }
 
   return (
-    <>
+    <ContentWrapper>
       <MainStack>
         <BalanceDisplay
           balance={formattedBalance} 
@@ -300,6 +306,8 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = ({ aesKey }
         onClose={handleCloseDeposit}
         address={address!}
       />
-    </>
+    </ContentWrapper>
   );
-};
+});
+
+ContentManageToken.displayName = 'ContentManageToken';
