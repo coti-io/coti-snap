@@ -9,3 +9,5 @@ export const ONBOARD_CONTRACT_LINK = isLocal
   : 'https://mainnet.cotiscan.io/address/0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9?tab=transactions';
 
 export const COTI_FAUCET_LINK = 'https://faucet.coti.io';
+
+export const ONBOARD_CONTRACT_GITHUB_LINK="https://github.com/coti-io/coti-contracts/blob/main/contracts/onboard/AccountOnboard.sol";

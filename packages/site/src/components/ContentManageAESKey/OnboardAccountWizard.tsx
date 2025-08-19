@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
 import EditIcon from '../../assets/edit.svg';
-import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK } from '../../config/onboard';
+import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK, ONBOARD_CONTRACT_GITHUB_LINK } from '../../config/onboard';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
 import { ButtonAction, ButtonCancel } from '../Button';
@@ -94,12 +94,11 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
         <ContentTextSpaced>
           You are about to interact with the{' '}
           <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>
-            AccountOnboard.sol
+            Account Onboard contract
           </Link>{' '}
-          contract.
         </ContentTextSpaced>
         <ContentInput>
-          <ContentText id="contract-address-description">AccountOnboard.sol address</ContentText>
+          <ContentText id="contract-address-description"><Link target="_blank" href={ONBOARD_CONTRACT_GITHUB_LINK}>AccountOnboard.sol</Link> address</ContentText>
           <EditableInputContainer
             $isEditable={isEditable}
             $isError={settingAESKeyError}

@@ -106,17 +106,13 @@ export const ContentBoldText = styled.p`
 
 
 export const Link = styled.a`
-  color: white;
-  background-color: #1E29F6;
-  text-decoration: none;
+  color: #0066CC !important;
+  text-decoration: underline;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease-in-out;
+  transition: color 0.2s ease-in-out;
   
   &:hover {
-    background-color: #4d55f7;
-    text-decoration: none;
+    text-decoration: underline;
   }
 `;
 
