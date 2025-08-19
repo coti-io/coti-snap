@@ -54,7 +54,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
   if (loading) {
     return (
       <Loading
-        title="Manage your AES Key"
+        title="Key Management"
         actionText="Approve in your wallet to reveal your AES key"
       />
     );
@@ -66,7 +66,7 @@ export const ManageAESKey: React.FC<ManageAESKeyProps> = ({
 
   return (
     <>
-      <ContentTitle>Manage your AES Key</ContentTitle>
+      <ContentTitle>Key Management</ContentTitle>
       <ContentInput>
         <ContentText id="aes-key-label">AES Key</ContentText>
         <AESKeyContainer role="group" aria-labelledby="aes-key-label">
