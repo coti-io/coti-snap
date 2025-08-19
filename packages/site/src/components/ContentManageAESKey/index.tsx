@@ -5,6 +5,7 @@ import { ContentBorderWrapper, ContentContainer } from '../styles';
 import { ContentManageToken } from '../ContentManageToken';
 import { ManageAESKey } from './ManageAESKey';
 import { OnboardAccount } from './OnboardAccount';
+import { useSnap } from '../../hooks/SnapContext';
 
 interface ContentManageAESKeyProps {
   readonly userHasAESKey: boolean;
@@ -17,6 +18,7 @@ interface AESKeyState {
 
 export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {  
   const { address } = useAccount();
+  const { onboardingStep } = useSnap();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({
     showManage: false
   });
@@ -27,7 +29,10 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
     });
   }, [address]);
 
-  const shouldShowOnboarding = useMemo(() => !userHasAESKey, [userHasAESKey]);
+  const shouldShowOnboarding = useMemo(() => {
+    return !userHasAESKey || onboardingStep !== null;
+  }, [userHasAESKey, onboardingStep]);
+
   const shouldShowTokenManagement = useMemo(() => userHasAESKey && !aesKeyState.showManage, [userHasAESKey, aesKeyState]);
 
   const handleToggleManage = () => {
