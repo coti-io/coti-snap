@@ -52,7 +52,7 @@ export const ContentInstallAESKeyManager = () => {
   return (
     <ContentBorderWrapper>
       <ContentContainer>
-        <ContentTitle>Install the COTI MetaMask Snap</ContentTitle>
+        <ContentTitle>Install</ContentTitle>
         <ContentTextInstall>
           Please install the COTI MetaMask snap to onboard your account. If you
           don't have the COTI snap installed you will be prompted to install it.
