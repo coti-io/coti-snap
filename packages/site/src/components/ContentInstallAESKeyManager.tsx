@@ -54,8 +54,7 @@ export const ContentInstallAESKeyManager = () => {
       <ContentContainer>
         <ContentTitle>Install</ContentTitle>
         <ContentTextInstall>
-          Please install the COTI MetaMask snap to onboard your account. If you
-          don't have the COTI snap installed you will be prompted to install it.
+        Click on the Install with Metamask to continue with the Snap installation, using the snap you could onboard your AES key and use different dApps and COTI privacy centric experience!
         </ContentTextInstall>
 
         <ButtonAction
