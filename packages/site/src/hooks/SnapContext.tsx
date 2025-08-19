@@ -8,12 +8,20 @@ import { useAccount } from 'wagmi';
 import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
+import { useMetaMaskContext } from './MetamaskContext';
 
 export type setAESKeyErrorsType =
   | 'accountBalanceZero'
   | 'invalidAddress'
   | 'userRejected'
   | 'unknownError'
+  | null;
+
+export type OnboardingStep = 
+  | 'signature-prompt'
+  | 'signature-request'
+  | 'send-tx'
+  | 'done'
   | null;
 
 type SnapContextProps = {
@@ -32,6 +40,7 @@ type SnapContextProps = {
     inputEvent: React.ChangeEvent<HTMLInputElement>,
   ) => void;
   handleCancelOnboard: () => void;
+  onboardingStep: OnboardingStep;
 };
 
 const SnapContext = createContext<SnapContextProps | undefined>(undefined);
@@ -40,6 +49,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const invokeSnap = useInvokeSnap();
   const { address } = useAccount();
   const { installedSnap } = useMetaMask();
+  const { error: metamaskError } = useMetaMaskContext();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
@@ -49,6 +59,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
     useState<setAESKeyErrorsType>(null);
   const [onboardContractAddress, setOnboardContractAddress] =
     useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const getWalletPermissions = async () => {
@@ -96,11 +107,13 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
   const handleCancelOnboard = () => {
     setOnboardContractAddress(USED_ONBOARD_CONTRACT_ADDRESS);
     setSettingAESKeyError(null);
+    setOnboardingStep(null);
   };
 
   const setAESKey = async () => {
     setLoading(true);
     setSettingAESKeyError(null);
+    setOnboardingStep('signature-prompt');
 
     const hasPermissions = await getWalletPermissions();
 
@@ -108,6 +121,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       const connect = await connectSnapToWallet();
       if (!connect) {
         setLoading(false);
+        setOnboardingStep(null);
         return;
       }
     }
@@ -116,16 +130,19 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       if (!isAddress(onboardContractAddress)) {
         setSettingAESKeyError('invalidAddress');
         setLoading(false);
+        setOnboardingStep(null);
         return;
       }
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
 
+      setOnboardingStep('signature-request');
       await signer.signMessage(
         'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.',
       );
 
+      setOnboardingStep('send-tx');
       let retryCount = 0;
       const maxRetries = 3;
       let aesKey = null;
@@ -159,6 +176,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
       if (aesKey === null) {
         setLoading(false);
+        setOnboardingStep(null);
         return;
       }
 
@@ -170,10 +188,30 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (result) {
+        setOnboardingStep('done');
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
+        
+        setTimeout(() => {
+          setLoading(false);
+          setOnboardingStep(null);
+        }, 1500);
+
+        return;
       } else {
         console.error('setAESKey failed - snap returned:', result);
+        if (metamaskError) {
+          console.error('MetaMask error details:', metamaskError.message, metamaskError);
+          if (metamaskError.message.includes('User rejected') || (metamaskError as any).code === 4001) {
+            setSettingAESKeyError('userRejected');
+          } else {
+            setSettingAESKeyError('unknownError');
+          }
+        } else {
+          setSettingAESKeyError('unknownError');
+        }
+        setLoading(false);
+        setOnboardingStep(null);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -194,8 +232,9 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setSettingAESKeyError('unknownError');
       }
-    } finally {
+      
       setLoading(false);
+      setOnboardingStep(null);
     }
   };
 
@@ -256,6 +295,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
+      setOnboardingStep(null);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -279,6 +319,7 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         onboardContractAddress,
         handleOnChangeContactAddress,
         handleCancelOnboard,
+        onboardingStep,
       }}
     >
       {children}

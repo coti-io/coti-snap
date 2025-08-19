@@ -9,7 +9,7 @@ import { useSnap } from '../../hooks/SnapContext';
 import { ButtonAction, ButtonCancel } from '../Button';
 import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
 import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
-import { Loading } from '../Loading';
+import { LoadingWithProgress } from '../LoadingWithProgress';
 import { ContentText, ContentTitle } from '../styles';
 import { Alert } from '../ContentManageToken/Alert';
 import {
@@ -39,7 +39,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     settingAESKeyError,
     onboardContractAddress,
     handleOnChangeContactAddress,
-    handleCancelOnboard: snapCancelOnboard,
+    handleCancelOnboard: snapCancelOnboard
   } = useSnap();
 
   const { address } = useAccount();
@@ -87,7 +87,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
 
   return isConnected ? (
     loading ? (
-      <Loading title="Onboard" actionText="Onboarding account" />
+      <LoadingWithProgress title="Onboard" actionText="Onboarding account" />
     ) : (
       <>
         <ContentTitle>Onboard</ContentTitle>
