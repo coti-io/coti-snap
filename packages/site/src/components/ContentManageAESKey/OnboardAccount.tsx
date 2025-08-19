@@ -84,7 +84,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
 
   return isConnected ? (
     (!isLocal() && loading && !settingAESKeyError) ? (
-      <Loading title="Onboard account" actionText="Onboarding account" />
+      <Loading title="Onboard" actionText="Onboarding account" />
     ) : shouldShowWizard ? (
       <OnboardAccountWizard
         handleOnboardAccount={handleOnboardingComplete}
@@ -98,7 +98,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         </ContentText>
         <ButtonAction
           primary
-          text="Onboard Account"
+          text="Onboard"
           onClick={handleStartOnboarding}
           aria-label="Start account onboarding process"
           disabled={!isLocal() && loading}
