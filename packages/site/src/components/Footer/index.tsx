@@ -53,6 +53,9 @@ export function Footer() {
           Privacy Policy
         </Link>
       </Description>
+      <Link href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap" target="_blank" rel="noopener noreferrer">
+          Docs
+        </Link>{' '}
     </FooterContainer>
   );
 }
