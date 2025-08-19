@@ -1,10 +1,6 @@
 import type { DefaultTheme } from 'styled-components';
 import { createGlobalStyle } from 'styled-components';
 
-import SofiaProBold from '../fonts/SofiaProBold.otf';
-import SofiaProMedium from '../fonts/SofiaProMedium.otf';
-import SofiaProRegular from '../fonts/SofiaProRegular.otf';
-import SofiaProSemiBold from '../fonts/SofiaProSemiBold.otf';
 
 const breakpoints = ['600px', '768px', '992px'];
 
@@ -139,12 +135,6 @@ export const dark: DefaultTheme = {
  */
 export const GlobalStyle = createGlobalStyle`
 
-@font-face {
-  font-family: 'Sofia Pro';
-  src: url(${SofiaProRegular}) format('opentype'), url(${SofiaProMedium}) format('opentype'), local('Sofia Pro'), url(${SofiaProSemiBold}) format('opentype'), url(${SofiaProBold}) format('opentype');
-  font-weight: 400,500,600,700;
-  font-style: normal;
-}
 
   html {
     /* 62.5% of the base size of 16px = 10px.*/
@@ -154,8 +144,7 @@ export const GlobalStyle = createGlobalStyle`
   body {
     background: transparent;
     color: #FFFFFF;
-    //font-family: ${(props) => props.theme.fonts.default};
-    font-family: "Sofia Pro";
+    font-family: ${(props) => props.theme.fonts.default};
     font-size: ${(props) => props.theme.fontSizes.text};
     margin: 0;
     padding: 0;
@@ -187,7 +176,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   button {
-    font-family: "Sofia Pro";
+    font-family: ${(props) => props.theme.fonts.default};
   }
 
   * {

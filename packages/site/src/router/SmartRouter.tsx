@@ -39,7 +39,7 @@ export function SmartRouter() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setHasInitialized(true);
-    }, 100);
+    }, 0);
 
     return () => clearTimeout(timer);
   }, []);
@@ -71,7 +71,7 @@ export function SmartRouter() {
       if (!isOnProtectedRoute && (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install')) {
         setTimeout(() => {
           navigate('/wallet', { replace: true });
-        }, 50);
+        }, 0);
       }
     });
   }, [hasInitialized, isConnected, wrongChain, installedSnap, navigate]);
