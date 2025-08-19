@@ -9,7 +9,7 @@ const StyledButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Sofia Pro', sans-serif;
+  font-family: ${({ theme }) => theme.fonts.default};
   font-size: 1.4rem;
   font-weight: 500;
   line-height: 1.2;

@@ -109,7 +109,7 @@ export const MobileAddressDisplay = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 8px;
   color: #FFFFFF;
-  font-family: 'Sofia Pro';
+  font-family: ${({ theme }) => theme.fonts.default};
 `;
 
 export const MobileConnectButton = styled.button`
@@ -123,7 +123,7 @@ export const MobileConnectButton = styled.button`
   color: #FFFFFF;
   border: none;
   font-weight: 500;
-  font-family: 'Sofia Pro';
+  font-family: ${({ theme }) => theme.fonts.default};
   padding: 12px 40px;
   min-height: 4.2rem;
   cursor: pointer;
@@ -151,7 +151,7 @@ export const MobileInstallLink = styled.a`
   color: #FFFFFF;
   border: none;
   font-weight: 500;
-  font-family: 'Sofia Pro';
+  font-family: ${({ theme }) => theme.fonts.default};
   padding: 12px 40px;
   min-height: 4.2rem;
   text-decoration: none;
@@ -206,7 +206,7 @@ export const DisconnectButton = styled.button`
   color: #FFFFFF;
   border: none;
   font-weight: 500;
-  font-family: 'Sofia Pro';
+  font-family: ${({ theme }) => theme.fonts.default};
   padding: 12px 40px;
   min-height: 4.2rem;
   cursor: pointer;
@@ -262,7 +262,7 @@ export const Link = styled.a`
   color: #FFFFFF;
   border: none;
   font-weight: 500;
-  font-family: 'Sofia Pro';
+  font-family: ${({ theme }) => theme.fonts.default};
   flex: none;
   padding: 12px 40px;
   text-decoration: none;

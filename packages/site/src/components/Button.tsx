@@ -118,7 +118,7 @@ const StyledButton = styled.button<StyledButtonProps>`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Sofia Pro', sans-serif;
+  font-family: ${({ theme }) => theme.fonts.default};
   font-size: ${props => props.theme.fontSizes.small};
   font-weight: 500;
   line-height: 1.2;
@@ -172,7 +172,7 @@ const BaseButton: React.FC<ButtonProps & { variant: ButtonVariant }> = memo(({
       disabled={disabled || isPending}
     >
       {leftIcon && <IconWrapper $position="left">{leftIcon}</IconWrapper>}
-      {isPending ? 'Loading...' : text}
+      {isPending ? text : text}
       {iconRight && <IconWrapper $position="right">{iconRight}</IconWrapper>}
     </StyledButton>
   );

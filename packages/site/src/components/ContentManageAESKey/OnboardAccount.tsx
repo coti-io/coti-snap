@@ -64,13 +64,11 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   }, [isLocal, setAESKey, startTransition]);
 
   const handleOnboardingComplete = useCallback((): void => {
-    startTransition(() => {
-      setOnboardingState({
-        isOnboarding: false,
-        isCompleted: true
-      });
+    setOnboardingState({
+      isOnboarding: false,
+      isCompleted: true
     });
-  }, [startTransition]);
+  }, []);
 
   const handleOnboardingCancel = (): void => {
     setOnboardingState({

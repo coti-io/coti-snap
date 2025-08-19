@@ -330,7 +330,7 @@ export const NetworkBadge = styled.div.withConfig({
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Sofia Pro', sans-serif;
+  font-family: ${({ theme }) => theme.fonts.default};
   font-size: ${typography.sizes.base};
   font-weight: ${typography.weights.bold};
   line-height: 1.2;
