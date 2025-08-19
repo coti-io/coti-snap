@@ -4,7 +4,7 @@ export const ContentConnectYourWallet = () => {
   return (
     <ContentBorderWrapper>
       <ContentContainer>
-        <ContentTitle>Connect Your Wallet</ContentTitle>
+        <ContentTitle>Connect</ContentTitle>
         <ContentText>Please connect your wallet to get started.</ContentText>
       </ContentContainer>
     </ContentBorderWrapper>
