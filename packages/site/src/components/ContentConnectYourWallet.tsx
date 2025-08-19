@@ -5,7 +5,7 @@ export const ContentConnectYourWallet = () => {
     <ContentBorderWrapper>
       <ContentContainer>
         <ContentTitle>Connect</ContentTitle>
-        <ContentText>Please connect your wallet to get started.</ContentText>
+        <ContentText>Click on the Connect Wallet to get started.</ContentText>
       </ContentContainer>
     </ContentBorderWrapper>
   );
