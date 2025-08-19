@@ -10,6 +10,10 @@ export const ONBOARD_CONTRACT_LINK = isLocal
 
 export const COTI_FAUCET_LINK = 'https://faucet.coti.io';
 
+<<<<<<< HEAD
 export const ONBOARD_CONTRACT_GITHUB_LINK="https://github.com/coti-io/coti-contracts/blob/main/contracts/onboard/AccountOnboard.sol";
 
 export const COTI_SITE = 'https://coti.io';
+=======
+export const ONBOARD_CONTRACT_GITHUB_LINK="https://github.com/coti-io/coti-contracts/blob/main/contracts/onboard/AccountOnboard.sol";
+>>>>>>> f50d021 (fix: onboard account links)
