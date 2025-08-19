@@ -37,7 +37,7 @@ export const Home = ({
       {!aesKey && (
         <Box direction="horizontal" alignment="center">
           <Banner title="" severity="info">
-            <Text>To view your balances, you must first register your account. Click on the button below to get started</Text>
+            <Text>To view private balances, click on the Onboard account and follow instructions.</Text>
           </Banner>
         </Box>
       )}
@@ -56,7 +56,7 @@ export const Home = ({
               </Box>
               <Box direction="horizontal" alignment="space-around">
                 <Text color="muted" alignment="center" size="sm">
-                  Add your AES Key to view your tokens and NFTs
+                  Onboard to acquire AES key into metamask
                 </Text>
               </Box>
             </Box>
