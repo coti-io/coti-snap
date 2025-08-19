@@ -91,7 +91,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
       />
     ) : (
       <>
-        <ContentTitle>Onboard Account</ContentTitle>
+        <ContentTitle>Onboard</ContentTitle>
         <ContentText>
           {ONBOARDING_DESCRIPTION}
         </ContentText>
