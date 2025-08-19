@@ -27,7 +27,7 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
   if (loading) {
     return (
       <Loading
-        title="Delete your AES Key"
+        title="Key Management"
         actionText="Approve in your wallet to delete your AES key"
       />
     );
@@ -35,7 +35,7 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
 
   return (
     <>
-      <ContentTitle>Delete your AES Key</ContentTitle>
+      <ContentTitle>Key Management</ContentTitle>
       <ContentBoldText>
         Are you sure you want to remove the AES key from MetaMask account?
       </ContentBoldText>
