@@ -87,10 +87,10 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
 
   return isConnected ? (
     loading ? (
-      <Loading title="Onboard account" actionText="Onboarding account" />
+      <Loading title="Onboard" actionText="Onboarding account" />
     ) : (
       <>
-        <ContentTitle>Onboard account</ContentTitle>
+        <ContentTitle>Onboard</ContentTitle>
         <ContentTextSpaced>
           You are about to interact with the{' '}
           <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>
