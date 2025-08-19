@@ -52,9 +52,9 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
 }) => {
   return (
     <Container>
-      <Title>AES Key Required</Title>
+      <Title>Unlock Your Balances</Title>
       <Description>
-        To view and manage your encrypted token balances, please approve the retrieval of your AES Key.
+      To view and manage your private balances, please allow access to your security key.
       </Description>
       <SendButton
         onClick={onRequestAESKey}
