@@ -34,7 +34,7 @@ export const HeaderButtons = () => {
                 connector.id === connectorId && (
                   <Button
                     key={connector.id}
-                    text="Connect wallet"
+                    text="Connect Wallet"
                     primary
                     onClick={() => connect({ connector })}
                   />
