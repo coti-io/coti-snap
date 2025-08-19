@@ -177,7 +177,7 @@ export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(({
 
   return (
     <Container>
-      <Title>Manage your AES Key</Title>
+      <Title>Key Management</Title>
       <Description>
         Your AES Key has been successfully retrieved. You can now reveal it or proceed to launch the dApp.
       </Description>
