@@ -2,12 +2,16 @@ const isLocal = (): boolean => {
     return import.meta.env.VITE_NODE_ENV === 'local';
 };
 
+const isSnapLocal = (): boolean => {
+  return import.meta.env.VITE_SNAP_ENV === 'local';
+};
+
 const isProduction = (): boolean => {
     return import.meta.env.VITE_NODE_ENV === 'production';
 };
 
 const buildSnapOrigin = (): string => {
-    if (isLocal()) {
+    if (isSnapLocal()) {
         return 'local:http://localhost:8080';
     } else if (isProduction()) {
         return 'npm:@coti-io/coti-snap';
