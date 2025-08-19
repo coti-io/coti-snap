@@ -19,7 +19,8 @@ interface OnboardingState {
   readonly isCompleted: boolean;
 }
 
-const ONBOARDING_DESCRIPTION = `Start with onboarding your account so that your wallet could interact with private chain data, for example: your balance in a private ERC20 token.`;
+const ONBOARDING_DESCRIPTION = `Onboarding your account will securely store your network key within the metamask to be used with secured dApp interactions.
+For example: viewing your balance on a Private ERC20 token.`;
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   const { setAESKey, loading, settingAESKeyError } = useSnap();
