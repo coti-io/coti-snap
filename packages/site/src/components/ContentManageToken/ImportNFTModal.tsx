@@ -295,7 +295,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
     <ModalBackdrop onClick={handleBackdropClick}>
       <AnimatedModalContainer onClick={e => e.stopPropagation()} onKeyDown={handleKeyDown} tabIndex={-1}>
         <ModalHeader>
-          Import Token
+          Import
           <ModalClose 
             onClick={handleClose} 
             aria-label="Close modal"

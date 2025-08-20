@@ -294,7 +294,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
         {state.step === MODAL_STEPS.ADDRESS_INPUT && (
           <>
             <ModalHeader>
-              Import tokens
+              Import
               <ModalClose 
                 onClick={handleClose} 
                 aria-label="Close modal"
@@ -345,7 +345,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
         {state.step === MODAL_STEPS.CONFIRMATION && state.tokenInfo && (
           <>
             <ModalHeader>
-              Import tokens
+              Import
               <ModalClose 
                 onClick={handleClose} 
                 aria-label="Close modal"
