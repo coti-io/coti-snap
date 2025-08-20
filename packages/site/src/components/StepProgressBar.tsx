@@ -53,13 +53,11 @@ const StepCircle = styled.div<{ $completed: boolean; $current: boolean }>`
 
 const StepLabel = styled.div<{ $completed: boolean; $current: boolean }>`
   position: absolute;
-  top: 25px;
+  top: 35px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 10px;
-  color: ${props => 
-    props.$completed ? '#1E29F6' : 
-    props.$current ? '#1E29F6' : '#666'};
+  font-size: 12px;
+  color: #000000 !important;
   white-space: nowrap;
   font-weight: ${props => props.$current ? 'bold' : 'normal'};
 `;

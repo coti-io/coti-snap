@@ -37,9 +37,9 @@ const ContentTitle = styled.p`
 `;
 
 const ONBOARDING_STEPS = [
-  'Signature Request Prompt',
-  'Signature Request',
-  'Send TX',
+  'Request',
+  'Sign',
+  'Confirm',
   'Done'
 ];
 
