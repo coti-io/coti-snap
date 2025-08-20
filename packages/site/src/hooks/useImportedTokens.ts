@@ -1,24 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAccount } from 'wagmi';
 import {
-  getImportedTokens,
-  addImportedToken,
-  removeImportedToken,
-  setImportedTokens,
-  getERC20Tokens,
-  getNFTTokens
+  getImportedTokensByAccount,
+  addImportedTokenByAccount,
+  removeImportedTokenByAccount,
+  clearImportedTokensByAccount,
+  getERC20TokensByAccount,
+  getNFTTokensByAccount
 } from '../utils/localStorage';
 import { ImportedToken } from '../types/token';
 
 export const useImportedTokens = () => {
+  const { address } = useAccount();
   const [importedTokens, setImportedTokensState] = useState<ImportedToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load tokens from localStorage on hook initialization
   useEffect(() => {
     const loadTokens = () => {
       try {
-        const tokens = getImportedTokens();
-        setImportedTokensState(tokens);
+        if (address) {
+          const tokens = getImportedTokensByAccount(address);
+          setImportedTokensState(tokens);
+        } else {
+          setImportedTokensState([]);
+        }
       } catch (error) {
         console.error('Error loading imported tokens:', error);
       } finally {
@@ -26,81 +31,83 @@ export const useImportedTokens = () => {
       }
     };
 
+    setIsLoading(true);
     loadTokens();
-  }, []);
+  }, [address]);
 
   // Add a new token
   const addToken = useCallback((token: ImportedToken) => {
+    if (!address) return;
+    
     try {
-      addImportedToken(token);
+      addImportedTokenByAccount(address, token);
       // Reload tokens from localStorage to ensure consistency
-      const updatedTokens = getImportedTokens();
+      const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
     } catch (error) {
       console.error('Error adding token:', error);
     }
-  }, []);
+  }, [address]);
 
   // Remove a token
-  const removeToken = useCallback((address: string) => {
+  const removeToken = useCallback((tokenAddress: string) => {
+    if (!address) return;
+    
     try {
-      removeImportedToken(address);
+      removeImportedTokenByAccount(address, tokenAddress);
       // Reload tokens from localStorage to ensure consistency
-      const updatedTokens = getImportedTokens();
+      const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
     } catch (error) {
       console.error('Error removing token:', error);
     }
-  }, []);
+  }, [address]);
 
-  // Update token balance - removed since we no longer store encrypted balances
-  const updateTokenBalance = useCallback((_address: string, _encryptedBalance: string) => {
-    // This function is kept for compatibility but no longer persists encrypted balances
-  }, []);
-
-  // Clear all tokens
   const clearAllTokens = useCallback(() => {
+    if (!address) return;
+    
     try {
-      setImportedTokens([]);
+      clearImportedTokensByAccount(address);
       setImportedTokensState([]);
     } catch (error) {
       console.error('Error clearing tokens:', error);
     }
-  }, []);
+  }, [address]);
 
   // Check if a token exists
-  const hasToken = useCallback((address: string) => {
+  const hasToken = useCallback((tokenAddress: string) => {
     return importedTokens.some(
-      token => token.address.toLowerCase() === address.toLowerCase()
+      token => token.address.toLowerCase() === tokenAddress.toLowerCase()
     );
   }, [importedTokens]);
 
   // Refresh tokens from localStorage
   const refreshTokens = useCallback(() => {
+    if (!address) return;
+    
     try {
-      const tokens = getImportedTokens();
+      const tokens = getImportedTokensByAccount(address);
       setImportedTokensState(tokens);
     } catch (error) {
       console.error('Error refreshing tokens:', error);
     }
-  }, []);
+  }, [address]);
 
-  // Get ERC20 tokens
   const getERC20TokensList = useCallback(() => {
-    return getERC20Tokens();
-  }, []);
+    if (!address) return [];
+    return getERC20TokensByAccount(address);
+  }, [address]);
 
-  // Get NFT tokens (ERC721 and ERC1155)
   const getNFTTokensList = useCallback(() => {
-    return getNFTTokens();
-  }, []);
+    if (!address) return [];
+    return getNFTTokensByAccount(address);
+  }, [address]);
 
   return {
     importedTokens,
     isLoading,
     addToken,
     removeToken,
-    updateTokenBalance,
     clearAllTokens,
     hasToken,
     refreshTokens,
