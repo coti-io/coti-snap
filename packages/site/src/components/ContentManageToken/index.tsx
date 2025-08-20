@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { formatUnits } from 'ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
@@ -121,6 +121,16 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const [selectedNFT, setSelectedNFT] = useState<ImportedToken | null>(null);
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
   const [transferToken, setTransferToken] = useState<ImportedToken | null>(null);
+
+  useEffect(() => {
+    setIsRequestingAESKey(false);
+    setShowAESKeyDisplay(false);
+    setShowDeleteConfirmation(false);
+    setModalState({ transfer: false, deposit: false });
+    setSelectedNFT(null);
+    setSelectedToken(null);
+    setTransferToken(null);
+  }, [address]);
 
   const formattedBalance = useMemo(() => {
     if (!balance) return '0';
