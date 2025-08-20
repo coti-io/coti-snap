@@ -19,12 +19,14 @@ interface PermissionGuardProps {
 
 type PermissionState = boolean | null;
 
-const STORAGE_KEY_PREFIXES = ['snap_', 'onboard', 'aes'] as const;
+const PRESERVED_STORAGE_KEYS = [
+  'snap_onboarding_completed',
+] as const;
 
-const clearSnapRelatedStorage = (): void => {
+const clearTemporarySnapStorage = (): void => {
   Object.keys(localStorage).forEach(key => {
-    if (STORAGE_KEY_PREFIXES.some(prefix => key.startsWith(prefix) || key.includes(prefix))) {
-      localStorage.removeItem(key);
+    if (PRESERVED_STORAGE_KEYS.some(preserved => key === preserved)) {
+      return;
     }
   });
 };
@@ -61,7 +63,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({ children }) =>
 
   useEffect(() => {
     if (shouldShowPermissionDenied) {
-      clearSnapRelatedStorage();
+      clearTemporarySnapStorage();
     }
   }, [shouldShowPermissionDenied]);
 

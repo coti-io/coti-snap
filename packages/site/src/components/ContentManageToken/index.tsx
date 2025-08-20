@@ -222,18 +222,6 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     return <Loading title="Loading..." actionText="" />;
   }
 
-  if (showAESKeyDisplay && (currentAESKey || userAESKey)) {
-    return (
-      <MainStack>
-        <DisplayAESKey 
-          aesKey={currentAESKey || userAESKey || ''}
-          onLaunchDApp={handleLaunchDApp}
-          onDeleteAESKey={handleDeleteAESKey}
-        />
-      </MainStack>
-    );
-  }
-
   if (showDeleteConfirmation) {
     return (
       <MainStack>
@@ -248,6 +236,18 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
         <RequestAESKey 
           onRequestAESKey={handleRequestAESKey}
           isRequesting={isRequestingAESKey}
+        />
+      </MainStack>
+    );
+  }
+
+  if (showAESKeyDisplay && (currentAESKey || userAESKey)) {
+    return (
+      <MainStack>
+        <DisplayAESKey 
+          aesKey={currentAESKey || userAESKey || ''}
+          onLaunchDApp={handleLaunchDApp}
+          onDeleteAESKey={handleDeleteAESKey}
         />
       </MainStack>
     );
