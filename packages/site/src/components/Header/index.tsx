@@ -4,14 +4,18 @@ import { MobileMenu } from './MobileMenu';
 import {
   ButtonsContainer,
   HeaderWrapper,
+  LinkTransparent,
   LogoWrapper,
 } from './styles';
+import { COTI_SITE } from "../../config/onboard";
 
 export const Header = () => {
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        <COTILogo />
+        <LinkTransparent href={COTI_SITE} target="_blank" rel="noopener noreferrer">
+          <COTILogo />
+        </LinkTransparent>
       </LogoWrapper>
       <ButtonsContainer>
         <HeaderButtons />

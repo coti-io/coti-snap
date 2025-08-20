@@ -284,6 +284,36 @@ export const Link = styled.a`
   }
 `;
 
+export const LinkTransparent = styled.a`
+  font-size: ${(props) => props.theme.fontSizes.small};
+  line-height: 1.2;
+  border-radius: ${(props) => props.theme.radii.button};
+  background-color: transparent;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 500;
+  font-family: ${({ theme }) => theme.fonts.default};
+  flex: none;
+  padding: 8px 35px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #FFFFFF;
+  }
+
+  &:disabled {
+    border: none;
+    cursor: not-allowed;
+    background-color: transparent;
+    color: #FFFFFF;
+    opacity: 0.5;
+  }
+`;
+
 export const ConnectedContainer = styled.div`
   display: flex;
   align-self: flex-start;
