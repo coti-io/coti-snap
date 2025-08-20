@@ -101,11 +101,17 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncedRef = useRef<boolean>(false);
   const initialCheckRef = useRef<boolean>(false);
+  const lastCheckedAddressRef = useRef<string | null>(null);
+  const permissionCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearTimerIfExists = useCallback((): void => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
+    }
+    if (permissionCheckTimeoutRef.current) {
+      clearTimeout(permissionCheckTimeoutRef.current);
+      permissionCheckTimeoutRef.current = null;
     }
   }, []);
 
@@ -200,6 +206,34 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
     }
   }, [invokeSnap, address, installedSnap]);
+
+  const checkPermissionsForAccount = useCallback(async (targetAddress: string): Promise<void> => {
+    
+    if (permissionCheckTimeoutRef.current) {
+      clearTimeout(permissionCheckTimeoutRef.current);
+    }
+    if (!installedSnap || !targetAddress) {
+      return;
+    }
+    if (lastCheckedAddressRef.current === targetAddress.toLowerCase()) {
+      return;
+    }
+    lastCheckedAddressRef.current = targetAddress.toLowerCase();
+    permissionCheckTimeoutRef.current = setTimeout(async () => {
+      try {
+        const permissionCheck = await checkAccountPermissions(targetAddress);        
+        if (permissionCheck && permissionCheck.hasPermission === false) {
+          setSettingAESKeyError('accountPermissionDenied');
+        } else if (permissionCheck && permissionCheck.hasPermission === true) {
+          if (settingAESKeyError === 'accountPermissionDenied') {
+            setSettingAESKeyError(null);
+          }
+        }
+      } catch (error) {
+        console.warn('Permission check failed for account:', targetAddress, error);
+      }
+    }, 800);
+  }, [installedSnap, checkAccountPermissions, settingAESKeyError]);
 
   const handleShowDelete = useCallback((): void => {
     setShowDelete(prev => !prev);
@@ -416,7 +450,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     try {
       const hasOnboarded = hasCompletedOnboarding(address);
       setUserHasAesKEY(hasOnboarded);
-      
+
       setSettingAESKeyError(null);
       setOnboardingStep(null);
       clearTimerIfExists();
@@ -432,7 +466,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   useEffect(() => {
     initialCheckRef.current = false;
     syncedRef.current = false;
-    
+
     if (!address || !installedSnap) {
       setUserHasAesKEY(false);
       setUserAesKEY(null);
@@ -454,12 +488,25 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   useEffect(() => {
     const handleAccountsChanged = async (accounts: unknown): Promise<void> => {
       const accountsArray = accounts as string[];
-      if (!accountsArray?.length || !installedSnap) return;
-      
+
+      if (!accountsArray?.length || !installedSnap) {
+        setUserHasAesKEY(false);
+        setUserAesKEY(null);
+        setSettingAESKeyError(null);
+        initialCheckRef.current = false;
+        lastCheckedAddressRef.current = null;
+        return;
+      }
+
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
       initialCheckRef.current = false;
+
+      const newAddress = accountsArray[0];
+      if (newAddress) {
+        await checkPermissionsForAccount(newAddress);
+      }
     };
 
     if (window.ethereum) {
@@ -468,7 +515,20 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       };
     }
-  }, [installedSnap]);
+  }, [installedSnap, checkPermissionsForAccount]);
+
+  useEffect(() => {
+    if (address && installedSnap) {
+      checkPermissionsForAccount(address);
+    } else if (!address) {
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      if (settingAESKeyError === 'accountPermissionDenied') {
+        setSettingAESKeyError(null);
+      }
+      lastCheckedAddressRef.current = null;
+    }
+  }, [address, installedSnap, checkPermissionsForAccount, settingAESKeyError]);
 
   const contextValue = useMemo((): SnapContextValue => ({
     userHasAESKey,
@@ -500,6 +560,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     handleCancelOnboard,
     onboardingStep,
   ]);
+
+  useEffect(() => {
+    return () => {
+      clearTimerIfExists();
+    };
+  }, [clearTimerIfExists]);
 
   return (
     <SnapContext.Provider value={contextValue}>
