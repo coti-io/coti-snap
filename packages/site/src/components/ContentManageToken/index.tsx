@@ -180,7 +180,10 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
       try {
         await getAESKey();
         setShowAESKeyDisplay(true);
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.code === 4001 || error?.code === -32603) {
+          throw error;
+        }
       } finally {
         setIsRequestingAESKey(false);
       }
