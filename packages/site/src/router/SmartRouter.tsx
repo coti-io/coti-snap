@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { Header } from '../components';
 import { Footer } from '../components/Footer';
+import { PermissionGuard } from '../components/PermissionGuard';
 
 const Container = styled.div`
   display: flex;
@@ -79,7 +80,9 @@ export function SmartRouter() {
   return (
     <Container>
       <Header />
-      <Outlet />
+      <PermissionGuard>
+        <Outlet />
+      </PermissionGuard>
       <Footer />
     </Container>
   );

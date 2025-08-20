@@ -23,7 +23,7 @@ const ONBOARDING_DESCRIPTION = `Onboarding your account will securely store your
 For example: viewing your balance on a Private ERC20 token.`;
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
-  const { setAESKey, loading, settingAESKeyError, userHasAESKey, onboardingStep } = useSnap();
+  const { setAESKey, loading, settingAESKeyError } = useSnap();
   const { isConnected, address } = useAccount();
   const { wrongChain } = useWrongChain();
 
