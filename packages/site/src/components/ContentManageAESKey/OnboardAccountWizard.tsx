@@ -48,13 +48,6 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     setIsEditable(false);
   }, [address]);
 
-  const handleIconClick = (): void => {
-    setIsEditable(true);
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
-  };
-
   const handleBlur = (): void => {
     setIsEditable(false);
   };
