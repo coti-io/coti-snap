@@ -15,7 +15,7 @@ const FooterContainer = styled.footer`
   height: 120px; /* Fixed height to prevent layout shift */
   box-sizing: border-box;
   contain: layout style;
-  z-index: -1;
+  z-index: 10;
 `;
 
 const Title = styled.h3`
@@ -51,11 +51,11 @@ export function Footer() {
         </Link>{' '}
         <Link href="https://coti.io/privacy" target="_blank" rel="noopener noreferrer">
           Privacy Policy
-        </Link>
-      </Description>
-      <Link href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap" target="_blank" rel="noopener noreferrer">
+        </Link>{' '}
+        <Link href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap" target="_blank" rel="noopener noreferrer">
           Docs
         </Link>{' '}
+      </Description>
     </FooterContainer>
   );
 }
