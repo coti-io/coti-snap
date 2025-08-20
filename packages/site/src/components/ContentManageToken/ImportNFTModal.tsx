@@ -46,6 +46,7 @@ const useImportNFTForm = () => {
   const [nftInfo, setNftInfo] = useState<NFTInfo | null>(null);
   const [nftInfoError, setNftInfoError] = useState<string | null>(null);
   const [tokenTypeDetected, setTokenTypeDetected] = useState<'ERC721' | 'ERC1155' | null>(null);
+  const [isAddressAlreadyImported, setIsAddressAlreadyImported] = useState(false);
 
   const updateField = useCallback((field: keyof NFTFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -83,6 +84,7 @@ const useImportNFTForm = () => {
     setErrors({ address: '', tokenId: '', tokenType: '' });
     setIsLoading(false);
     setTokenTypeDetected(null);
+    setIsAddressAlreadyImported(false);
   }, []);
 
   return {
@@ -100,7 +102,9 @@ const useImportNFTForm = () => {
     setErrors,
     setNftInfo,
     setNftInfoError,
-    setTokenTypeDetected
+    setTokenTypeDetected,
+    isAddressAlreadyImported,
+    setIsAddressAlreadyImported
   };
 };
 
@@ -126,7 +130,9 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
     setErrors,
     setNftInfo,
     setNftInfoError,
-    setTokenTypeDetected
+    setTokenTypeDetected,
+    isAddressAlreadyImported,
+    setIsAddressAlreadyImported
   } = useImportNFTForm();
   
   const { handleClose, handleBackdropClick, handleKeyDown } = useModal({
@@ -140,12 +146,17 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
   }, [formData, errors]);
 
   const isButtonDisabled = useMemo(() => {
-    return !isFormValid || isLoading;
-  }, [isFormValid, isLoading]);
+    return !isFormValid || isLoading || isAddressAlreadyImported;
+  }, [isFormValid, isLoading, isAddressAlreadyImported]);
 
   const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    updateField('address', e.target.value);
-  }, [updateField]);
+    const newAddress = e.target.value;
+    updateField('address', newAddress);
+    
+    const normalized = normalizeAddress(newAddress);
+    const isAlreadyImported = normalized ? hasToken(normalized) : false;
+    setIsAddressAlreadyImported(isAlreadyImported);
+  }, [updateField, hasToken, setIsAddressAlreadyImported]);
 
   const handleTokenIdChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -325,6 +336,13 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
             message={errors.address}
             className="address-error"
           />
+          
+          {isAddressAlreadyImported && (
+            <ErrorText 
+              message={ERROR_MESSAGES.NFT_ADDRESS_ALREADY_IMPORTED}
+              className="address-already-imported-error"
+            />
+          )}
           
           {nftInfoError && (
             <ErrorText 

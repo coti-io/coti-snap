@@ -10,6 +10,7 @@ export const ERROR_MESSAGES = {
   DECIMALS_REQUIRED: 'Decimals required',
   DECIMALS_INVALID: 'Decimals must be a number',
   NFT_ALREADY_IMPORTED: 'NFT already imported',
+  NFT_ADDRESS_ALREADY_IMPORTED: 'This NFT address has already been imported',
   IMPORT_FAILED: 'Failed to import NFT',
   LOCALSTORAGE_UNAVAILABLE: 'Local storage is not available.'
 } as const;
