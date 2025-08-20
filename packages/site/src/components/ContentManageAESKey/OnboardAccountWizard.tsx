@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
-import EditIcon from '../../assets/edit.svg';
 import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK, ONBOARD_CONTRACT_GITHUB_LINK } from '../../config/onboard';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
@@ -15,7 +14,6 @@ import { Alert } from '../ContentManageToken/Alert';
 import {
   ContentButtons,
   ContentInput,
-  Edit,
   EditableInput,
   EditableInputContainer,
   Link,
@@ -114,13 +112,6 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
               aria-label="AccountOnboard contract address"
               aria-describedby="contract-address-description"
             />
-            <Edit
-              onClick={handleIconClick}
-              aria-label="Edit contract address"
-              title="Click to edit contract address"
-            >
-              <EditIcon />
-            </Edit>
           </EditableInputContainer>
         </ContentInput>
         <ContentButtons>

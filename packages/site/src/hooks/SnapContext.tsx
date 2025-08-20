@@ -240,14 +240,23 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   const getAESKey = async () => {
     setLoading(true);
-    const result = await invokeSnap({
-      method: 'get-aes-key',
-    });
+    try {
+      const result = await invokeSnap({
+        method: 'get-aes-key',
+      });
 
-    if (result !== null) {
-      setUserAesKEY(result as string);
+      if (result !== null) {
+        setUserAesKEY(result as string);
+      } else {
+        const rejectionError = new Error('User rejected the request');
+        (rejectionError as any).code = 4001;
+        throw rejectionError;
+      }
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const deleteAESKey = async () => {

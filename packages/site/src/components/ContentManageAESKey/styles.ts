@@ -157,6 +157,7 @@ export const EditableInputContainer = styled.div<EditableInputContainerProps>`
 export const EditableInput = styled.input<EditableInputProps>`
   ${commonInputStyles}
   cursor: ${(props) => (props.$isEditable ? 'text' : 'default')};
+  padding: 6px 6px;
   
   &:read-only {
     pointer-events: none;

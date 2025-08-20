@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { SendButton } from './styles';
 import SpinnerIcon from '../../assets/spinner.png';
+import { Alert } from './Alert';
 
 const Container = styled.div`
   display: flex;
@@ -21,7 +22,6 @@ const Title = styled.h2`
 const Description = styled.p`
   font-size: 16px;
   color: #18191d !important;;
-  margin-bottom: 24px;
   line-height: 1.5;
   font-weight: 450;
 `;
@@ -50,6 +50,19 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
   onRequestAESKey,
   isRequesting
 }) => {
+  const [rejectionError, setRejectionError] = useState(false);
+
+  const handleRequest = async () => {
+    setRejectionError(false);
+    try {
+      await onRequestAESKey();
+    } catch (error: any) {
+      if (error?.code === 4001 || error?.code === -32603) {
+        setRejectionError(true);
+      }
+    }
+  };
+
   return (
     <Container>
       <Title>Unlock Your Balances</Title>
@@ -57,12 +70,18 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
       To view and manage your private balances, please allow access to your security key.
       </Description>
       <SendButton
-        onClick={onRequestAESKey}
+        onClick={handleRequest}
         disabled={isRequesting}
       >
         {isRequesting ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
         {isRequesting ? 'Requesting' : 'Request'}
       </SendButton>
+      <br/>
+      {rejectionError && (
+        <Alert type="error">
+          Request failed or was cancelled. Please try again and approve the MetaMask request to continue.
+        </Alert>
+      )}
     </Container>
   );
 };
