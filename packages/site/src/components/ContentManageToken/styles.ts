@@ -321,7 +321,7 @@ export const HeaderBar = styled.div`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: ${spacing.sm} 0 0 0;
+  padding: 0 0 0 0;
 `;
 
 export const NetworkBadge = styled.div.withConfig({
@@ -1445,7 +1445,7 @@ export const TokenDetailsContainer = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
-  padding-top: ${spacing.xxxl};
+  padding-top: ${spacing.md};
   gap: ${spacing.xl};
   width: 100%;
 `;
