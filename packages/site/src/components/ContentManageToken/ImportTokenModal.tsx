@@ -38,6 +38,7 @@ const MESSAGES = {
   AES_KEY_REQUIRED: 'AES key is required to read token information',
   NO_TOKEN_INFO: 'No token info available',
   TOKEN_ALREADY_IMPORTED: 'Token already imported',
+  TOKEN_ALREADY_IMPORTED_ADDRESS: 'This token address has already been imported',
   IMPORT_ERROR: 'Error importing token',
   METAMASK_DISCONNECTED: 'Se perdió la conexión con MetaMask. Recarga la página.',
   LOADING_BALANCE: 'Loading balance...',
@@ -86,6 +87,7 @@ interface ModalState {
   address: string;
   addressStatus: 'idle' | 'error';
   isAddressValid: boolean;
+  isAddressAlreadyImported: boolean;
   tokenInfo: TokenInfo | null;
   tokenInfoError: string | null;
   tokenInfoLoading: boolean;
@@ -99,6 +101,7 @@ const INITIAL_STATE: ModalState = {
   address: '',
   addressStatus: 'idle',
   isAddressValid: false,
+  isAddressAlreadyImported: false,
   tokenInfo: null,
   tokenInfoError: null,
   tokenInfoLoading: false,
@@ -143,8 +146,8 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
   });
 
   const isNextButtonDisabled = useMemo(() => {
-    return !state.isAddressValid || state.importLoading || state.tokenInfoLoading;
-  }, [state.isAddressValid, state.importLoading, state.tokenInfoLoading]);
+    return !state.isAddressValid || state.importLoading || state.tokenInfoLoading || state.isAddressAlreadyImported;
+  }, [state.isAddressValid, state.importLoading, state.tokenInfoLoading, state.isAddressAlreadyImported]);
 
   const isImportButtonDisabled = useMemo(() => {
     return state.importLoading || !state.tokenInfo;
@@ -155,16 +158,18 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
     
     const normalized = normalizeAddress(newAddress);
     const isValid = !!normalized;
+    const isAlreadyImported = isValid ? hasToken(normalized) : false;
     
     updateState({
       address: newAddress,
       addressStatus: isValid || !newAddress ? 'idle' : 'error',
       isAddressValid: isValid,
+      isAddressAlreadyImported: isAlreadyImported,
       tokenInfo: null,
       tokenInfoError: null,
       tokenInfoLoading: false
     });
-  }, [updateState]);
+  }, [updateState, hasToken]);
 
 
   const handleNext = useCallback(async () => {
@@ -321,6 +326,11 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
                 />
               )}
               
+              {state.isAddressAlreadyImported && (
+                <ErrorText 
+                  message={MESSAGES.TOKEN_ALREADY_IMPORTED_ADDRESS}
+                />
+              )}
               
               {state.tokenInfoError && !state.tokenInfoLoading && (
                 <ErrorText 
