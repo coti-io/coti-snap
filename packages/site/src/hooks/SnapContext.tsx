@@ -9,6 +9,7 @@ import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 import { useMetaMaskContext } from './MetamaskContext';
+import { hasCompletedOnboarding, setOnboardingCompleted, clearOnboardingCompleted } from '../utils/onboardingStorage';
 
 export type setAESKeyErrorsType =
   | 'accountBalanceZero'
@@ -192,6 +193,10 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
         
+        if (address) {
+          setOnboardingCompleted(address);
+        }
+        
         setTimeout(() => {
           setLoading(false);
           setOnboardingStep(null);
@@ -269,6 +274,10 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
       setUserHasAesKEY(false);
       setShowDelete(false);
       setSettingAESKeyError(null);
+      
+      if (address) {
+        clearOnboardingCompleted(address);
+      }
     }
     setLoading(false);
   };
@@ -301,7 +310,8 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (address) {      
-      setUserHasAesKEY(false);
+      const hasOnboarded = hasCompletedOnboarding(address);
+      setUserHasAesKEY(hasOnboarded);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
       setOnboardingStep(null);
