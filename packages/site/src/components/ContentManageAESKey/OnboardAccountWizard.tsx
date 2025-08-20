@@ -144,7 +144,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
             Error onboarding account: Insufficient funds. Fund your account and
             try again. Testnet funds available at{' '}
             <Link target="_blank" href={COTI_FAUCET_LINK}>
-              https://faucet.coti.io
+              faucet.coti.io
             </Link>
           </Alert>
         )}
