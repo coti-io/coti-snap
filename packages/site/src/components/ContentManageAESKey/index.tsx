@@ -42,7 +42,6 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
     }));
   };
 
-
   const renderContent = (): JSX.Element | null => {
     if (shouldShowOnboarding) {
       return <OnboardAccount />;
