@@ -6,6 +6,36 @@ import svgr from 'vite-plugin-svgr';
 export default defineConfig({
   server: {
     port: 8000,
+    headers: {
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; media-src 'self'; frame-src 'none'; worker-src 'self'; child-src 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self';",
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=(), interest-cohort=()',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-DNS-Prefetch-Control': 'off',
+      'X-Download-Options': 'noopen',
+      'X-Permitted-Cross-Domain-Policies': 'none'
+    }
+  },
+  preview: {
+    headers: {
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; media-src 'self'; frame-src 'none'; worker-src 'self'; child-src 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self';",
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=(), interest-cohort=()',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-DNS-Prefetch-Control': 'off',
+      'X-Download-Options': 'noopen',
+      'X-Permitted-Cross-Domain-Policies': 'none'
+    }
   },
   plugins: [
     react({
