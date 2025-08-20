@@ -19,7 +19,7 @@ export type SetAESKeyError =
   | 'accountPermissionDenied'
   | null;
 
-export type OnboardingStep = 
+export type OnboardingStep =
   | 'signature-prompt'
   | 'signature-request'
   | 'send-tx'
@@ -64,14 +64,13 @@ interface SnapProviderProps {
 const MAX_RETRIES = 3;
 const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
 const SYNC_DELAY = 200;
-const PERMISSION_CHECK_DELAY = 1000;
 
 const isUserRejectedError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
-  
+
   const message = error.message.toLowerCase();
   const code = (error as any).code;
-  
+
   return (
     message.includes('user rejected') ||
     message.includes('action_rejected') ||
@@ -88,7 +87,7 @@ const SnapContext = createContext<SnapContextValue | undefined>(undefined);
 export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const invokeSnap = useInvokeSnap();
   const { address } = useAccount();
-  const { installedSnap } = useMetaMask();
+  const { installedSnap, isInstallingSnap } = useMetaMask();
   const { error: metamaskError } = useMetaMaskContext();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
@@ -119,7 +118,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const checkWalletPermissions = useCallback(async (): Promise<boolean> => {
     try {
       const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
-      
+
       const ethAccountsPermission = permissions?.find(
         permission => permission.parentCapability === 'eth_accounts'
       );
@@ -148,17 +147,29 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [invokeSnap]);
 
   const checkAccountPermissions = useCallback(async (targetAccount?: string): Promise<PermissionCheckResult> => {
+    if (!address || !installedSnap) {
+      return { hasPermission: false, currentAccount: null, permittedAccounts: [] };
+    }
+
     try {
       const result = await invokeSnap({
         method: 'check-account-permissions',
         ...(targetAccount && { params: { targetAccount } })
       }) as PermissionCheckResult;
 
+      if (!result) {
+        return { hasPermission: false, currentAccount: null, permittedAccounts: [] };
+      }
+
       return result;
     } catch (error) {
+      if (error instanceof Error && error.message.includes('No account connected')) {
+        throw error;
+      }
+
       try {
         const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
-        
+
         const ethAccountsPermission = permissions?.find(
           permission => permission.parentCapability === 'eth_accounts'
         );
@@ -185,10 +196,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         };
       } catch (fallbackError) {
         console.error('Permission check fallback failed:', fallbackError);
-        return { hasPermission: false, currentAccount: null, permittedAccounts: [] };
+        throw fallbackError;
       }
     }
-  }, [invokeSnap, address]);
+  }, [invokeSnap, address, installedSnap]);
 
   const handleShowDelete = useCallback((): void => {
     setShowDelete(prev => !prev);
@@ -212,8 +223,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     try {
       const permissionCheck = await checkAccountPermissions();
-      
-      if (!permissionCheck.hasPermission) {
+
+      if (permissionCheck && !permissionCheck.hasPermission) {
         setSettingAESKeyError('accountPermissionDenied');
         resetOnboardingState();
         return;
@@ -250,13 +261,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         try {
           await signer.generateOrRecoverAes(onboardContractAddress);
           aesKey = signer.getUserOnboardInfo()?.aesKey ?? null;
-          
+
           if (!aesKey && retryCount < MAX_RETRIES - 1) {
             await new Promise(resolve => setTimeout(resolve, getRetryDelay(retryCount + 1)));
             retryCount++;
           }
         } catch (providerError: any) {
-          const isRetryableError = 
+          const isRetryableError =
             providerError.message?.includes('Block tracker destroyed') ||
             providerError.message?.includes('connection') ||
             providerError.code === 'UNKNOWN_ERROR';
@@ -284,11 +295,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setOnboardingStep('done');
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
-        
+
         if (address) {
           setOnboardingCompleted(address);
         }
-        
+
         setTimeout(() => {
           resetOnboardingState();
         }, 1500);
@@ -328,7 +339,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     } else {
       setSettingAESKeyError('unknownError');
     }
-    
+
     resetOnboardingState();
   }, [metamaskError, resetOnboardingState]);
 
@@ -339,6 +350,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
       if (result !== null) {
         setUserAesKEY(result as string);
+        setUserHasAesKEY(true);
       } else {
         const rejectionError = new Error('User rejected the request');
         (rejectionError as any).code = 4001;
@@ -360,7 +372,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setUserHasAesKEY(false);
         setShowDelete(false);
         setSettingAESKeyError(null);
-        
+
         if (address) {
           clearOnboardingCompleted(address);
         }
@@ -374,95 +386,80 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const syncEnvironmentWithSnap = async (): Promise<void> => {
-      if (!installedSnap || syncedRef.current) return;
+      if (!installedSnap || syncedRef.current || !address) return;
 
       try {
         syncedRef.current = true;
         await new Promise(resolve => setTimeout(resolve, SYNC_DELAY));
-        
+
         await invokeSnap({
           method: 'set-environment',
           params: { environment: ENVIRONMENT }
         });
       } catch (error) {
-        console.error('Failed to sync environment:', error);
+        if (!(error instanceof Error) || !error.message.includes('No account connected')) {
+          console.error('Failed to sync environment:', error);
+        }
         syncedRef.current = false;
       }
     };
 
-    if (installedSnap) {
-      setTimeout(syncEnvironmentWithSnap, 0);
+    if (installedSnap && address && !syncedRef.current) {
+      const timer = setTimeout(syncEnvironmentWithSnap, SYNC_DELAY);
+      return () => clearTimeout(timer);
     }
-  }, [installedSnap, invokeSnap]);
+  }, [installedSnap, address]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
-    if (!address || !installedSnap) return;
-
-    const hasOnboarded = hasCompletedOnboarding(address);
-    setUserHasAesKEY(hasOnboarded);
-    setUserAesKEY(null);
-    setSettingAESKeyError(null);
-    setOnboardingStep(null);
-    
-    clearTimerIfExists();
+    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap) return;
 
     try {
-      const permissionCheck = await checkAccountPermissions();
+      const hasOnboarded = hasCompletedOnboarding(address);
+      setUserHasAesKEY(hasOnboarded);
       
-      if (!permissionCheck.hasPermission) {
-        setSettingAESKeyError('accountPermissionDenied');
-      } else if (settingAESKeyError === 'accountPermissionDenied') {
-        setSettingAESKeyError(null);
-      }
+      setSettingAESKeyError(null);
+      setOnboardingStep(null);
+      clearTimerIfExists();
+
+      initialCheckRef.current = true;
     } catch (error) {
-      console.error('SnapContext: Permission check failed:', error);
-    }
-    
-    initialCheckRef.current = true;
-  }, [address, installedSnap, checkAccountPermissions, settingAESKeyError, clearTimerIfExists]);
-
-  useEffect(() => {
-    void handlePermissionCheck();
-  }, [handlePermissionCheck]);
-
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (address && installedSnap && !initialCheckRef.current) {
-        try {
-          const permissionCheck = await checkAccountPermissions();
-          
-          if (!permissionCheck.hasPermission) {
-            setSettingAESKeyError('accountPermissionDenied');
-          }
-        } catch (error) {
-          console.error('SnapContext: Delayed permission check failed:', error);
-        }
-        initialCheckRef.current = true;
+      if (!(error instanceof Error) || !error.message.includes('No account connected')) {
+        console.error('SnapContext: Permission check failed:', error);
       }
-    }, PERMISSION_CHECK_DELAY);
+    }
+  }, [address, installedSnap, isInstallingSnap, clearTimerIfExists]);
+
+  useEffect(() => {
+    initialCheckRef.current = false;
+    syncedRef.current = false;
+    
+    if (!address || !installedSnap) {
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      setSettingAESKeyError(null);
+      return;
+    }
+
+    if (isInstallingSnap) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void handlePermissionCheck();
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, [checkAccountPermissions]); 
+  }, [address, installedSnap, isInstallingSnap]);
 
   useEffect(() => {
     const handleAccountsChanged = async (accounts: unknown): Promise<void> => {
       const accountsArray = accounts as string[];
-      
       if (!accountsArray?.length || !installedSnap) return;
-
-      const newAddress = accountsArray[0];
       
-      try {
-        const permissionCheck = await checkAccountPermissions(newAddress);
-        
-        if (!permissionCheck.hasPermission) {
-          setSettingAESKeyError('accountPermissionDenied');
-        } else if (settingAESKeyError === 'accountPermissionDenied') {
-          setSettingAESKeyError(null);
-        }
-      } catch (error) {
-        console.error('Permission check failed for new account:', error);
-      }
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      setSettingAESKeyError(null);
+      initialCheckRef.current = false;
     };
 
     if (window.ethereum) {
@@ -471,7 +468,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       };
     }
-  }, [installedSnap, settingAESKeyError, checkAccountPermissions]);
+  }, [installedSnap]);
 
   const contextValue = useMemo((): SnapContextValue => ({
     userHasAESKey,

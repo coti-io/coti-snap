@@ -16,7 +16,7 @@ interface AESKeyState {
   readonly showManage: boolean;
 }
 
-export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {  
+export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {
   const { address } = useAccount();
   const { onboardingStep } = useSnap();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({

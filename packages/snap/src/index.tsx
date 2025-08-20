@@ -659,13 +659,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     case 'check-account-permissions':
       try {
-        // Obtener el parámetro de la cuenta a verificar (opcional)
         const { targetAccount } = (request.params as { targetAccount?: string }) || {};
         
-        // Obtener las cuentas disponibles desde eth_accounts
         const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
         
-        // Usar la cuenta especificada o la primera cuenta disponible
         let currentAccount: string | null;
         if (targetAccount) {
           currentAccount = targetAccount.toLowerCase();
@@ -682,7 +679,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           };
         }
         
-        // Verificar si la cuenta actual está en la lista de cuentas permitidas
         const hasPermission = accounts.some(account => account.toLowerCase() === currentAccount);
         const permittedAccounts = accounts;
         

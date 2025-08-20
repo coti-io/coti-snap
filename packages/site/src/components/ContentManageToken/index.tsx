@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect, useRef } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { formatUnits } from 'ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
@@ -122,14 +122,19 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
   const [transferToken, setTransferToken] = useState<ImportedToken | null>(null);
 
+  const prevAddressRef = useRef<string | undefined>();
+  
   useEffect(() => {
-    setIsRequestingAESKey(false);
-    setShowAESKeyDisplay(false);
-    setShowDeleteConfirmation(false);
-    setModalState({ transfer: false, deposit: false });
-    setSelectedNFT(null);
-    setSelectedToken(null);
-    setTransferToken(null);
+    if (prevAddressRef.current !== address) {
+      setIsRequestingAESKey(false);
+      setShowAESKeyDisplay(false);
+      setShowDeleteConfirmation(false);
+      setModalState({ transfer: false, deposit: false });
+      setSelectedNFT(null);
+      setSelectedToken(null);
+      setTransferToken(null);
+      prevAddressRef.current = address;
+    }
   }, [address]);
 
   const formattedBalance = useMemo(() => {
@@ -217,12 +222,13 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     return <Loading title="Loading..." actionText="" />;
   }
 
-  if (!currentAESKey && userHasAESKey && !showAESKeyDisplay && !aesKey) {
+  if (showAESKeyDisplay && (currentAESKey || userAESKey)) {
     return (
       <MainStack>
-        <RequestAESKey 
-          onRequestAESKey={handleRequestAESKey}
-          isRequesting={isRequestingAESKey}
+        <DisplayAESKey 
+          aesKey={currentAESKey || userAESKey || ''}
+          onLaunchDApp={handleLaunchDApp}
+          onDeleteAESKey={handleDeleteAESKey}
         />
       </MainStack>
     );
@@ -236,13 +242,12 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     );
   }
 
-  if (showAESKeyDisplay && currentAESKey) {
+  if (!currentAESKey && userHasAESKey && !showAESKeyDisplay && !aesKey) {
     return (
       <MainStack>
-        <DisplayAESKey 
-          aesKey={currentAESKey}
-          onLaunchDApp={handleLaunchDApp}
-          onDeleteAESKey={handleDeleteAESKey}
+        <RequestAESKey 
+          onRequestAESKey={handleRequestAESKey}
+          isRequesting={isRequestingAESKey}
         />
       </MainStack>
     );

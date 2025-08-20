@@ -9,18 +9,24 @@ type MetaMaskContextType = {
   provider: MetaMaskInpageProvider | null;
   installedSnap: Snap | null;
   error: Error | null;
+  isInstallingSnap: boolean;
   setInstalledSnap: (snap: Snap | null) => void;
   setError: (error: Error) => void;
+  setIsInstallingSnap: (installing: boolean) => void;
 };
 
 export const MetaMaskContext = createContext<MetaMaskContextType>({
   provider: null,
   installedSnap: null,
   error: null,
+  isInstallingSnap: false,
   setInstalledSnap: () => {
     /* no-op */
   },
   setError: () => {
+    /* no-op */
+  },
+  setIsInstallingSnap: () => {
     /* no-op */
   },
 });
@@ -36,6 +42,7 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   const [provider, setProvider] = useState<MetaMaskInpageProvider | null>(null);
   const [installedSnap, setInstalledSnap] = useState<Snap | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [isInstallingSnap, setIsInstallingSnap] = useState<boolean>(false);
 
   useEffect(() => {
     getSnapsProvider().then(setProvider).catch(console.error);
@@ -57,7 +64,15 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <MetaMaskContext.Provider
-      value={{ provider, error, setError, installedSnap, setInstalledSnap }}
+      value={{ 
+        provider, 
+        error, 
+        setError, 
+        installedSnap, 
+        setInstalledSnap,
+        isInstallingSnap,
+        setIsInstallingSnap
+      }}
     >
       {children}
     </MetaMaskContext.Provider>
