@@ -398,6 +398,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
+  await checkChainId();
+  
   const getState = await getStateByChainIdAndAddress();
   switch (request.method) {
     case 'encrypt':
