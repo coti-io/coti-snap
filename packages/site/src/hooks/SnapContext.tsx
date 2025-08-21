@@ -230,6 +230,9 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
+        if (error instanceof Error && error.message.includes('No account connected')) {
+          return;
+        }
         console.warn('Permission check failed for account:', targetAddress, error);
       }
     }, 800);

@@ -89,8 +89,12 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({ children }) =>
               
       setLocalPermissionError(result ? !result.hasPermission : false);
     } catch (error) {
-      console.error('PermissionGuard: Failed to check permissions:', error);
-      setLocalPermissionError(true);
+      if (error instanceof Error && error.message.includes('No account connected')) {
+        setLocalPermissionError(false);
+      } else {
+        console.error('PermissionGuard: Failed to check permissions:', error);
+        setLocalPermissionError(true);
+      }
     } finally {
       checkingRef.current = false;
     }
