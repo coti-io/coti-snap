@@ -43,8 +43,6 @@ export const LoadingWithProgressAlt: React.FC<LoadingWithProgressAltProps> = ({
   title,
   actionText,
 }) => {
-  const { onboardingStep } = useSnap();
-
   return (
     <>
       <ContentTitle>{title}</ContentTitle>
