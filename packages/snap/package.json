@@ -1,6 +1,6 @@
 {
   "name": "@coti-io/coti-snap",
-  "version": "1.0.13-a613fe",
+  "version": "1.0.14-6d75bc",
   "description": "COTI Snap - MetaMask Snap for managing confidential tokens and confidential transactions",
   "repository": {
     "type": "git",
