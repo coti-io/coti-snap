@@ -1,9 +1,7 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import LoaderIcon from '../assets/icons/loader.png';
-import { StepProgressBar } from './StepProgressBar';
 import { useSnap } from '../hooks/SnapContext';
-import type { OnboardingStep } from '../hooks/SnapContext';
 
 const spin = keyframes`
   from {
@@ -36,40 +34,15 @@ const ContentTitle = styled.p`
   color: #000000 !important;
 `;
 
-const ONBOARDING_STEPS = [
-  'Request',
-  'Sign',
-  'Confirm',
-  'Done'
-];
-
-const getStepNumber = (onboardingStep: OnboardingStep): number => {
-  switch (onboardingStep) {
-    case 'signature-prompt':
-      return 1;
-    case 'signature-request':
-      return 2;
-    case 'send-tx':
-      return 3;
-    case 'done':
-      return 4;
-    default:
-      return 1;
-  }
-};
-
-interface LoadingWithProgressProps {
+interface LoadingWithProgressAltProps {
   title: string;
   actionText: string;
 }
 
-export const LoadingWithProgress: React.FC<LoadingWithProgressProps> = ({
+export const LoadingWithProgressAlt: React.FC<LoadingWithProgressAltProps> = ({
   title,
   actionText,
 }) => {
-  const { onboardingStep } = useSnap();
-  const currentStep = getStepNumber(onboardingStep);
-
   return (
     <>
       <ContentTitle>{title}</ContentTitle>
@@ -88,10 +61,6 @@ export const LoadingWithProgress: React.FC<LoadingWithProgressProps> = ({
         />
         <ContentText>{actionText}</ContentText>
 
-        <StepProgressBar 
-        currentStep={currentStep} 
-        steps={ONBOARDING_STEPS} 
-      />
       </div>
     </>
   );

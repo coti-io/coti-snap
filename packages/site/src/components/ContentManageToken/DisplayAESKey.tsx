@@ -142,13 +142,15 @@ const DeleteButton = styled(SendButton)`
 
 interface DisplayAESKeyProps {
   aesKey: string;
-  onLaunchDApp: () => void;
+  onLaunchDApp?: () => void;
+  onNavigateToTokens?: () => void;
   onDeleteAESKey: () => void;
 }
 
 export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(({
   aesKey,
   onLaunchDApp,
+  onNavigateToTokens,
   onDeleteAESKey
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
@@ -198,8 +200,8 @@ export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(({
         <DeleteButton onClick={handleDelete}>
           Delete AES Key
         </DeleteButton>
-        <LaunchButton onClick={onLaunchDApp}>
-          Launch dApp
+        <LaunchButton onClick={onNavigateToTokens || onLaunchDApp}>
+          {onNavigateToTokens ? 'View Tokens' : 'Launch dApp'}
         </LaunchButton>
       </ButtonContainer>
     </Container>

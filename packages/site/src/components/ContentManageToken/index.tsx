@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect, useRef } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { formatUnits } from 'ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
@@ -122,6 +122,21 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
   const [transferToken, setTransferToken] = useState<ImportedToken | null>(null);
 
+  const prevAddressRef = useRef<string | undefined>();
+  
+  useEffect(() => {
+    if (prevAddressRef.current !== address) {
+      setIsRequestingAESKey(false);
+      setShowAESKeyDisplay(false);
+      setShowDeleteConfirmation(false);
+      setModalState({ transfer: false, deposit: false });
+      setSelectedNFT(null);
+      setSelectedToken(null);
+      setTransferToken(null);
+      prevAddressRef.current = address;
+    }
+  }, [address]);
+
   const formattedBalance = useMemo(() => {
     if (!balance) return '0';
     try {
@@ -207,6 +222,14 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     return <Loading title="Loading..." actionText="" />;
   }
 
+  if (showDeleteConfirmation) {
+    return (
+      <MainStack>
+        <DeleteAESKey handleShowDelete={handleCancelDelete} />
+      </MainStack>
+    );
+  }
+
   if (!currentAESKey && userHasAESKey && !showAESKeyDisplay && !aesKey) {
     return (
       <MainStack>
@@ -218,19 +241,11 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     );
   }
 
-  if (showDeleteConfirmation) {
-    return (
-      <MainStack>
-        <DeleteAESKey handleShowDelete={handleCancelDelete} />
-      </MainStack>
-    );
-  }
-
-  if (showAESKeyDisplay && currentAESKey) {
+  if (showAESKeyDisplay && (currentAESKey || userAESKey)) {
     return (
       <MainStack>
         <DisplayAESKey 
-          aesKey={currentAESKey}
+          aesKey={currentAESKey || userAESKey || ''}
           onLaunchDApp={handleLaunchDApp}
           onDeleteAESKey={handleDeleteAESKey}
         />

@@ -7,6 +7,7 @@ import {
   ContentSwitchNetwork,
 } from '../components';
 import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyManager';
+import { PermissionGuard } from '../components/PermissionGuard';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 import { SmartRouter } from './SmartRouter.js';
@@ -41,18 +42,32 @@ function SnapProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function InstallProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { installedSnap } = useMetaMask();
+  
+  if (installedSnap) {
+    return <Navigate to="/wallet" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
 function Dashboard() {
   const { userHasAESKey, userAESKey } = useSnap();
   
   return (
-    <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+    <PermissionGuard>
+      <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+    </PermissionGuard>
   );
 }
 
 function TokenManagement() {
   const { userHasAESKey, userAESKey } = useSnap();
   return (
-    <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+    <PermissionGuard>
+      <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+    </PermissionGuard>
   );
 }
 
@@ -103,7 +118,9 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <NetworkProtectedRoute>
-              <ContentInstallAESKeyManager />
+              <InstallProtectedRoute>
+                <ContentInstallAESKeyManager />
+              </InstallProtectedRoute>
             </NetworkProtectedRoute>
           </ProtectedRoute>
         ),

@@ -16,13 +16,14 @@ export const useRequestSnap = (
   version?: string,
 ) => {
   const request = useRequest();
-  const { setInstalledSnap } = useMetaMaskContext();
+  const { setInstalledSnap, setIsInstallingSnap } = useMetaMaskContext();
 
   /**
    * Request the Snap.
    */
   const requestSnap = async () => {
     try {
+      setIsInstallingSnap(true);
       
       const snaps = (await request({
         method: 'wallet_requestSnaps',
@@ -32,11 +33,17 @@ export const useRequestSnap = (
       })) as Record<string, Snap>;
 
       // Updates the `installedSnap` context variable since we just installed the Snap.
-      setInstalledSnap(snaps?.[snapId] ?? null);
+      const installedSnap = snaps?.[snapId] ?? null;
+      setInstalledSnap(installedSnap);
       
-      return snaps?.[snapId];
+      setTimeout(() => {
+        setIsInstallingSnap(false);
+      }, installedSnap ? 3000 : 1000);
+      
+      return installedSnap;
     } catch (error) {
       console.error('Error installing snap:', error);
+      setIsInstallingSnap(false);
       throw error;
     }
   };

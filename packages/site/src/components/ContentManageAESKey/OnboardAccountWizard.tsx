@@ -137,6 +137,16 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
             Error to onboard account, check the contract address
           </Alert>
         )}
+        {settingAESKeyError === 'userRejected' && (
+          <Alert type="error">
+            Onboarding cancelled: You rejected the transaction request
+          </Alert>
+        )}
+        {settingAESKeyError === 'accountPermissionDenied' && (
+          <Alert type="error">
+            Permission denied: Please connect your wallet to continue
+          </Alert>
+        )}
         {settingAESKeyError === 'unknownError' && (
           <Alert type="error">
             Error to onboard account, try again

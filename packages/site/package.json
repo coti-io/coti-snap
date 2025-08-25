@@ -27,7 +27,8 @@
     "styled-components": "^6.1.14",
     "viem": "^2.22.16",
     "vite-plugin-svgr": "^4.3.0",
-    "wagmi": "^2.14.9"
+    "wagmi": "^2.14.9",
+    "zns-sdk": "^0.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

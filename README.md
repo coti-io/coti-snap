@@ -21,6 +21,24 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 > [!IMPORTANT]  
 > You cannot have other versions of MetaMask installed
 
+## 📋 Quick Setup
+
+### For Development (Testnet)
+```bash
+# In packages/site/.env.local
+VITE_NODE_ENV=local
+VITE_SNAP_ENV=local
+VITE_SNAP_VERSION=0.0.0
+```
+
+### For Production (Mainnet)
+```bash
+# In packages/site/.env.local
+VITE_NODE_ENV=production
+VITE_SNAP_ENV=production
+VITE_SNAP_VERSION=latest
+```
+
 ### Running
 
 1. Clone the COTI-snap repository and set up the development environment:
