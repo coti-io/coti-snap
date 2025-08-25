@@ -1,5 +1,5 @@
 {
-  "version": "1.0.11-544fbd",
+  "version": "1.0.12-d12303",
   "description": "COTI Snap - MetaMask Snap for managing confidential tokens and confidential transactions",
   "proposedName": "COTI",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/coti-io/coti-snap.git"
   },
   "source": {
-    "shasum": "JmdtgOGyY6AyRa2RUZa2/FCgai/niO9yMpYZZvw4kkI=",
+    "shasum": "sbs/KYUWew7mhWnL9rmPJjra+5xrybRUVxztq4HC/Co=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
