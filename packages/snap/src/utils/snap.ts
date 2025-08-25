@@ -36,11 +36,16 @@ export async function setStateData<StateType>(data: StateType): Promise<void> {
 export const getStateIdentifier = async (): Promise<StateIdentifier> => {
   const provider = new BrowserProvider(ethereum);
   const network = await provider.getNetwork();
-  const signer = await provider.getSigner();
+  
+  const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+  const currentAddress = accounts.length > 0 ? accounts[0] : null;
+  
+  if (!currentAddress) {
+    throw new Error('No account connected');
+  }
 
-  const signerAddress = await signer.getAddress();
   const chainId = network.chainId.toString();
-  return { chainId, address: signerAddress };
+  return { chainId, address: currentAddress };
 };
 
 export const getStateByChainIdAndAddress = async (): Promise<State> => {

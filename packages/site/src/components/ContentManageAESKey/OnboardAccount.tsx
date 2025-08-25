@@ -5,14 +5,15 @@ import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
 import { isLocal } from '../../config/snap';
 import { useSnap } from '../../hooks/SnapContext';
-import { useWrongChain } from '../../hooks';
+import { useWrongChain, useMetaMask } from '../../hooks';
 import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
 import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
 import { LoadingWithProgress } from '../LoadingWithProgress';
+import { LoadingWithProgressAlt } from '../LoadingWithProgressAlt';
 import { Alert } from '../ContentManageToken/Alert';
 import { OnboardAccountWizard } from './OnboardAccountWizard';
 
-interface OnboardAccountProps {}
+interface OnboardAccountProps { }
 
 interface OnboardingState {
   readonly isOnboarding: boolean;
@@ -23,9 +24,10 @@ const ONBOARDING_DESCRIPTION = `Onboarding your account will securely store your
 For example: viewing your balance on a Private ERC20 token.`;
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
-  const { setAESKey, loading, settingAESKeyError, userHasAESKey, onboardingStep } = useSnap();
+  const { setAESKey, loading, settingAESKeyError } = useSnap();
   const { isConnected, address } = useAccount();
   const { wrongChain } = useWrongChain();
+  const { isInstallingSnap } = useMetaMask();
 
   const [, startTransition] = useTransition();
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
@@ -54,7 +56,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         }));
       }
     });
-    
+
     if (!isLocal()) {
       try {
         await setAESKey();
@@ -83,6 +85,15 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
     return <ContentSwitchNetwork />;
   }
 
+  if (isInstallingSnap) {
+    return (
+      <LoadingWithProgressAlt
+        title="Installing"
+        actionText=""
+      />
+    );
+  }
+
   return isConnected ? (
     (!isLocal() && loading && !settingAESKeyError) ? (
       <LoadingWithProgress title="Onboard" actionText="Onboarding account" />
@@ -104,7 +115,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
           aria-label="Start account onboarding process"
           disabled={!isLocal() && loading}
         />
-        
+
         {!isLocal() && settingAESKeyError === 'accountBalanceZero' && (
           <Alert type="error">
             Error onboarding account: Insufficient funds.

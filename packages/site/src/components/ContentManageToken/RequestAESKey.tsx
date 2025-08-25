@@ -67,7 +67,7 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
     <Container>
       <Title>Unlock Your Balances</Title>
       <Description>
-      To view and manage your private balances, please allow access to your security key.
+        To view and manage your private balances, please allow access to your security key.
       </Description>
       <SendButton
         onClick={handleRequest}
@@ -76,7 +76,7 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
         {isRequesting ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
         {isRequesting ? 'Requesting' : 'Request'}
       </SendButton>
-      <br/>
+      <br />
       {rejectionError && (
         <Alert type="error">
           Request failed or was cancelled. Please try again and approve the MetaMask request to continue.

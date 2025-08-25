@@ -53,7 +53,7 @@ export const getAccountTokensKey = (address: string): string => {
  */
 export const getImportedTokensByAccount = (address: string): ImportedToken[] => {
   if (!address) return [];
-  
+
   try {
     const accountKey = getAccountTokensKey(address);
     const data = getLocalStorage(accountKey);
@@ -93,7 +93,7 @@ export const getImportedTokens = (): ImportedToken[] => {
  */
 export const setImportedTokensByAccount = (address: string, tokens: ImportedToken[]) => {
   if (!address) return;
-  
+
   try {
     const accountKey = getAccountTokensKey(address);
     setLocalStorage(accountKey, JSON.stringify(tokens));
@@ -123,14 +123,14 @@ export const setImportedTokens = (tokens: ImportedToken[]) => {
  */
 export const addImportedTokenByAccount = (accountAddress: string, token: ImportedToken) => {
   if (!accountAddress) return;
-  
+
   const existingTokens = getImportedTokensByAccount(accountAddress);
   const normalizedAddress = token.address.toLowerCase();
-  
+
   const tokenExists = existingTokens.some(
     existingToken => existingToken.address.toLowerCase() === normalizedAddress
   );
-  
+
   if (!tokenExists) {
     const updatedTokens = [...existingTokens, { ...token, address: normalizedAddress }];
     setImportedTokensByAccount(accountAddress, updatedTokens);
@@ -145,12 +145,12 @@ export const addImportedTokenByAccount = (accountAddress: string, token: Importe
 export const addImportedToken = (token: ImportedToken) => {
   const existingTokens = getImportedTokens();
   const normalizedAddress = token.address.toLowerCase();
-  
+
   // Check if token already exists (case-insensitive)
   const tokenExists = existingTokens.some(
     existingToken => existingToken.address.toLowerCase() === normalizedAddress
   );
-  
+
   if (!tokenExists) {
     const updatedTokens = [...existingTokens, { ...token, address: normalizedAddress }];
     setImportedTokens(updatedTokens);
@@ -165,7 +165,7 @@ export const addImportedToken = (token: ImportedToken) => {
  */
 export const removeImportedTokenByAccount = (accountAddress: string, tokenAddress: string) => {
   if (!accountAddress) return;
-  
+
   const existingTokens = getImportedTokensByAccount(accountAddress);
   const normalizedAddress = tokenAddress.toLowerCase();
   const updatedTokens = existingTokens.filter(

@@ -398,6 +398,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
+  await checkChainId();
+  
   const getState = await getStateByChainIdAndAddress();
   switch (request.method) {
     case 'encrypt':
@@ -515,7 +517,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return false;
 
     case 'get-aes-key':
-      if (!getState.aesKey) {
+      const currentAESState = await getStateByChainIdAndAddress();
+      if (!currentAESState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -531,7 +534,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (getState.aesKey) {
+      if (currentAESState.aesKey) {
         const revealaesKey = await snap.request({
           method: 'snap_dialog',
           params: {
@@ -546,14 +549,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         });
 
         if (revealaesKey) {
-          return getState.aesKey;
+          return currentAESState.aesKey;
         }
       }
 
       return null;
 
     case 'delete-aes-key':
-      if (!getState.aesKey) {
+      const currentDeleteState = await getStateByChainIdAndAddress();
+      if (!currentDeleteState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -584,7 +588,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       if (deleteResult) {
         await setStateByChainIdAndAddress({
-          ...getState,
+          ...currentDeleteState,
           aesKey: null,
         });
         return true;
@@ -624,6 +628,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       await ethereum.request({ method: 'eth_requestAccounts' });
       return true;
 
+
     case 'get-permissions':
       const permissions = await ethereum.request({
         method: 'wallet_getPermissions',
@@ -653,6 +658,47 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       
       setEnvironment(environment);
       return true;
+
+    case 'check-account-permissions':
+      try {
+        const { targetAccount } = (request.params as { targetAccount?: string }) || {};
+        
+        const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+        
+        let currentAccount: string | null;
+        if (targetAccount) {
+          currentAccount = targetAccount.toLowerCase();
+        } else {
+          currentAccount = accounts.length > 0 ? accounts[0]?.toLowerCase() || null : null;
+        }
+        
+        if (!currentAccount) {
+          return {
+            hasPermission: false,
+            currentAccount: null,
+            permittedAccounts: accounts,
+            error: 'No active account found'
+          };
+        }
+        
+        const hasPermission = accounts.some(account => account.toLowerCase() === currentAccount);
+        const permittedAccounts = accounts;
+        
+        return {
+          hasPermission,
+          currentAccount,
+          permittedAccounts
+        };
+      } catch (error) {
+        console.error('Error checking account permissions:', error);
+        return {
+          hasPermission: false,
+          currentAccount: null,
+          permittedAccounts: [],
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+
     default:
       throw new Error('Method not found.');
   }

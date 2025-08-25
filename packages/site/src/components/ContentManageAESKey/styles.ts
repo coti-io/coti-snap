@@ -1,9 +1,9 @@
-import type { setAESKeyErrorsType } from 'src/hooks/SnapContext';
+import type { SetAESKeyError } from 'src/hooks/SnapContext';
 import styled, { css } from 'styled-components';
 
 interface EditableInputContainerProps {
   $isEditable: boolean;
-  $isError: setAESKeyErrorsType;
+  $isError: SetAESKeyError;
 }
 
 interface EditableInputProps {
@@ -170,7 +170,7 @@ export const IconContainer = styled.button<IconContainerProps>`
   svg {
     ${commonIconStyles}
     fill: ${(props) =>
-      props.$isCopied ? props.theme.colors.primary?.default : props.theme.colors.text?.muted || '#8c8c8c'};
+    props.$isCopied ? props.theme.colors.primary?.default : props.theme.colors.text?.muted || '#8c8c8c'};
 
     &:hover {
       fill: ${(props) => props.theme.colors.primary?.default};

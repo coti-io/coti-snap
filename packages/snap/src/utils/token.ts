@@ -111,8 +111,13 @@ export const checkERC721Ownership = async (
 ): Promise<boolean> => {
   try {
     const provider = new BrowserProvider(ethereum);
-    const signer = await provider.getSigner();
-    const userAddress = await signer.getAddress();
+    
+    const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+    const userAddress = accounts.length > 0 ? accounts[0] : null;
+    
+    if (!userAddress) {
+      throw new Error('No account connected');
+    }
     
     let contract = new ethers.Contract(address, erc721Abi, provider);
     
@@ -281,8 +286,14 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
   const provider = new BrowserProvider(ethereum);
 
   try {
+    const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+    const signerAddress = accounts.length > 0 ? accounts[0] : null;
+    
+    if (!signerAddress) {
+      throw new Error('No account connected');
+    }
+    
     const signer = await provider.getSigner();
-    const signerAddress = await signer.getAddress();
     const balance = await provider.getBalance(signerAddress);
 
   const tokenBalances: Tokens = await Promise.all(

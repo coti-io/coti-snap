@@ -31,7 +31,7 @@ const Container = styled.div`
 export function SmartRouter() {
   const { isConnected } = useAccount();
   const { wrongChain } = useWrongChain();
-  const { installedSnap } = useMetaMask();
+  const { installedSnap, isInstallingSnap } = useMetaMask();
   const navigate = useNavigate();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [, startTransition] = useTransition();
@@ -63,23 +63,24 @@ export function SmartRouter() {
         return;
       }
 
-      if (!installedSnap) {
+      if (!installedSnap && !isInstallingSnap) {
         navigate('/install', { replace: true });
         return;
       }
 
-      if (!isOnProtectedRoute && (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install')) {
+      if (installedSnap && !isOnProtectedRoute && 
+          (currentPath === '/' || currentPath === '/connect' || currentPath === '/network' || currentPath === '/install')) {
         setTimeout(() => {
           navigate('/wallet', { replace: true });
-        }, 0);
+        }, isInstallingSnap ? 500 : 0);
       }
     });
-  }, [hasInitialized, isConnected, wrongChain, installedSnap, navigate]);
+  }, [hasInitialized, isConnected, wrongChain, installedSnap, isInstallingSnap, navigate]);
 
   return (
     <Container>
       <Header />
-      <Outlet />
+        <Outlet />
       <Footer />
     </Container>
   );

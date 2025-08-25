@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, memo, useTransition } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { ContentTitle } from '../styles';
+import { useZNSResolver } from '../../hooks/useZNSResolver';
 import { IconButton, SendButton, TransferContainer } from './styles';
 import {
   HeaderBar,
@@ -93,6 +94,10 @@ type TransactionStatus = 'idle' | 'loading' | 'success' | 'error';
 const ADDRESS_VALIDATION_DELAY = 800;
 
 const validateAddress = (address: string): boolean => {
+  if (address.toLowerCase().endsWith('.coti')) {
+    return true;
+  }
+  
   const normalized = normalizeAddress(address);
   return !!normalized;
 };
@@ -384,8 +389,16 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const [amount, setAmount] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  
+  const { 
+    address: resolvedAddress, 
+    isResolving: isResolvingZNS, 
+    error: znsError, 
+    isZNSDomain,
+    resolveAddress: resolveZNSAddress,
+    clearResolver 
+  } = useZNSResolver();
 
-  // Initialize with the passed token if available
   useEffect(() => {
     if (initialToken && !selectedToken) {
       let contractAddress = initialToken.contractAddress;
@@ -416,7 +429,6 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const [loadedTokenAddress, setLoadedTokenAddress] = useState<string>('');
   const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
   const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
-  const [txError, setTxError] = useState<string | null>(null);
   const { getERC20TokensList, importedTokens } = useImportedTokens();
   const { getAESKey, userHasAESKey } = useSnap();
 
@@ -458,12 +470,11 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
     const allTokens = [cotiToken, ...importedTokensFormatted];
 
-    // Filter NFTs from imported tokens (by type ERC721/ERC1155 and address format)
     const nftImportedTokens = importedTokens.filter(t =>
       (t.type === 'ERC721' || t.type === 'ERC1155') && t.address.includes('-')
     );
 
-    let nftTokens: Token[] = nftImportedTokens.map((nft, index) => {
+    let nftTokens: Token[] = nftImportedTokens.map((nft) => {
       const addressParts = nft.address.split('-');
       const contractAddress = addressParts[0] || '';
       const tokenId = addressParts[1] || '';
@@ -534,20 +545,35 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     return !isNaN(amountNum) && amountNum > 0 && amountNum <= balanceNum;
   }, [amount, amountNum, balanceNum, currentToken?.tokenId, currentToken?.type]);
 
-  const canContinue = useMemo(() =>
-    addressValidation.isValid && isAmountValid && txStatus !== 'loading',
-    [addressValidation.isValid, isAmountValid, txStatus]
-  );
+  const canContinue = useMemo(() => {
+    const addressIsValid = isZNSDomain(addressInput) 
+      ? (resolvedAddress !== null && !znsError)
+      : addressValidation.isValid;
+    
+    return addressIsValid && isAmountValid && txStatus !== 'loading' && !isResolvingZNS;
+  }, [addressValidation.isValid, isAmountValid, txStatus, isZNSDomain, addressInput, resolvedAddress, znsError, isResolvingZNS]);
 
   const handleAddressChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAddress = e.target.value;
     setAddressInput(newAddress);
-    addressValidation.validate(newAddress);
+    
+    clearResolver();
+    
+    if (isZNSDomain(newAddress)) {
+      const resolvedAddress = await resolveZNSAddress(newAddress);
+      if (resolvedAddress) {
+        addressValidation.validate(resolvedAddress);
+      } else {
+        addressValidation.validate(newAddress);
+      }
+    } else {
+      addressValidation.validate(newAddress);
+    }
 
     if (!aesKey && newAddress.length > 0 && userHasAESKey) {
       await getAESKey();
     }
-  }, [addressValidation, aesKey, userHasAESKey, getAESKey]);
+  }, [addressValidation, aesKey, userHasAESKey, getAESKey, clearResolver, isZNSDomain, resolveZNSAddress]);
 
   const handleAddressBlur = useCallback(() => {
     if (!addressInput) return;
@@ -696,20 +722,20 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     if (!provider || !canContinue || !tokenOps) return;
 
     setTxStatus('loading');
-    setTxError(null);
 
     try {
       let success = false;
+      const targetAddress = resolvedAddress || addressInput;
 
       if (currentToken.symbol === 'COTI' || !currentToken.address) {
         success = await tokenOps.transferCOTI({
-          to: addressInput,
+          to: targetAddress,
           amount: amount
         });
       } else if (currentToken.tokenId && currentToken.type === 'ERC721') {
         success = await tokenOps.transferERC721({
           tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
-          to: addressInput,
+          to: targetAddress,
           tokenId: currentToken.tokenId
         });
       } else if (currentToken.tokenId && currentToken.type === 'ERC1155') {
@@ -718,7 +744,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         }
         success = await tokenOps.transferERC1155({
           tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
-          to: addressInput,
+          to: targetAddress,
           tokenId: currentToken.tokenId,
           amount: amount
         });
@@ -728,7 +754,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
         success = await tokenOps.transferERC20({
           tokenAddress: currentToken.address,
-          to: addressInput,
+          to: targetAddress,
           amount: amountInWei.toString(),
           aesKey: aesKey || ''
         });
@@ -745,13 +771,11 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         }
       } else {
         setTxStatus('error');
-        setTxError(tokenOps.error || `Error transferring ${currentToken.symbol}`);
       }
     } catch (error: any) {
       setTxStatus('error');
-      setTxError(error.message || `Error transferring ${currentToken.symbol}`);
     }
-  }, [provider, canContinue, tokenOps, addressInput, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess]);
+  }, [provider, canContinue, tokenOps, addressInput, resolvedAddress, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess]);
 
   const handleCancel = useCallback(() => {
     startTransition(() => {
@@ -864,7 +888,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
       {!addressValidation.isValid && (
         <InputBox>
           <AddressInput
-            placeholder="Enter public address (0x) or domain name"
+            placeholder="Enter public address (0x) or .coti domain name"
             value={addressInput}
             onChange={handleAddressChange}
             onBlur={handleAddressBlur}
@@ -874,9 +898,9 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       {addressValidation.isValid && (
         <AccountBox>
-          <JazziconComponent address={addressInput} type="to" />
+          <JazziconComponent address={resolvedAddress || addressInput} type="to" />
           <AccountDetails>
-            <AccountAddress>{truncateString(addressInput)}</AccountAddress>
+            <AccountAddress>{isZNSDomain(addressInput) && resolvedAddress ? truncateString(resolvedAddress) : truncateString(addressInput)}</AccountAddress>
           </AccountDetails>
           <ClearIconButton
             onClick={handleClearAddress}
@@ -921,12 +945,20 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         </AccountBox>
       )}
 
-      {addressValidation.status === 'loading' && addressInput && (
-        <Alert type="loading">Loading...</Alert>
+      {(addressValidation.status === 'loading' || isResolvingZNS) && addressInput && !resolvedAddress && (
+        <Alert type="loading">{isResolvingZNS ? 'Resolving .coti domain...' : 'Loading...'}</Alert>
       )}
 
-      {addressValidation.status === 'error' && addressInput && (
-        <Alert type="error">No resolution for domain provided</Alert>
+      {addressValidation.status === 'error' && addressInput && !isZNSDomain(addressInput) && (
+        <Alert type="error">Invalid address format</Alert>
+      )}
+      
+      {znsError && isZNSDomain(addressInput) && (
+        <Alert type="error">{znsError}</Alert>
+      )}
+      
+      {resolvedAddress && isZNSDomain(addressInput) && addressInput && !addressValidation.isValid && (
+        <Alert type="success">Domain resolved to: {truncateString(resolvedAddress)}</Alert>
       )}
 
       <BottomActions>

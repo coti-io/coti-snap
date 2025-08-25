@@ -1,7 +1,7 @@
 import type { Eip1193Provider } from '@coti-io/coti-ethers';
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 
@@ -9,128 +9,276 @@ import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 import { useMetaMaskContext } from './MetamaskContext';
+import { hasCompletedOnboarding, setOnboardingCompleted, clearOnboardingCompleted } from '../utils/onboardingStorage';
 
-export type setAESKeyErrorsType =
+export type SetAESKeyError =
   | 'accountBalanceZero'
   | 'invalidAddress'
   | 'userRejected'
   | 'unknownError'
+  | 'accountPermissionDenied'
   | null;
 
-export type OnboardingStep = 
+export type OnboardingStep =
   | 'signature-prompt'
   | 'signature-request'
   | 'send-tx'
   | 'done'
   | null;
 
-type SnapContextProps = {
-  setAESKey: () => Promise<void>;
-  deleteAESKey: () => Promise<void>;
-  getAESKey: () => Promise<void>;
-  userAESKey: string | null;
-  setUserAesKEY: (key: string | null) => void;
-  userHasAESKey: boolean;
-  handleShowDelete: () => void;
-  showDelete: boolean;
-  loading: boolean;
-  settingAESKeyError: setAESKeyErrorsType;
-  onboardContractAddress: `0x${string}`;
-  handleOnChangeContactAddress: (
-    inputEvent: React.ChangeEvent<HTMLInputElement>,
-  ) => void;
-  handleCancelOnboard: () => void;
-  onboardingStep: OnboardingStep;
+interface PermissionCheckResult {
+  hasPermission: boolean;
+  currentAccount: string | null;
+  permittedAccounts: string[];
+}
+
+interface EthAccountsPermission {
+  parentCapability: string;
+  caveats?: Array<{
+    type: string;
+    value: string[];
+  }>;
+}
+
+interface SnapContextValue {
+  readonly setAESKey: () => Promise<void>;
+  readonly deleteAESKey: () => Promise<void>;
+  readonly getAESKey: () => Promise<void>;
+  readonly userAESKey: string | null;
+  readonly setUserAesKEY: (key: string | null) => void;
+  readonly userHasAESKey: boolean;
+  readonly handleShowDelete: () => void;
+  readonly showDelete: boolean;
+  readonly loading: boolean;
+  readonly settingAESKeyError: SetAESKeyError;
+  readonly onboardContractAddress: `0x${string}`;
+  readonly handleOnChangeContactAddress: (inputEvent: React.ChangeEvent<HTMLInputElement>) => void;
+  readonly handleCancelOnboard: () => void;
+  readonly onboardingStep: OnboardingStep;
+}
+
+interface SnapProviderProps {
+  readonly children: ReactNode;
+}
+
+const MAX_RETRIES = 3;
+const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
+const SYNC_DELAY = 200;
+
+const isUserRejectedError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  const code = (error as any).code;
+
+  return (
+    message.includes('user rejected') ||
+    message.includes('action_rejected') ||
+    message.includes('ethers-user-denied') ||
+    code === 4001
+  );
 };
 
-const SnapContext = createContext<SnapContextProps | undefined>(undefined);
+const getRetryDelay = (attempt: number): number => 1000 * attempt;
+const getSyncDelay = (attempt: number): number => 2000 * attempt;
 
-export const SnapProvider = ({ children }: { children: ReactNode }) => {
+const SnapContext = createContext<SnapContextValue | undefined>(undefined);
+
+export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const invokeSnap = useInvokeSnap();
   const { address } = useAccount();
-  const { installedSnap } = useMetaMask();
+  const { installedSnap, isInstallingSnap } = useMetaMask();
   const { error: metamaskError } = useMetaMaskContext();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
-  const [showDelete, setShowDelete] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [settingAESKeyError, setSettingAESKeyError] =
-    useState<setAESKeyErrorsType>(null);
-  const [onboardContractAddress, setOnboardContractAddress] =
-    useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
+  const [showDelete, setShowDelete] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [settingAESKeyError, setSettingAESKeyError] = useState<SetAESKeyError>(null);
+  const [onboardContractAddress, setOnboardContractAddress] = useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getWalletPermissions = async () => {
-    const permissions: any[] = (await invokeSnap({
-      method: 'get-permissions',
-    })) as any[];
-    let ethAccountsPermission = null;
-    if (permissions && permissions.length > 0) {
-      ethAccountsPermission = permissions.find(
-        (permission: any) => permission.parentCapability === 'eth_accounts',
-      );
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const syncedRef = useRef<boolean>(false);
+  const initialCheckRef = useRef<boolean>(false);
+  const lastCheckedAddressRef = useRef<string | null>(null);
+  const permissionCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearTimerIfExists = useCallback((): void => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-    if (ethAccountsPermission) {
-      const caveat = ethAccountsPermission.caveats?.find(
-        (_caveat: any) => _caveat.type === 'restrictReturnedAccounts',
+    if (permissionCheckTimeoutRef.current) {
+      clearTimeout(permissionCheckTimeoutRef.current);
+      permissionCheckTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetOnboardingState = useCallback((): void => {
+    setOnboardingStep(null);
+    setSettingAESKeyError(null);
+    setLoading(false);
+  }, []);
+
+  const checkWalletPermissions = useCallback(async (): Promise<boolean> => {
+    try {
+      const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
+
+      const ethAccountsPermission = permissions?.find(
+        permission => permission.parentCapability === 'eth_accounts'
       );
-      if (caveat?.value && caveat.value.length > 0) {
-        return true;
+
+      if (!ethAccountsPermission) return false;
+
+      const caveat = ethAccountsPermission.caveats?.find(
+        caveat => caveat.type === 'restrictReturnedAccounts'
+      );
+
+      return Boolean(caveat?.value?.length);
+    } catch (error) {
+      console.error('Failed to check wallet permissions:', error);
+      return false;
+    }
+  }, [invokeSnap]);
+
+  const connectSnapToWallet = useCallback(async (): Promise<boolean> => {
+    try {
+      const result = await invokeSnap({ method: 'connect-to-wallet' });
+      return Boolean(result);
+    } catch (error) {
+      console.error('Failed to connect snap to wallet:', error);
+      return false;
+    }
+  }, [invokeSnap]);
+
+  const checkAccountPermissions = useCallback(async (targetAccount?: string): Promise<PermissionCheckResult> => {
+    if (!address || !installedSnap) {
+      return { hasPermission: false, currentAccount: null, permittedAccounts: [] };
+    }
+
+    try {
+      const result = await invokeSnap({
+        method: 'check-account-permissions',
+        ...(targetAccount && { params: { targetAccount } })
+      }) as PermissionCheckResult;
+
+      if (!result) {
+        return { hasPermission: false, currentAccount: null, permittedAccounts: [] };
+      }
+
+      return result;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('No account connected')) {
+        throw error;
+      }
+
+      try {
+        const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
+
+        const ethAccountsPermission = permissions?.find(
+          permission => permission.parentCapability === 'eth_accounts'
+        );
+
+        if (!ethAccountsPermission) {
+          return { hasPermission: true, currentAccount: address ?? null, permittedAccounts: [] };
+        }
+
+        const caveat = ethAccountsPermission.caveats?.find(
+          caveat => caveat.type === 'restrictReturnedAccounts'
+        );
+
+        if (!caveat?.value?.length) {
+          return { hasPermission: true, currentAccount: address ?? null, permittedAccounts: [] };
+        }
+
+        const currentAddress = (targetAccount ?? address)?.toLowerCase();
+        const hasPermission = currentAddress ? caveat.value.includes(currentAddress) : false;
+
+        return {
+          hasPermission,
+          currentAccount: targetAccount ?? address ?? null,
+          permittedAccounts: caveat.value
+        };
+      } catch (fallbackError) {
+        console.error('Permission check fallback failed:', fallbackError);
+        throw fallbackError;
       }
     }
-    return false;
-  };
+  }, [invokeSnap, address, installedSnap]);
 
-  const connectSnapToWallet = async () => {
-    const result = await invokeSnap({
-      method: 'connect-to-wallet',
-    });
-
-    if (result) {
-      return true;
+  const checkPermissionsForAccount = useCallback(async (targetAddress: string): Promise<void> => {
+    
+    if (permissionCheckTimeoutRef.current) {
+      clearTimeout(permissionCheckTimeoutRef.current);
     }
-    return false;
-  };
+    if (!installedSnap || !targetAddress) {
+      return;
+    }
+    if (lastCheckedAddressRef.current === targetAddress.toLowerCase()) {
+      return;
+    }
+    lastCheckedAddressRef.current = targetAddress.toLowerCase();
+    permissionCheckTimeoutRef.current = setTimeout(async () => {
+      try {
+        const permissionCheck = await checkAccountPermissions(targetAddress);        
+        if (permissionCheck && permissionCheck.hasPermission === false) {
+          setSettingAESKeyError('accountPermissionDenied');
+        } else if (permissionCheck && permissionCheck.hasPermission === true) {
+          if (settingAESKeyError === 'accountPermissionDenied') {
+            setSettingAESKeyError(null);
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('No account connected')) {
+          return;
+        }
+        console.warn('Permission check failed for account:', targetAddress, error);
+      }
+    }, 800);
+  }, [installedSnap, checkAccountPermissions, settingAESKeyError]);
 
-  const handleShowDelete = () => {
-    setShowDelete(!showDelete);
-  };
+  const handleShowDelete = useCallback((): void => {
+    setShowDelete(prev => !prev);
+  }, []);
 
-  const handleOnChangeContactAddress = (
-    inputEvent: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleOnChangeContactAddress = useCallback((
+    inputEvent: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     setOnboardContractAddress(inputEvent.target.value as `0x${string}`);
-  };
+  }, []);
 
-  const handleCancelOnboard = () => {
+  const handleCancelOnboard = useCallback((): void => {
     setOnboardContractAddress(USED_ONBOARD_CONTRACT_ADDRESS);
-    setSettingAESKeyError(null);
-    setOnboardingStep(null);
-  };
+    resetOnboardingState();
+  }, [resetOnboardingState]);
 
-  const setAESKey = async () => {
+  const setAESKey = useCallback(async (): Promise<void> => {
     setLoading(true);
     setSettingAESKeyError(null);
     setOnboardingStep('signature-prompt');
 
-    const hasPermissions = await getWalletPermissions();
+    try {
+      const permissionCheck = await checkAccountPermissions();
 
-    if (!hasPermissions) {
-      const connect = await connectSnapToWallet();
-      if (!connect) {
-        setLoading(false);
-        setOnboardingStep(null);
+      if (permissionCheck && !permissionCheck.hasPermission) {
+        setSettingAESKeyError('accountPermissionDenied');
+        resetOnboardingState();
         return;
       }
-    }
 
-    try {
+      const hasPermissions = await checkWalletPermissions();
+      if (!hasPermissions) {
+        const connected = await connectSnapToWallet();
+        if (!connected) {
+          resetOnboardingState();
+          return;
+        }
+      }
+
       if (!isAddress(onboardContractAddress)) {
         setSettingAESKeyError('invalidAddress');
-        setLoading(false);
-        setOnboardingStep(null);
+        resetOnboardingState();
         return;
       }
 
@@ -139,207 +287,302 @@ export const SnapProvider = ({ children }: { children: ReactNode }) => {
 
       setOnboardingStep('signature-request');
       await signer.signMessage(
-        'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.',
+        'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.'
       );
 
       setOnboardingStep('send-tx');
+      let aesKey: string | null = null;
       let retryCount = 0;
-      const maxRetries = 3;
-      let aesKey = null;
 
-      while (retryCount < maxRetries && aesKey === null) {
+      while (retryCount < MAX_RETRIES && !aesKey) {
         try {
           await signer.generateOrRecoverAes(onboardContractAddress);
-          aesKey = signer.getUserOnboardInfo()?.aesKey;
-          
-          if (aesKey === null) {
+          aesKey = signer.getUserOnboardInfo()?.aesKey ?? null;
+
+          if (!aesKey && retryCount < MAX_RETRIES - 1) {
+            await new Promise(resolve => setTimeout(resolve, getRetryDelay(retryCount + 1)));
             retryCount++;
-            if (retryCount < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-            }
           }
         } catch (providerError: any) {
-          if (
+          const isRetryableError =
             providerError.message?.includes('Block tracker destroyed') ||
             providerError.message?.includes('connection') ||
-            providerError.code === 'UNKNOWN_ERROR'
-          ) {
+            providerError.code === 'UNKNOWN_ERROR';
+
+          if (isRetryableError && retryCount < MAX_RETRIES - 1) {
+            await new Promise(resolve => setTimeout(resolve, getSyncDelay(retryCount + 1)));
             retryCount++;
-            if (retryCount < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
-              continue;
-            }
+            continue;
           }
           throw providerError;
         }
       }
 
-      if (aesKey === null) {
-        setLoading(false);
-        setOnboardingStep(null);
+      if (!aesKey) {
+        resetOnboardingState();
         return;
       }
 
       const result = await invokeSnap({
         method: 'set-aes-key',
-        params: {
-          newUserAesKey: aesKey,
-        },
+        params: { newUserAesKey: aesKey }
       });
 
       if (result) {
         setOnboardingStep('done');
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
-        
-        setTimeout(() => {
-          setLoading(false);
-          setOnboardingStep(null);
-        }, 1500);
 
-        return;
-      } else {
-        console.error('setAESKey failed - snap returned:', result);
-        if (metamaskError) {
-          console.error('MetaMask error details:', metamaskError.message, metamaskError);
-          if (metamaskError.message.includes('User rejected') || (metamaskError as any).code === 4001) {
-            setSettingAESKeyError('userRejected');
-          } else {
-            setSettingAESKeyError('unknownError');
-          }
-        } else {
-          setSettingAESKeyError('unknownError');
+        if (address) {
+          setOnboardingCompleted(address);
         }
-        setLoading(false);
-        setOnboardingStep(null);
+
+        setTimeout(() => {
+          resetOnboardingState();
+        }, 1500);
+      } else {
+        handleSetAESKeyError();
       }
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('Account balance is 0')) {
-          setSettingAESKeyError('accountBalanceZero');
-        } else if (
-          error.message.includes('user rejected') || 
-          error.message.includes('User rejected') ||
-          error.message.includes('ACTION_REJECTED') ||
-          error.message.includes('ethers-user-denied') ||
-          (error as any).code === 4001
-        ) {
-          setSettingAESKeyError('userRejected');
-        } else {
-          console.error('Error setting AES key:', error.message);
-          setSettingAESKeyError('unknownError');
-        }
+      handleSetAESKeyError(error);
+    }
+  }, [
+    checkAccountPermissions,
+    checkWalletPermissions,
+    connectSnapToWallet,
+    onboardContractAddress,
+    invokeSnap,
+    address,
+    resetOnboardingState
+  ]);
+
+  const handleSetAESKeyError = useCallback((error?: unknown): void => {
+    if (error instanceof Error) {
+      if (error.message.includes('Account balance is 0')) {
+        setSettingAESKeyError('accountBalanceZero');
+      } else if (isUserRejectedError(error)) {
+        setSettingAESKeyError('userRejected');
+      } else {
+        console.error('Error setting AES key:', error.message);
+        setSettingAESKeyError('unknownError');
+      }
+    } else if (metamaskError) {
+      console.error('MetaMask error details:', metamaskError.message, metamaskError);
+      if (isUserRejectedError(metamaskError)) {
+        setSettingAESKeyError('userRejected');
       } else {
         setSettingAESKeyError('unknownError');
       }
-      
-      setLoading(false);
-      setOnboardingStep(null);
+    } else {
+      setSettingAESKeyError('unknownError');
     }
-  };
 
-  const getAESKey = async () => {
+    resetOnboardingState();
+  }, [metamaskError, resetOnboardingState]);
+
+  const getAESKey = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const result = await invokeSnap({
-        method: 'get-aes-key',
-      });
+      const result = await invokeSnap({ method: 'get-aes-key' });
 
       if (result !== null) {
         setUserAesKEY(result as string);
+        setUserHasAesKEY(true);
       } else {
         const rejectionError = new Error('User rejected the request');
         (rejectionError as any).code = 4001;
         throw rejectionError;
       }
-    } catch (error: any) {
+    } catch (error) {
       throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, [invokeSnap]);
 
-  const deleteAESKey = async () => {
+  const deleteAESKey = useCallback(async (): Promise<void> => {
     setLoading(true);
-    const result = await invokeSnap({
-      method: 'delete-aes-key',
-    });
+    try {
+      const result = await invokeSnap({ method: 'delete-aes-key' });
 
-    if (result) {
-      setUserHasAesKEY(false);
-      setShowDelete(false);
-      setSettingAESKeyError(null);
-    }
-    setLoading(false);
-  };
+      if (result) {
+        setUserHasAesKEY(false);
+        setShowDelete(false);
+        setSettingAESKeyError(null);
 
-  const syncedRef = useRef(false);
-  useEffect(() => {
-    const syncEnvironmentWithSnap = async () => {
-      if (installedSnap && !syncedRef.current) {
-        try {
-          syncedRef.current = true;
-          const environment = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
-          
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          await invokeSnap({
-            method: 'set-environment',
-            params: { environment },
-          });
-          
-        } catch (error) {
-          syncedRef.current = false;
+        if (address) {
+          clearOnboardingCompleted(address);
         }
+      }
+    } catch (error) {
+      console.error('Failed to delete AES key:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [invokeSnap, address]);
+
+  useEffect(() => {
+    const syncEnvironmentWithSnap = async (): Promise<void> => {
+      if (!installedSnap || syncedRef.current || !address) return;
+
+      try {
+        syncedRef.current = true;
+        await new Promise(resolve => setTimeout(resolve, SYNC_DELAY));
+
+        await invokeSnap({
+          method: 'set-environment',
+          params: { environment: ENVIRONMENT }
+        });
+      } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes('No account connected')) {
+          console.error('Failed to sync environment:', error);
+        }
+        syncedRef.current = false;
       }
     };
 
-    if (installedSnap) {
-      setTimeout(syncEnvironmentWithSnap, 0);
+    if (installedSnap && address && !syncedRef.current) {
+      const timer = setTimeout(syncEnvironmentWithSnap, SYNC_DELAY);
+      return () => clearTimeout(timer);
     }
-  }, [installedSnap, invokeSnap]);
+  }, [installedSnap, address]);
+
+  const handlePermissionCheck = useCallback(async (): Promise<void> => {
+    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap) return;
+
+    try {
+      const hasOnboarded = hasCompletedOnboarding(address);
+      setUserHasAesKEY(hasOnboarded);
+
+      setSettingAESKeyError(null);
+      setOnboardingStep(null);
+      clearTimerIfExists();
+
+      initialCheckRef.current = true;
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes('No account connected')) {
+        console.error('SnapContext: Permission check failed:', error);
+      }
+    }
+  }, [address, installedSnap, isInstallingSnap, clearTimerIfExists]);
 
   useEffect(() => {
-    if (address) {      
+    initialCheckRef.current = false;
+    syncedRef.current = false;
+
+    if (!address || !installedSnap) {
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
-      setOnboardingStep(null);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
+      return;
     }
-  }, [address]);
+
+    if (isInstallingSnap) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void handlePermissionCheck();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [address, installedSnap, isInstallingSnap]);
+
+  useEffect(() => {
+    const handleAccountsChanged = async (accounts: unknown): Promise<void> => {
+      const accountsArray = accounts as string[];
+
+      if (!accountsArray?.length || !installedSnap) {
+        setUserHasAesKEY(false);
+        setUserAesKEY(null);
+        setSettingAESKeyError(null);
+        initialCheckRef.current = false;
+        lastCheckedAddressRef.current = null;
+        return;
+      }
+
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      setSettingAESKeyError(null);
+      initialCheckRef.current = false;
+
+      const newAddress = accountsArray[0];
+      if (newAddress) {
+        await checkPermissionsForAccount(newAddress);
+      }
+    };
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      };
+    }
+  }, [installedSnap, checkPermissionsForAccount]);
+
+  useEffect(() => {
+    if (address && installedSnap) {
+      checkPermissionsForAccount(address);
+    } else if (!address) {
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      if (settingAESKeyError === 'accountPermissionDenied') {
+        setSettingAESKeyError(null);
+      }
+      lastCheckedAddressRef.current = null;
+    }
+  }, [address, installedSnap, checkPermissionsForAccount, settingAESKeyError]);
+
+  const contextValue = useMemo((): SnapContextValue => ({
+    userHasAESKey,
+    setAESKey,
+    getAESKey,
+    deleteAESKey,
+    userAESKey,
+    setUserAesKEY,
+    handleShowDelete,
+    showDelete,
+    loading,
+    settingAESKeyError,
+    onboardContractAddress,
+    handleOnChangeContactAddress,
+    handleCancelOnboard,
+    onboardingStep,
+  }), [
+    userHasAESKey,
+    setAESKey,
+    getAESKey,
+    deleteAESKey,
+    userAESKey,
+    handleShowDelete,
+    showDelete,
+    loading,
+    settingAESKeyError,
+    onboardContractAddress,
+    handleOnChangeContactAddress,
+    handleCancelOnboard,
+    onboardingStep,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearTimerIfExists();
+    };
+  }, [clearTimerIfExists]);
 
   return (
-    <SnapContext.Provider
-      value={{
-        userHasAESKey,
-        setAESKey,
-        getAESKey,
-        deleteAESKey,
-        userAESKey,
-        setUserAesKEY,
-        handleShowDelete,
-        showDelete,
-        loading,
-        settingAESKeyError,
-        onboardContractAddress,
-        handleOnChangeContactAddress,
-        handleCancelOnboard,
-        onboardingStep,
-      }}
-    >
+    <SnapContext.Provider value={contextValue}>
       {children}
     </SnapContext.Provider>
   );
 };
 
-export const useSnap = (): SnapContextProps => {
+export const useSnap = (): SnapContextValue => {
   const context = useContext(SnapContext);
   if (context === undefined) {
     throw new Error('useSnap must be used within a SnapProvider');
   }
   return context;
 };
+
+SnapProvider.displayName = 'SnapProvider';
