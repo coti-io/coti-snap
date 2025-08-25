@@ -1,13 +1,13 @@
 export const COTI_TESTNET_CHAIN_ID = '7082400';
 export const COTI_MAINNET_CHAIN_ID = '2632500';
 
-export interface NetworkConfig {
+export type NetworkConfig = {
   chainId: string;
   networkName: string;
   rpcUrl: string;
   explorerUrl: string;
   isTestnet: boolean;
-}
+};
 
 export const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
   [COTI_TESTNET_CHAIN_ID]: {

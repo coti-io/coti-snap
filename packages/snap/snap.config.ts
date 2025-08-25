@@ -1,5 +1,6 @@
 import type { SnapConfig } from '@metamask/snaps-cli';
 import { resolve } from 'path';
+import webpack from 'webpack';
 
 const config: SnapConfig = {
   bundler: 'webpack',
@@ -12,18 +13,18 @@ const config: SnapConfig = {
     crypto: true,
   },
   environment: {
-    NODE_ENV: process.env.NODE_ENV || 'development',
-    SNAP_ENV: process.env.SNAP_ENV || 'local',
+    NODE_ENV: process.env.NODE_ENV ?? 'development',
+    SNAP_ENV: process.env.SNAP_ENV ?? 'local',
   },
-  customizeWebpackConfig: (config) => {
-    config.plugins = config.plugins || [];
-    config.plugins.push(
-      new (require('webpack')).DefinePlugin({
-        '__SNAP_ENV__': JSON.stringify(process.env.SNAP_ENV || 'local'),
-        '__DEV__': JSON.stringify(process.env.NODE_ENV === 'development'),
+  customizeWebpackConfig: (webpackConfig) => {
+    webpackConfig.plugins = webpackConfig.plugins ?? [];
+    webpackConfig.plugins.push(
+      new webpack.DefinePlugin({
+        SNAP_ENV: JSON.stringify(process.env.SNAP_ENV ?? 'local'),
+        DEV: JSON.stringify(process.env.NODE_ENV === 'development'),
       })
     );
-    return config;
+    return webpackConfig;
   },
 };
 

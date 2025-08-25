@@ -6,7 +6,6 @@ import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc721Abi from '../abis/ERC721.json';
 import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
-import { getCurrentNetworkConfig } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 import {
@@ -128,7 +127,7 @@ export const checkERC721Ownership = async (
       
       const owner = await contract.ownerOf(BigInt(tokenId));
       return owner.toLowerCase() === userAddress.toLowerCase();
-    } catch (standardError) {
+    } catch {
       try {
         contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
         
@@ -138,14 +137,11 @@ export const checkERC721Ownership = async (
         
         const owner = await contract.ownerOf(BigInt(tokenId));
         return owner.toLowerCase() === userAddress.toLowerCase();
-      } catch (confidentialError) {
-        console.error('Standard ERC721 ownership check failed:', standardError);
-        console.error('Confidential ERC721 ownership check failed:', confidentialError);
+      } catch {
         return false;
       }
     }
-  } catch (error) {
-    console.error('Error checking ERC721 ownership:', error);
+  } catch {
     return false;
   }
 };
@@ -350,7 +346,7 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
       tokenBalances,
     });
     return { balance, tokenBalances };
-  } catch (error) {
+  } catch {
     return { 
       balance: BigInt(0), 
       tokenBalances: tokens.map(token => ({ ...token, balance: null }))

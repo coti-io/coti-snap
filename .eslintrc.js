@@ -27,6 +27,15 @@ module.exports = {
           { allow: ['describe', 'expect', 'it'] },
         ],
       },
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'objectLiteralProperty',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allowDouble',
+          trailingUnderscore: 'allowDouble',
+        },
+      ],
     },
   ],
 

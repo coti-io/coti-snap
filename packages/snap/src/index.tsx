@@ -690,7 +690,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           permittedAccounts
         };
       } catch (error) {
-        console.error('Error checking account permissions:', error);
         return {
           hasPermission: false,
           currentAccount: null,
