@@ -1,10 +1,10 @@
 import { ONBOARD_CONTRACT_ADDRESS } from '@coti-io/coti-ethers';
 
-const isLocal = import.meta.env.VITE_NODE_ENV === 'local';
+const isTestnet = import.meta.env.VITE_NODE_ENV === 'testnet';
 
 export const USED_ONBOARD_CONTRACT_ADDRESS = ONBOARD_CONTRACT_ADDRESS;
 
-export const ONBOARD_CONTRACT_LINK = isLocal
+export const ONBOARD_CONTRACT_LINK = isTestnet
   ? 'https://testnet.cotiscan.io/address/0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9?tab=transactions'
   : 'https://mainnet.cotiscan.io/address/0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9?tab=transactions';
 

@@ -58,8 +58,8 @@ export const NETWORKS: Record<number, NetworkConfig> = {
 };
 
 export const getCurrentNetworkConfig = (): NetworkConfig => {
-  const isLocal = import.meta.env.VITE_NODE_ENV === 'local';
-  const chainId = isLocal ? COTI_TESTNET_CHAIN_ID : COTI_MAINNET_CHAIN_ID;
+  const isTestnet = import.meta.env.VITE_NODE_ENV === 'testnet';
+  const chainId = isTestnet ? COTI_TESTNET_CHAIN_ID : COTI_MAINNET_CHAIN_ID;
   const config = NETWORKS[chainId];
   if (!config) {
     throw new Error(`Network configuration not found for chain ID: ${chainId}`);
