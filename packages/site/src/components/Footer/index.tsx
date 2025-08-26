@@ -31,6 +31,10 @@ const Description = styled.p`
   color: ${({ theme }) => theme.colors.text?.muted};
 `;
 
+const VersionInfo = styled.span`
+  font-weight: 600;
+`;
+
 const Link = styled.a`
   color: ${({ theme }) => theme.colors.text?.muted};
   text-decoration: underline;
@@ -45,15 +49,18 @@ export function Footer() {
     <FooterContainer>
       <Title>Powered by MetaMask Snaps. MetaMask® is a trademark of ConsenSys.</Title>
       <Description>
-        © 2025 COTI{' '}
-        <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">
-          Terms of Use
-        </Link>{' '}
-        <Link href="https://coti.io/privacy" target="_blank" rel="noopener noreferrer">
-          Privacy Policy
-        </Link>{' '}
+        dApp <VersionInfo>{process.env.VITE_GIT_COMMIT?.slice(0, 6) || 'dev'}</VersionInfo> • Snap <VersionInfo>v{process.env.VITE_SNAP_VERSION || 'unknown'}</VersionInfo>{' '} • {' '}
         <Link href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap" target="_blank" rel="noopener noreferrer">
           Docs
+        </Link>{' '}
+        •
+        © 2025 COTI{' '}
+        •
+        <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">{' '}
+          Terms of Use
+        </Link>{' '} • {' '}
+        <Link href="https://coti.io/privacy" target="_blank" rel="noopener noreferrer">
+          Privacy Policy
         </Link>{' '}
       </Description>
     </FooterContainer>

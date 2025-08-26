@@ -62,7 +62,7 @@ interface SnapProviderProps {
 }
 
 const MAX_RETRIES = 3;
-const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'local' ? 'testnet' : 'mainnet';
+const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'testnet' ? 'testnet' : 'mainnet';
 const SYNC_DELAY = 200;
 
 const isUserRejectedError = (error: unknown): boolean => {
