@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 
 import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
-import { isLocal } from '../../config/snap';
+import { isTestnet } from '../../config/snap';
 import { useSnap } from '../../hooks/SnapContext';
 import { useWrongChain, useMetaMask } from '../../hooks';
 import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
@@ -43,13 +43,13 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   }, [address]);
 
   const shouldShowWizard = useMemo(() => {
-    const showWizard = onboardingState.isOnboarding && !onboardingState.isCompleted && isLocal();
+    const showWizard = onboardingState.isOnboarding && !onboardingState.isCompleted && isTestnet();
     return showWizard;
   }, [onboardingState]);
 
   const handleStartOnboarding = useCallback(async (): Promise<void> => {
     startTransition(() => {
-      if (isLocal()) {
+      if (isTestnet()) {
         setOnboardingState(prev => ({
           ...prev,
           isOnboarding: true
@@ -57,7 +57,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
       }
     });
 
-    if (!isLocal()) {
+    if (!isTestnet()) {
       try {
         await setAESKey();
         handleOnboardingComplete();
@@ -65,7 +65,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         console.error('OnboardAccount: Error during AES key setup:', error);
       }
     }
-  }, [isLocal, setAESKey, startTransition]);
+  }, [isTestnet, setAESKey, startTransition]);
 
   const handleOnboardingComplete = useCallback((): void => {
     setOnboardingState({
@@ -95,7 +95,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   }
 
   return isConnected ? (
-    (!isLocal() && loading && !settingAESKeyError) ? (
+    (!isTestnet() && loading && !settingAESKeyError) ? (
       <LoadingWithProgress title="Onboard" actionText="Onboarding account" />
     ) : shouldShowWizard ? (
       <OnboardAccountWizard
@@ -113,25 +113,25 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
           text="Onboard"
           onClick={handleStartOnboarding}
           aria-label="Start account onboarding process"
-          disabled={!isLocal() && loading}
+          disabled={!isTestnet() && loading}
         />
 
-        {!isLocal() && settingAESKeyError === 'accountBalanceZero' && (
+        {!isTestnet() && settingAESKeyError === 'accountBalanceZero' && (
           <Alert type="error">
             Error onboarding account: Insufficient funds.
           </Alert>
         )}
-        {!isLocal() && settingAESKeyError === 'invalidAddress' && (
+        {!isTestnet() && settingAESKeyError === 'invalidAddress' && (
           <Alert type="error">
             Error to onboard account, check the contract address
           </Alert>
         )}
-        {!isLocal() && settingAESKeyError === 'userRejected' && (
+        {!isTestnet() && settingAESKeyError === 'userRejected' && (
           <Alert type="error">
             Transaction rejected by user. Please try again when ready.
           </Alert>
         )}
-        {!isLocal() && settingAESKeyError === 'unknownError' && (
+        {!isTestnet() && settingAESKeyError === 'unknownError' && (
           <Alert type="error">
             Error to onboard account, try again
           </Alert>
