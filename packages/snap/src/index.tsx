@@ -629,13 +629,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return true;
 
 
-    case 'get-permissions':
-      const permissions = await ethereum.request({
-        method: 'wallet_getPermissions',
-        params: [],
-      });
 
-      return permissions ?? [];
 
     case 'set-environment':
       const { environment } = request.params as { environment: 'testnet' | 'mainnet' };

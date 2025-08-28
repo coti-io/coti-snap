@@ -152,4 +152,260 @@ describe('onRpcRequest', () => {
       stack: expect.any(String),
     });
   });
+
+  it('checks if AES key exists', async () => {
+    const { request } = await installSnap();
+
+    const responseWithoutKey = await request({
+      method: 'has-aes-key',
+    });
+
+    expect(responseWithoutKey).toRespondWith(false);
+
+    const aesKey = 'test-aes-key';
+    await request({
+      method: 'set-aes-key',
+      params: { newUserAesKey: aesKey },
+    });
+
+    const responseWithKey = await request({
+      method: 'has-aes-key',
+    });
+
+    expect(responseWithKey).toRespondWith(true);
+  });
+
+  it('deletes AES key with user confirmation', async () => {
+    const { request } = await installSnap();
+    const aesKey = 'my-aes-key';
+
+    await request({
+      method: 'set-aes-key',
+      params: { newUserAesKey: aesKey },
+    });
+
+    const hasKeyBefore = await request({
+      method: 'has-aes-key',
+    });
+    expect(hasKeyBefore).toRespondWith(true);
+
+    const deleteResponse = request({
+      method: 'delete-aes-key',
+    });
+
+    const ui = (await deleteResponse.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('confirmation');
+    expect(ui).toRender(
+      <Box>
+        <Heading>Delete AES Key</Heading>
+        <Text>Approve to delete the AES Key</Text>
+      </Box>,
+    );
+
+    await ui.ok();
+    const rpcResponse = await deleteResponse;
+    expect(rpcResponse).toRespondWith(true);
+
+    const hasKeyAfter = await request({
+      method: 'has-aes-key',
+    });
+    expect(hasKeyAfter).toRespondWith(false);
+  });
+
+  it('handles delete AES key when no key exists', async () => {
+    const { request } = await installSnap();
+
+    const response = request({
+      method: 'delete-aes-key',
+    });
+
+    const ui = (await response.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('alert');
+    expect(ui).toRender(
+      <Box>
+        <Heading>Warning</Heading>
+        <Text>AES key not found.</Text>
+      </Box>
+    );
+
+    await ui.ok();
+    const rpcResponse = await response;
+    const { result } = rpcResponse.response as { result: null };
+    expect(result).toBeNull();
+  });
+
+  it('handles user rejection when deleting AES key', async () => {
+    const { request } = await installSnap();
+    const aesKey = 'test-aes-key';
+
+    await request({
+      method: 'set-aes-key',
+      params: { newUserAesKey: aesKey },
+    });
+
+    const deleteResponse = request({
+      method: 'delete-aes-key',
+    });
+
+    const ui = (await deleteResponse.getInterface()) as SnapConfirmationInterface;
+    await ui.cancel();
+
+    const rpcResponse = await deleteResponse;
+    const { result } = rpcResponse.response as { result: null };
+    expect(result).toBeNull();
+
+    const hasKey = await request({
+      method: 'has-aes-key',
+    });
+    expect(hasKey).toRespondWith(true);
+  });
+
+  it('connects to wallet successfully', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'connect-to-wallet',
+    });
+
+    expect(response).toRespondWith(true);
+  });
+
+  it('gets wallet permissions', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'get-permissions',
+    });
+
+    expect(response).toRespondWith([{}]);
+  });
+
+  it('sets environment to testnet', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'set-environment',
+      params: { environment: 'testnet' },
+    });
+
+    expect(response).toRespondWith(true);
+  });
+
+  it('sets environment to mainnet', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'set-environment',
+      params: { environment: 'mainnet' },
+    });
+
+    expect(response).toRespondWith(true);
+  });
+
+  it('handles invalid environment parameter', async () => {
+    const { request } = await installSnap();
+
+    const response = request({
+      method: 'set-environment',
+      params: { environment: 'invalid-env' },
+    });
+
+    const ui = (await response.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('alert');
+    expect(ui).toRender(
+      <Box>
+        <Heading>Error</Heading>
+        <Text>Invalid environment. Must be 'testnet' or 'mainnet'.</Text>
+      </Box>,
+    );
+
+    await ui.ok();
+    const rpcResponse = await response;
+    expect(rpcResponse).toRespondWith(false);
+  });
+
+  it('handles missing environment parameter', async () => {
+    const { request } = await installSnap();
+
+    const response = request({
+      method: 'set-environment',
+      params: {},
+    });
+
+    const ui = (await response.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('alert');
+    expect(ui).toRender(
+      <Box>
+        <Heading>Error</Heading>
+        <Text>Invalid environment. Must be 'testnet' or 'mainnet'.</Text>
+      </Box>,
+    );
+
+    await ui.ok();
+    const rpcResponse = await response;
+    expect(rpcResponse).toRespondWith(false);
+  });
+
+  it('checks account permissions for current account', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'check-account-permissions',
+    });
+
+    expect(response.response).toHaveProperty('result');
+    const result = (response.response as { result: any }).result as {
+      hasPermission: boolean;
+      currentAccount: string | null;
+      permittedAccounts: string[];
+    };
+
+    expect(result).toHaveProperty('hasPermission');
+    expect(result).toHaveProperty('currentAccount');
+    expect(result).toHaveProperty('permittedAccounts');
+    expect(Array.isArray(result.permittedAccounts)).toBe(true);
+  });
+
+  it('checks account permissions for specific target account', async () => {
+    const { request } = await installSnap();
+    const targetAccount = '0x1234567890123456789012345678901234567890';
+
+    const response = await request({
+      method: 'check-account-permissions',
+      params: { targetAccount },
+    });
+
+    expect(response.response).toHaveProperty('result');
+    const result = (response.response as { result: any }).result as {
+      hasPermission: boolean;
+      currentAccount: string | null;
+      permittedAccounts: string[];
+    };
+
+    expect(result).toHaveProperty('hasPermission');
+    expect(result).toHaveProperty('currentAccount');
+    expect(result).toHaveProperty('permittedAccounts');
+    expect(result.currentAccount).toBe(targetAccount.toLowerCase());
+  });
+
+  it('handles account permissions check errors gracefully', async () => {
+    const { request } = await installSnap();
+
+    const response = await request({
+      method: 'check-account-permissions',
+    });
+
+    expect(response.response).toHaveProperty('result');
+    const result = (response.response as { result: any }).result as {
+      hasPermission: boolean;
+      currentAccount: string | null;
+      permittedAccounts: string[];
+      error?: string;
+    };
+
+    expect(result).toHaveProperty('hasPermission');
+    expect(result).toHaveProperty('currentAccount');
+    expect(result).toHaveProperty('permittedAccounts');
+    expect(typeof result.hasPermission).toBe('boolean');
+  });
 });

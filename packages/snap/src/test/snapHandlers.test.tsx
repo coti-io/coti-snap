@@ -184,7 +184,7 @@ describe('Snap Handlers', () => {
     it('should handle token details button click', async () => {
       const mockToken = { address: '0xToken1', name: 'Test Token', uri: null };
       const mockState = { tokenBalances: [mockToken] };
-      
+
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
       global.snap.request.mockResolvedValue(undefined);
 
@@ -206,13 +206,13 @@ describe('Snap Handlers', () => {
     });
 
     it('should handle token details with URI and image', async () => {
-      const mockToken = { 
-        address: '0xToken1', 
-        name: 'Test Token', 
-        uri: 'https://example.com/metadata' 
+      const mockToken = {
+        address: '0xToken1',
+        name: 'Test Token',
+        uri: 'https://example.com/metadata'
       };
       const mockState = { tokenBalances: [mockToken] };
-      
+
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
       (getSVGfromMetadata as jest.Mock).mockResolvedValue('base64image');
       global.snap.request.mockResolvedValue(undefined);
@@ -230,7 +230,7 @@ describe('Snap Handlers', () => {
     it('should handle confirm hide token button click', async () => {
       const mockToken = { address: '0xToken1', name: 'Test Token' };
       const mockState = { tokenBalances: [mockToken] };
-      
+
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
       global.snap.request.mockResolvedValue(undefined);
 
