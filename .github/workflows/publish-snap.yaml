@@ -13,9 +13,13 @@ permissions:
   packages: write
 
 jobs:
+  run-tests:
+    uses: ./.github/workflows/test-snap.yaml
+
   publish-snap:
     name: Build and Publish Snap
     runs-on: ubuntu-latest
+    needs: [run-tests]
     env:
       NODE_ENV: production
     steps:
