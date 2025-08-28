@@ -102,10 +102,29 @@ jobs:
 #        env:
 #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Update site versions
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          COMMIT_HASH=$(git rev-parse --short=6 HEAD)
+          
+          # Create - Update versions.json for site
+          cat > packages/site/src/config/versions.json << EOF
+          {
+            "snapVersion": "$NEW_VERSION",
+            "gitCommit": "$COMMIT_HASH",
+            "buildDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "environment": "production"
+          }
+          EOF
+          
+          echo "Updated versions.json with:"
+          echo "  snapVersion: $NEW_VERSION"
+          echo "  gitCommit: $COMMIT_HASH"
+
       - name: Commit version changes
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add packages/snap/package.json packages/snap/snap.manifest.json
+          git add packages/snap/package.json packages/snap/snap.manifest.json packages/site/src/config/versions.json
           git commit -m "chore: bump snap version to ${{ steps.version.outputs.new_version }} [skip ci]" || echo "No changes to commit"
           git push
