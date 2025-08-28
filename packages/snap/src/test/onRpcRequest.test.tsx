@@ -128,8 +128,8 @@ describe('onRpcRequest', () => {
     expect(ui.type).toBe('confirmation');
     expect(ui).toRender(
       <Box>
-        <Heading>Reveal AES Key</Heading>
-        <Text>Approve to reveal AES Key</Text>
+        <Heading>Unlock Security Key</Heading>
+        <Text>Approve to unlock your security key</Text>
       </Box>,
     );
 
