@@ -1,6 +1,29 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+const getGitCommitHash = () => {
+  try {
+    return execSync('git rev-parse --short=6 HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    return 'dev';
+  }
+};
+
+const getSnapVersion = () => {
+  try {
+    const snapManifestPath = resolve(__dirname, '../snap/snap.manifest.json');
+    const snapManifest = JSON.parse(readFileSync(snapManifestPath, 'utf8'));
+    const version = snapManifest.version;
+    process.env.VITE_SNAP_VERSION = version;
+    return version;
+  } catch {
+    return 'unknown';
+  }
+};
 
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
