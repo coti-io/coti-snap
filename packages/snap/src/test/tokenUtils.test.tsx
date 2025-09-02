@@ -10,6 +10,7 @@ jest.mock('@coti-io/coti-sdk-typescript', () => ({
   decryptString: jest.fn(),
   decryptUint: jest.fn(),
 }));
+const { getStateByChainIdAndAddress, setStateByChainIdAndAddress } = require('../utils/snap');
 jest.mock('../utils/snap', () => ({
   getStateByChainIdAndAddress: jest.fn(),
   setStateByChainIdAndAddress: jest.fn(),
@@ -202,6 +203,251 @@ describe('Token Utilities', () => {
       const result = await tokenUtils.checkChainId();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('getERC721Details', () => {
+    it('should return ERC721 details when valid', async () => {
+      const mockContract = {
+        symbol: jest.fn().mockResolvedValue('NFTS'),
+        name: jest.fn().mockResolvedValue('NFT Collection'),
+      };
+      (ethers.Contract as jest.Mock).mockImplementation(() => mockContract);
+
+      const details = await tokenUtils.getERC721Details('0xNFTAddress');
+
+      expect(mockContract.symbol).toHaveBeenCalled();
+      expect(mockContract.name).toHaveBeenCalled();
+      expect(details).toEqual({
+        symbol: 'NFTS',
+        name: 'NFT Collection',
+      });
+    });
+
+    it('should return null when an error occurs', async () => {
+      const mockContract = {
+        symbol: jest.fn().mockRejectedValue(new Error('Error')),
+        name: jest.fn(),
+      };
+      (ethers.Contract as jest.Mock).mockImplementation(() => mockContract);
+
+      const details = await tokenUtils.getERC721Details('0xNFTAddress');
+
+      expect(details).toBeNull();
+    });
+  });
+
+  describe('checkERC721Ownership', () => {
+    it('should return true when user owns the token', async () => {
+      const userAddress = '0x123';
+      global.ethereum.request.mockResolvedValue([userAddress]);
+      const mockContract = {
+        ownerOf: jest.fn().mockResolvedValue(userAddress),
+      };
+      (ethers.Contract as jest.Mock).mockImplementation(() => mockContract);
+
+      const result = await tokenUtils.checkERC721Ownership('0xNFTAddress', '1');
+
+      expect(mockContract.ownerOf).toHaveBeenCalledWith(BigInt(1));
+      expect(result).toBe(true);
+    });
+
+    it('should return false when user does not own the token', async () => {
+      const userAddress = '0x123';
+      const ownerAddress = '0x456';
+      global.ethereum.request.mockResolvedValue([userAddress]);
+      const mockContract = {
+        ownerOf: jest.fn().mockResolvedValue(ownerAddress),
+      };
+      (ethers.Contract as jest.Mock).mockImplementation(() => mockContract);
+
+      const result = await tokenUtils.checkERC721Ownership('0xNFTAddress', '1');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when no account is connected', async () => {
+      global.ethereum.request.mockResolvedValue([]);
+
+      const result = await tokenUtils.checkERC721Ownership('0xNFTAddress', '1');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('checkIfERC20Unique', () => {
+    it('should return true when token is unique', async () => {
+      const mockState = {
+        tokenBalances: [
+          { address: '0xOtherToken', type: TokenViewSelector.ERC20 },
+        ],
+      };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+
+      const result = await tokenUtils.checkIfERC20Unique('0xNewToken');
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when token already exists', async () => {
+      const mockState = {
+        tokenBalances: [
+          { address: '0xExistingToken', type: TokenViewSelector.ERC20 },
+        ],
+      };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+
+      const result = await tokenUtils.checkIfERC20Unique('0xExistingToken');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('checkIfERC721Unique', () => {
+    it('should return true when NFT is unique', async () => {
+      const mockState = {
+        tokenBalances: [
+          { address: '0xNFTAddress', tokenId: '2', type: TokenViewSelector.NFT },
+        ],
+      };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+
+      const result = await tokenUtils.checkIfERC721Unique('0xNFTAddress', '1');
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when NFT already exists', async () => {
+      const mockState = {
+        tokenBalances: [
+          { address: '0xNFTAddress', tokenId: '1', type: TokenViewSelector.NFT },
+        ],
+      };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+
+      const result = await tokenUtils.checkIfERC721Unique('0xNFTAddress', '1');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('truncateAddress', () => {
+    it('should truncate long addresses', () => {
+      const address = '0x1234567890abcdef1234567890abcdef12345678';
+      
+      const result = tokenUtils.truncateAddress(address);
+      
+      expect(result).toBe('0x1234...345678');
+    });
+
+    it('should return original address if short', () => {
+      const address = '0x1234';
+      
+      const result = tokenUtils.truncateAddress(address);
+      
+      expect(result).toBe('0x1234');
+    });
+
+    it('should use custom length', () => {
+      const address = '0x1234567890abcdef1234567890abcdef12345678';
+      
+      const result = tokenUtils.truncateAddress(address, 4);
+      
+      expect(result).toBe('0x12...5678');
+    });
+  });
+
+  describe('formatTokenBalance', () => {
+    it('should return 0 for null balance', () => {
+      const result = tokenUtils.formatTokenBalance(null, '18');
+      
+      expect(result).toBe('0');
+    });
+
+    it('should return 0 for zero balance', () => {
+      const result = tokenUtils.formatTokenBalance('0', '18');
+      
+      expect(result).toBe('0');
+    });
+
+    it('should return 0 for null decimals', () => {
+      const result = tokenUtils.formatTokenBalance('1000', null);
+      
+      expect(result).toBe('0');
+    });
+
+    it('should handle invalid input gracefully', () => {
+      const result = tokenUtils.formatTokenBalance('invalid', '18');
+      
+      expect(result).toBe('0');
+    });
+  });
+
+  describe('importToken', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should import valid ERC20 token without errors', async () => {
+      const mockState = { tokenBalances: [] };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+      (setStateByChainIdAndAddress as jest.Mock).mockResolvedValue(undefined);
+      
+      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType')
+        .mockImplementation(async () => ({ 
+          type: TokenViewSelector.ERC20, 
+          confidential: false 
+        }));
+
+      await expect(tokenUtils.importToken('0xToken', 'Test Token', 'TT', '18')).resolves.not.toThrow();
+
+      getTokenTypeSpy.mockRestore();
+    });
+
+    it('should not import unknown token type', async () => {
+      const mockState = { tokenBalances: [] };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+      
+      const mockTokenType = { type: TokenViewSelector.UNKNOWN, confidential: false };
+      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType').mockResolvedValue(mockTokenType);
+
+      await tokenUtils.importToken('0xToken', 'Unknown Token', 'UT', '18');
+
+      expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
+
+      getTokenTypeSpy.mockRestore();
+    });
+
+    it('should not import NFT without tokenId', async () => {
+      const mockState = { tokenBalances: [] };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+      
+      const mockTokenType = { type: TokenViewSelector.NFT, confidential: false };
+      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType').mockResolvedValue(mockTokenType);
+
+      await tokenUtils.importToken('0xNFT', 'NFT Token', 'NFT', '0');
+
+      expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
+
+      getTokenTypeSpy.mockRestore();
+    });
+  });
+
+  describe('hideToken', () => {
+    it('should remove token from state', async () => {
+      const mockState = {
+        tokenBalances: [
+          { address: '0xToken1', symbol: 'T1' },
+          { address: '0xToken2', symbol: 'T2' },
+        ],
+      };
+      (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+
+      await tokenUtils.hideToken('0xToken1');
+
+      expect(setStateByChainIdAndAddress).toHaveBeenCalledWith({
+        tokenBalances: [{ address: '0xToken2', symbol: 'T2' }],
+      });
     });
   });
 });

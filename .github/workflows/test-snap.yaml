@@ -1,0 +1,70 @@
+name: Test COTI Snap
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/snap/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/snap/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-snap:
+    name: Test Snap Package
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.16.0'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Snap for Testing
+        run: |
+          cd packages/snap
+          npm run build:clean
+        env:
+          SNAP_ENV: local
+          NODE_ENV: development
+
+      - name: Update Snap Manifest Shasum
+        run: |
+          cd packages/snap
+          npx mm-snap manifest --fix
+
+      - name: Run Unit Tests
+        run: |
+          cd packages/snap
+          npm test
+        env:
+          NODE_ENV: test
+
+      - name: Type Check
+        run: |
+          cd packages/snap
+          npx tsc --noEmit
+
+      - name: Test Coverage Report
+        run: |
+          cd packages/snap
+          npm test -- --coverage --watchAll=false
+        env:
+          NODE_ENV: test
