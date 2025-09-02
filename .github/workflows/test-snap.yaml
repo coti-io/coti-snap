@@ -12,7 +12,10 @@ on:
     paths:
       - 'packages/snap/**'
   workflow_dispatch:
+<<<<<<< HEAD
   workflow_call:
+=======
+>>>>>>> 39dd220 (test: snap unit testing (#5))
 
 permissions:
   contents: read
@@ -68,4 +71,8 @@ jobs:
           cd packages/snap
           npm test -- --coverage --watchAll=false
         env:
+<<<<<<< HEAD
           NODE_ENV: test
+=======
+          NODE_ENV: test
+>>>>>>> 39dd220 (test: snap unit testing (#5))
