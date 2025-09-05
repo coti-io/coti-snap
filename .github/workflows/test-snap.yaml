@@ -12,6 +12,10 @@ on:
     paths:
       - 'packages/snap/**'
   workflow_dispatch:
+<<<<<<< HEAD
+=======
+  workflow_call:
+>>>>>>> 4145c2d1d398a14e7c3a350afcbfe9559c25e64a
 
 permissions:
   contents: read
@@ -67,4 +71,8 @@ jobs:
           cd packages/snap
           npm test -- --coverage --watchAll=false
         env:
+<<<<<<< HEAD
           NODE_ENV: test
+=======
+          NODE_ENV: test
+>>>>>>> 4145c2d1d398a14e7c3a350afcbfe9559c25e64a
