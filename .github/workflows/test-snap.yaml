@@ -12,7 +12,6 @@ on:
     paths:
       - 'packages/snap/**'
   workflow_dispatch:
-  workflow_call:
 
 permissions:
   contents: read
