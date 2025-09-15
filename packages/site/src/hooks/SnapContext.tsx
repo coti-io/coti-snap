@@ -9,7 +9,7 @@ import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 import { useMetaMaskContext } from './MetamaskContext';
-import { hasCompletedOnboarding, setOnboardingCompleted, clearOnboardingCompleted } from '../utils/onboardingStorage';
+import { hasCompletedOnboarding, setOnboardingCompleted, clearOnboardingCompleted, clearAllOnboardingData } from '../utils/onboardingStorage';
 
 export type SetAESKeyError =
   | 'accountBalanceZero'
@@ -474,6 +474,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
+
+      if (!installedSnap) {
+        clearAllOnboardingData();
+      }
+
       return;
     }
 
