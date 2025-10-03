@@ -42,6 +42,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
 
   const { address } = useAccount();
   const [isEditable, setIsEditable] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -63,9 +64,12 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
 
   const handleOnboardClick = async (): Promise<void> => {
     try {
+      setIsValidating(true);
       await setAESKey();
     } catch (error) {
       console.error('OnboardAccountWizard: Error during AES key setup:', error);
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -116,9 +120,10 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
           />
           <ButtonAction
             primary
-            text="Onboard"
+            text={isValidating ? "Validating..." : "Onboard"}
             fullWidth={true}
             onClick={handleOnboardClick}
+            disabled={isValidating}
             aria-label="Start onboarding process"
           />
         </ContentButtons>

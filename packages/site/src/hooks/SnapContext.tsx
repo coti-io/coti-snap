@@ -125,7 +125,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     try {
       const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
 
-      const ethAccountsPermission = permissions?.find(
+      if (!Array.isArray(permissions)) {
+        console.warn('Permissions response is not an array:', permissions);
+        return false;
+      }
+
+      const ethAccountsPermission = permissions.find(
         permission => permission.parentCapability === 'eth_accounts'
       );
 
@@ -176,7 +181,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       try {
         const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
 
-        const ethAccountsPermission = permissions?.find(
+        if (!Array.isArray(permissions)) {
+          console.warn('Permissions response is not an array in fallback:', permissions);
+          return { hasPermission: true, currentAccount: address ?? null, permittedAccounts: [] };
+        }
+
+        const ethAccountsPermission = permissions.find(
           permission => permission.parentCapability === 'eth_accounts'
         );
 
@@ -254,16 +264,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [resetOnboardingState]);
 
   const setAESKey = useCallback(async (): Promise<void> => {
-    setLoading(true);
     setSettingAESKeyError(null);
-    setOnboardingStep('signature-prompt');
 
     try {
       const permissionCheck = await checkAccountPermissions();
 
       if (permissionCheck && !permissionCheck.hasPermission) {
         setSettingAESKeyError('accountPermissionDenied');
-        resetOnboardingState();
         return;
       }
 
@@ -271,19 +278,29 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       if (!hasPermissions) {
         const connected = await connectSnapToWallet();
         if (!connected) {
-          resetOnboardingState();
           return;
         }
       }
 
       if (!isAddress(onboardContractAddress)) {
         setSettingAESKeyError('invalidAddress');
-        resetOnboardingState();
         return;
       }
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
+
+      const balance = await provider.getBalance(address as string);
+      const minBalance = BigInt('5000000000000000');
+
+      if (balance < minBalance) {
+        console.error('Insufficient balance for onboarding. Balance:', balance.toString(), 'Required:', minBalance.toString());
+        setSettingAESKeyError('accountBalanceZero');
+        return;
+      }
+
+      setLoading(true);
+      setOnboardingStep('signature-prompt');
 
       setOnboardingStep('signature-request');
       await signer.signMessage(
@@ -296,20 +313,33 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
       while (retryCount < MAX_RETRIES && !aesKey) {
         try {
+          console.log(`Attempting to generate/recover AES key (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
           await signer.generateOrRecoverAes(onboardContractAddress);
           aesKey = signer.getUserOnboardInfo()?.aesKey ?? null;
+          console.log('AES key result:', aesKey ? 'Key received' : 'No key returned');
 
           if (!aesKey && retryCount < MAX_RETRIES - 1) {
+            console.log(`No AES key on attempt ${retryCount + 1}, retrying...`);
             await new Promise(resolve => setTimeout(resolve, getRetryDelay(retryCount + 1)));
+            retryCount++;
+          } else if (!aesKey) {
             retryCount++;
           }
         } catch (providerError: any) {
+          console.error('Error during generateOrRecoverAes:', providerError);
+
+          if (providerError.message?.includes('Account balance is 0') ||
+              providerError.message?.includes('balance')) {
+            throw providerError;
+          }
+
           const isRetryableError =
             providerError.message?.includes('Block tracker destroyed') ||
             providerError.message?.includes('connection') ||
             providerError.code === 'UNKNOWN_ERROR';
 
           if (isRetryableError && retryCount < MAX_RETRIES - 1) {
+            console.log(`Retryable error on attempt ${retryCount + 1}, retrying after delay...`);
             await new Promise(resolve => setTimeout(resolve, getSyncDelay(retryCount + 1)));
             retryCount++;
             continue;
@@ -319,6 +349,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
 
       if (!aesKey) {
+        console.error('Failed to generate AES key after all retries');
+        setSettingAESKeyError('unknownError');
         resetOnboardingState();
         return;
       }
