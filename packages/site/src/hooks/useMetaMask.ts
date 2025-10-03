@@ -55,5 +55,23 @@ export const useMetaMask = () => {
     detect().catch(console.error);
   }, [provider]);
 
+  useEffect(() => {
+    if (!provider) return;
+
+    const handleSnapUpdate = () => {
+      console.log('[useMetaMask] Snap update detected, re-checking snap installation');
+      getSnap().catch(console.error);
+    };
+
+    const interval = setInterval(handleSnapUpdate, 3000);
+
+    window.addEventListener('focus', handleSnapUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleSnapUpdate);
+    };
+  }, [provider]);
+
   return { isFlask, snapsDetected, installedSnap, getSnap, isInstallingSnap };
 };
