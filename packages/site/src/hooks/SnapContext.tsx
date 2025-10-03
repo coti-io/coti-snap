@@ -302,6 +302,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setLoading(true);
       setOnboardingStep('signature-prompt');
 
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       setOnboardingStep('signature-request');
       await signer.signMessage(
         'You will be prompted to sign a message to set your AES key. The body of the message will show its encrypted contents.'
@@ -474,7 +476,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [installedSnap, address]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
-    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap) return;
+    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap || loading || onboardingStep !== null) return;
 
     try {
       const hasOnboarded = hasCompletedOnboarding(address);
@@ -491,9 +493,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         console.error('SnapContext: Permission check failed:', error);
       }
     }
-  }, [address, installedSnap, isInstallingSnap, clearTimerIfExists]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
 
   useEffect(() => {
+    if (loading || onboardingStep !== null) {
+      return;
+    }
+
     initialCheckRef.current = false;
     syncedRef.current = false;
 
@@ -513,7 +519,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [address, installedSnap, isInstallingSnap]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep]);
 
   const snapCheckCompletedRef = useRef(false);
 
