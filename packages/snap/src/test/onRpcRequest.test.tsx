@@ -277,7 +277,7 @@ describe('onRpcRequest', () => {
       method: 'get-permissions',
     });
 
-    expect(response).toRespondWith({});
+    expect(response).toRespondWith([]);
   });
 
   it('sets environment to testnet', async () => {
