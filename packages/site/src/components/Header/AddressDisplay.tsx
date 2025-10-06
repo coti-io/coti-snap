@@ -9,7 +9,7 @@ import UpArrowIcon from '../../assets/icons/up-arrow.svg';
 const AddressContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: ${(props) => props.theme.fontSizes.small};
   line-height: 1.2;
   font-weight: 400;
