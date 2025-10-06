@@ -5,6 +5,7 @@ import { truncateString } from '../../utils';
 import { Chain } from './Chain';
 import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
 import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
+import LogOutIcon from '../../assets/icons/logOut.svg';
 
 export const WalletManager = memo(() => {
   const { address } = useAccount();
@@ -27,6 +28,7 @@ export const WalletManager = memo(() => {
         {address ? truncateString(address) : 'no address'}
         <Dropdown ref={dropdownRef} $isVisible={isOpen}>
           <DisconnectButton onClick={handleDisconnect}>
+            <LogOutIcon/>
             Disconnect
           </DisconnectButton>
         </Dropdown>
