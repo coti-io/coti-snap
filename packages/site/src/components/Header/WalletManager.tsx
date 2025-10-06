@@ -24,7 +24,7 @@ export const WalletManager = memo(() => {
 
   return (
     <>
-      <ConnectedDetails $wrongChain={false} onClick={toggle} $padding="10px 30px">
+      <ConnectedDetails $wrongChain={false} onClick={toggle} $padding="10px 18px">
         <AddressDisplay address={address || ''} isOpen={isOpen} />
         <Dropdown ref={dropdownRef} $isVisible={isOpen}>
           <DisconnectButton onClick={handleDisconnect}>
