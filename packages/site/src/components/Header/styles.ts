@@ -101,8 +101,10 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
 
 export const MobileAddressDisplay = styled.div`
   padding: 12px 16px;
+  gap: 8px;
   font-size: 14px;
   font-weight: 500;
+  align-items: center;
   text-align: center;
   background-color: #2a3441;
   border-radius: ${({ theme }) => theme.radii.button};
@@ -110,6 +112,9 @@ export const MobileAddressDisplay = styled.div`
   margin-bottom: 8px;
   color: #FFFFFF;
   font-family: ${({ theme }) => theme.fonts.default};
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 export const MobileConnectButton = styled.button`
