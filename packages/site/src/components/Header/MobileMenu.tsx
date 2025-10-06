@@ -15,6 +15,7 @@ import {
   MobileInstallLink
 } from './styles';
 import MenuIcon from '../../assets/menu.png';
+import LogOutIcon from '../../assets/icons/logOut.svg';
 
 export const MobileMenu = memo(() => {
   const [, startTransition] = useTransition();
@@ -60,6 +61,7 @@ export const MobileMenu = memo(() => {
             {wrongChain && <Chain />}
             
             <DisconnectButton onClick={handleDisconnect}>
+              <LogOutIcon/>
               Disconnect
             </DisconnectButton>
           </>

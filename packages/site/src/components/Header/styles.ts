@@ -205,9 +205,10 @@ export const DisconnectButton = styled.button`
   background-color: #ff1900;
   color: #FFFFFF;
   border: none;
+  gap: 2px;
   font-weight: 500;
   font-family: ${({ theme }) => theme.fonts.default};
-  padding: 12px 40px;
+  padding: 12px 30px;
   min-height: 4.2rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
