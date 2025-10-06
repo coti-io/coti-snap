@@ -7,7 +7,7 @@ export const truncateString = (str: string): string => {
   if (str.length <= 10) {
     return str;
   }
-  const firstFive = str.slice(0, 5);
-  const lastFive = str.slice(-5);
-  return `${firstFive}...${lastFive}`;
+  const firstCharacters = str.slice(0, 6);
+  const lastCharacters = str.slice(-4);
+  return `${firstCharacters}...${lastCharacters}`;
 };
