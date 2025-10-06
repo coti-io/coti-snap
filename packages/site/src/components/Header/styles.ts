@@ -195,7 +195,7 @@ export const Dropdown = styled.div<{ $isVisible: boolean }>`
   will-change: transform, opacity;
 `;
 
-export const DisconnectButton = styled.button`
+export const DisconnectButton = styled.button<{ $padding?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,11 +208,11 @@ export const DisconnectButton = styled.button`
   gap: 2px;
   font-weight: 500;
   font-family: ${({ theme }) => theme.fonts.default};
-  padding: 12px 30px;
+  padding: ${(props) => props.$padding || '12px 40px'};
   min-height: 4.2rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     background-color: #e55a5a;
   }
@@ -224,12 +224,12 @@ export const DisconnectButton = styled.button`
   }
 `;
 
-export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
+export const ConnectedDetails = styled.div<{ $wrongChain: boolean; $padding?: string }>`
   display: flex;
   align-self: flex-start;
   align-items: center;
   justify-content: center;
-  padding: 12px 40px;
+  padding: ${(props) => props.$padding || '12px 40px'};
   gap: 4px;
   font-size: ${(props) => props.theme.fontSizes.small};
   line-height: 1.2;
@@ -245,7 +245,7 @@ export const ConnectedDetails = styled.div<{ $wrongChain: boolean }>`
   position: relative;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  
+
   &:hover {
     background-color: ${(props) =>
     props.$wrongChain

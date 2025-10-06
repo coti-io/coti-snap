@@ -15,6 +15,7 @@ export const Chain = () => {
     <ConnectedDetails 
       $wrongChain={wrongChain}
       onClick={wrongChain ? handleSwitchChain : undefined}
+      $padding="14px 30px"
     >
       {wrongChain ? 'Wrong chain' : account.chain?.name}
     </ConnectedDetails>
