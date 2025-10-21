@@ -16,7 +16,7 @@ A MetaMask Snap for managing AES keys and confidential tokens on the COTI networ
 ### For Users
 
 1. **Install MetaMask** if you haven't already
-2. **Visit the companion dapp**: [https://snap.coti.io](https://snap.coti.io)
+2. **Visit the companion dapp**: [https://metamask.coti.io](https://snap.coti.io)
 3. **Connect your wallet** and follow the installation prompts
 4. **Generate your AES key** to start managing confidential tokens
 
@@ -52,9 +52,9 @@ const hasKey = await invokeSnap({ method: 'has-aes-key' });
 const aesKey = await invokeSnap({ method: 'get-aes-key' });
 
 // Set AES key
-await invokeSnap({ 
-  method: 'set-aes-key', 
-  params: { newUserAesKey: 'your-aes-key' } 
+await invokeSnap({
+  method: 'set-aes-key',
+  params: { newUserAesKey: 'your-aes-key' }
 });
 
 // Delete AES key
@@ -65,15 +65,15 @@ await invokeSnap({ method: 'delete-aes-key' });
 
 ```typescript
 // Encrypt data
-const encrypted = await invokeSnap({ 
-  method: 'encrypt', 
-  params: { value: 'data-to-encrypt' } 
+const encrypted = await invokeSnap({
+  method: 'encrypt',
+  params: { value: 'data-to-encrypt' }
 });
 
 // Decrypt data
-const decrypted = await invokeSnap({ 
-  method: 'decrypt', 
-  params: { value: encryptedData } 
+const decrypted = await invokeSnap({
+  method: 'decrypt',
+  params: { value: encryptedData }
 });
 ```
 

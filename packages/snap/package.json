@@ -19,7 +19,7 @@
     "blockchain"
   ],
   "author": "COTI Team",
-  "homepage": "https://snap.coti.io",
+  "homepage": "https://metamask.coti.io",
   "main": "./dist/bundle.js",
   "files": [
     "dist/",

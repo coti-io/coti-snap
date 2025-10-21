@@ -59,4 +59,4 @@ export const getCurrentNetworkConfig = (): NetworkConfig => {
 };
 
 export const CHAIN_ID = getCurrentNetworkConfig().chainId;
-export const COMPANION_DAPP_LINK = 'https://snap.coti.io/wallet';
+export const COMPANION_DAPP_LINK = 'https://metamask.coti.io/wallet';
