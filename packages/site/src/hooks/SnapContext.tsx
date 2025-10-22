@@ -10,6 +10,7 @@ import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 import { useMetaMaskContext } from './MetamaskContext';
 import { hasCompletedOnboarding, setOnboardingCompleted, clearOnboardingCompleted, clearAllOnboardingData } from '../utils/onboardingStorage';
+import '../utils/patchCotiOnboard';
 
 export type SetAESKeyError =
   | 'accountBalanceZero'
