@@ -5,16 +5,20 @@ import { config, CONNECTOR_MM, CONNECTOR_MM_FLASK_EXPORT, CONNECTOR_MM_REGULAR_E
 import { useMetaMask, useWrongChain } from '../../hooks';
 import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 import { truncateString } from '../../utils';
+import { JazziconComponent } from '../common/JazziconComponent';
 import { Chain } from './Chain';
-import { 
-  MobileMenuButton, 
-  MobileMenuDropdown, 
+import {
+  MobileMenuButton,
+  MobileMenuDropdown,
   DisconnectButton,
   MobileAddressDisplay,
   MobileConnectButton,
   MobileInstallLink
 } from './styles';
 import MenuIcon from '../../assets/menu.png';
+import LogOutIcon from '../../assets/icons/logOut.svg';
+import ArrowDownIcon from '../../assets/icons/arrowDown.svg';
+import UpArrowIcon from '../../assets/icons/up-arrow.svg';
 
 export const MobileMenu = memo(() => {
   const [, startTransition] = useTransition();
@@ -54,12 +58,14 @@ export const MobileMenu = memo(() => {
         {isConnected ? (
           <>
             <MobileAddressDisplay>
+              <JazziconComponent address={address || ''} type="from" size={18} />
               {address ? truncateString(address) : 'no address'}
             </MobileAddressDisplay>
-            
+
             {wrongChain && <Chain />}
-            
+
             <DisconnectButton onClick={handleDisconnect}>
+              <LogOutIcon/>
               Disconnect
             </DisconnectButton>
           </>

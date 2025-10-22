@@ -55,6 +55,7 @@ interface SnapContextValue {
   readonly handleOnChangeContactAddress: (inputEvent: React.ChangeEvent<HTMLInputElement>) => void;
   readonly handleCancelOnboard: () => void;
   readonly onboardingStep: OnboardingStep;
+  readonly isInitializing: boolean;
 }
 
 interface SnapProviderProps {
@@ -88,7 +89,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const invokeSnap = useInvokeSnap();
   const { address } = useAccount();
   const { installedSnap, isInstallingSnap } = useMetaMask();
-  const { error: metamaskError } = useMetaMaskContext();
+  const { error: metamaskError, provider } = useMetaMaskContext();
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
@@ -97,12 +98,14 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const [settingAESKeyError, setSettingAESKeyError] = useState<SetAESKeyError>(null);
   const [onboardContractAddress, setOnboardContractAddress] = useState<`0x${string}`>(USED_ONBOARD_CONTRACT_ADDRESS);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncedRef = useRef<boolean>(false);
   const initialCheckRef = useRef<boolean>(false);
   const lastCheckedAddressRef = useRef<string | null>(null);
   const permissionCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previousInstalledSnapRef = useRef<typeof installedSnap>(installedSnap);
 
   const clearTimerIfExists = useCallback((): void => {
     if (timeoutRef.current) {
@@ -125,7 +128,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     try {
       const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
 
-      const ethAccountsPermission = permissions?.find(
+      if (!Array.isArray(permissions)) {
+        return false;
+      }
+
+      const ethAccountsPermission = permissions.find(
         permission => permission.parentCapability === 'eth_accounts'
       );
 
@@ -176,7 +183,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       try {
         const permissions = await invokeSnap({ method: 'get-permissions' }) as EthAccountsPermission[];
 
-        const ethAccountsPermission = permissions?.find(
+        if (!Array.isArray(permissions)) {
+          return { hasPermission: true, currentAccount: address ?? null, permittedAccounts: [] };
+        }
+
+        const ethAccountsPermission = permissions.find(
           permission => permission.parentCapability === 'eth_accounts'
         );
 
@@ -254,16 +265,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [resetOnboardingState]);
 
   const setAESKey = useCallback(async (): Promise<void> => {
-    setLoading(true);
     setSettingAESKeyError(null);
-    setOnboardingStep('signature-prompt');
 
     try {
       const permissionCheck = await checkAccountPermissions();
 
       if (permissionCheck && !permissionCheck.hasPermission) {
         setSettingAESKeyError('accountPermissionDenied');
-        resetOnboardingState();
         return;
       }
 
@@ -271,19 +279,30 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       if (!hasPermissions) {
         const connected = await connectSnapToWallet();
         if (!connected) {
-          resetOnboardingState();
           return;
         }
       }
 
       if (!isAddress(onboardContractAddress)) {
         setSettingAESKeyError('invalidAddress');
-        resetOnboardingState();
         return;
       }
 
       const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
       const signer = await provider.getSigner();
+
+      const balance = await provider.getBalance(address as string);
+      const minBalance = BigInt('5000000000000000');
+
+      if (balance < minBalance) {
+        setSettingAESKeyError('accountBalanceZero');
+        return;
+      }
+
+      setLoading(true);
+      setOnboardingStep('signature-prompt');
+
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       setOnboardingStep('signature-request');
       await signer.signMessage(
@@ -302,8 +321,15 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
           if (!aesKey && retryCount < MAX_RETRIES - 1) {
             await new Promise(resolve => setTimeout(resolve, getRetryDelay(retryCount + 1)));
             retryCount++;
+          } else if (!aesKey) {
+            retryCount++;
           }
         } catch (providerError: any) {
+          if (providerError.message?.includes('Account balance is 0') ||
+              providerError.message?.includes('balance')) {
+            throw providerError;
+          }
+
           const isRetryableError =
             providerError.message?.includes('Block tracker destroyed') ||
             providerError.message?.includes('connection') ||
@@ -319,6 +345,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
 
       if (!aesKey) {
+        console.error('Failed to generate AES key after all retries');
+        setSettingAESKeyError('unknownError');
         resetOnboardingState();
         return;
       }
@@ -448,7 +476,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [installedSnap, address]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
-    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap) return;
+    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap || loading || onboardingStep !== null) return;
 
     try {
       const hasOnboarded = hasCompletedOnboarding(address);
@@ -459,14 +487,19 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       clearTimerIfExists();
 
       initialCheckRef.current = true;
+      setIsInitializing(false);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.includes('No account connected')) {
         console.error('SnapContext: Permission check failed:', error);
       }
     }
-  }, [address, installedSnap, isInstallingSnap, clearTimerIfExists]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
 
   useEffect(() => {
+    if (loading || onboardingStep !== null) {
+      return;
+    }
+
     initialCheckRef.current = false;
     syncedRef.current = false;
 
@@ -474,11 +507,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setUserHasAesKEY(false);
       setUserAesKEY(null);
       setSettingAESKeyError(null);
-
-      if (!installedSnap) {
-        clearAllOnboardingData();
-      }
-
       return;
     }
 
@@ -491,7 +519,40 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [address, installedSnap, isInstallingSnap]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep]);
+
+  const snapCheckCompletedRef = useRef(false);
+
+  useEffect(() => {
+    if (provider !== null && !isInstallingSnap) {
+      const timer = setTimeout(() => {
+        snapCheckCompletedRef.current = true;
+
+        if (!address || installedSnap === null) {
+          setIsInitializing(false);
+        } else if (initialCheckRef.current) {
+          setIsInitializing(false);
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [provider, isInstallingSnap, address, installedSnap]);
+
+  useEffect(() => {
+    const previousSnap = previousInstalledSnapRef.current;
+    const currentSnap = installedSnap;
+
+    previousInstalledSnapRef.current = currentSnap;
+
+    const snapWasInstalled = previousSnap !== null && previousSnap !== undefined;
+    const snapIsNowUninstalled = currentSnap === null;
+    const snapWasUninstalled = snapWasInstalled && snapIsNowUninstalled;
+
+    if (snapCheckCompletedRef.current && !isInstallingSnap && snapWasUninstalled) {
+      clearAllOnboardingData();
+    }
+  }, [installedSnap, isInstallingSnap, provider]);
 
   useEffect(() => {
     const handleAccountsChanged = async (accounts: unknown): Promise<void> => {
@@ -553,6 +614,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     handleOnChangeContactAddress,
     handleCancelOnboard,
     onboardingStep,
+    isInitializing,
   }), [
     userHasAESKey,
     setAESKey,
@@ -567,6 +629,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     handleOnChangeContactAddress,
     handleCancelOnboard,
     onboardingStep,
+    isInitializing,
   ]);
 
   useEffect(() => {

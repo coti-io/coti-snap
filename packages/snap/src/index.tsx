@@ -638,9 +638,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
            }
           ],
         });
-        return permissions ?? {};
+        return permissions ?? [];
       } catch (error) {
-        return {};
+        return [];
       }
 
     case 'set-environment':

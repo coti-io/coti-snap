@@ -24,3 +24,5 @@ export const Header = () => {
     </HeaderWrapper>
   );
 };
+
+export { AddressDisplay } from './AddressDisplay';

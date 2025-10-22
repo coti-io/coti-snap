@@ -4,8 +4,11 @@ import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
 import { useMetaMask, useWrongChain } from '../hooks';
+import { useSnap } from '../hooks/SnapContext';
 import { Header } from '../components';
 import { Footer } from '../components/Footer';
+import { Loading } from '../components/Loading';
+import { ContentBorderWrapper, ContentContainer } from '../components/styles';
 
 const Container = styled.div`
   display: flex;
@@ -32,6 +35,7 @@ export function SmartRouter() {
   const { isConnected } = useAccount();
   const { wrongChain } = useWrongChain();
   const { installedSnap, isInstallingSnap } = useMetaMask();
+  const { isInitializing } = useSnap();
   const navigate = useNavigate();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [, startTransition] = useTransition();
@@ -76,6 +80,20 @@ export function SmartRouter() {
       }
     });
   }, [hasInitialized, isConnected, wrongChain, installedSnap, isInstallingSnap, navigate]);
+
+  if (isInitializing) {
+    return (
+      <Container>
+        <Header />
+        <ContentBorderWrapper>
+          <ContentContainer>
+            <Loading title="Loading..." actionText="" />
+          </ContentContainer>
+        </ContentBorderWrapper>
+        <Footer />
+      </Container>
+    );
+  }
 
   return (
     <Container>
