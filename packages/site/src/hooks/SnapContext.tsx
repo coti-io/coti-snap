@@ -62,6 +62,10 @@ interface SnapProviderProps {
   readonly children: ReactNode;
 }
 
+interface ResetOnboardingOptions {
+  readonly preserveError?: boolean;
+}
+
 const MAX_RETRIES = 3;
 const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'testnet' ? 'testnet' : 'mainnet';
 const SYNC_DELAY = 200;
@@ -118,9 +122,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const resetOnboardingState = useCallback((): void => {
+  const resetOnboardingState = useCallback((options: ResetOnboardingOptions = {}): void => {
     setOnboardingStep(null);
-    setSettingAESKeyError(null);
+    if (!options.preserveError) {
+      setSettingAESKeyError(null);
+    }
     setLoading(false);
   }, []);
 
@@ -385,9 +391,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   ]);
 
   const handleSetAESKeyError = useCallback((error?: unknown): void => {
+    let preserveError = false;
+
     if (error instanceof Error) {
       if (error.message.includes('Account balance is 0')) {
         setSettingAESKeyError('accountBalanceZero');
+        preserveError = true;
       } else if (isUserRejectedError(error)) {
         setSettingAESKeyError('userRejected');
       } else {
@@ -405,7 +414,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setSettingAESKeyError('unknownError');
     }
 
-    resetOnboardingState();
+    resetOnboardingState({ preserveError });
   }, [metamaskError, resetOnboardingState]);
 
   const getAESKey = useCallback(async (): Promise<void> => {
@@ -482,7 +491,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       const hasOnboarded = hasCompletedOnboarding(address);
       setUserHasAesKEY(hasOnboarded);
 
-      setSettingAESKeyError(null);
+      setSettingAESKeyError(prev => (prev === 'accountBalanceZero' ? prev : null));
       setOnboardingStep(null);
       clearTimerIfExists();
 
