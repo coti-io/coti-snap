@@ -24,7 +24,7 @@ interface OnboardingState {
 const ONBOARDING_DESCRIPTION = `Onboarding your account will securely store your network key within the metamask to be used with secured dApp interactions.
 For example: viewing your balance on a Private ERC20 token.`;
 
-const FUND_WALLET_URL = 'https://metamask.app.link/buy';
+const FUND_WALLET_URL = 'https://www.binance.com/en/price/coti';
 
 const FundingHelper = styled.div`
   margin-top: 12px;
