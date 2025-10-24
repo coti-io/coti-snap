@@ -399,7 +399,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   request,
 }) => {
   await checkChainId();
-  
+
+  const requestingOrigin = origin ?? 'Unknown origin';
   const getState = await getStateByChainIdAndAddress();
   switch (request.method) {
     case 'encrypt':
@@ -437,6 +438,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             <Box>
               <Heading>Would you like to encrypt this value?</Heading>
               <Text>Value to encrypt: "{String(textToEncrypt)}"</Text>
+              <Text>Request origin: {requestingOrigin}</Text>
             </Box>
           ),
         },
@@ -493,6 +495,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             <Box>
               <Heading>Would you like to decrypt this value?</Heading>
               <Text>Value to decrypt: "{encryptedValue}"</Text>
+              <Text>Request origin: {requestingOrigin}</Text>
             </Box>
           ),
         },
@@ -543,6 +546,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               <Box>
                 <Heading>Unlock Security Key</Heading>
                 <Text>Approve to unlock your security key</Text>
+                <Text>Request origin: {requestingOrigin}</Text>
               </Box>
             ),
           },
@@ -581,6 +585,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             <Box>
               <Heading>Delete AES Key</Heading>
               <Text>Approve to delete the AES Key</Text>
+              <Text>Request origin: {requestingOrigin}</Text>
             </Box>
           ),
         },

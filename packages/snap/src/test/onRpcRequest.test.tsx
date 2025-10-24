@@ -7,6 +7,7 @@ describe('onRpcRequest', () => {
   it('handles encryption with a valid AES key', async () => {
     const { request } = await installSnap();
     const aesKey = 'test-aes-key';
+    const origin = 'https://example-dapp.io';
 
     await request({
       method: 'set-aes-key',
@@ -17,6 +18,7 @@ describe('onRpcRequest', () => {
     const response = request({
       method: 'encrypt',
       params: { value: textToEncrypt },
+      origin,
     });
 
     const ui = (await response.getInterface()) as SnapConfirmationInterface;
@@ -25,6 +27,7 @@ describe('onRpcRequest', () => {
       <Box>
         <Heading>Would you like to encrypt this value?</Heading>
         <Text>Value to encrypt: "{textToEncrypt}"</Text>
+        <Text>Request origin: {origin}</Text>
       </Box>,
     );
 
@@ -50,6 +53,7 @@ describe('onRpcRequest', () => {
   it('handles decryption with a valid AES key', async () => {
     const { request } = await installSnap();
     const aesKey = 'test-aes-key';
+    const origin = 'https://example-dapp.io';
 
     // encrypted string of "Hello, encrypt!"
     const encryptedValue = `{"ciphertext":{"0":200,"1":164,"2":9,"3":14,"4":128,"5":3,"6":140,"7":76,"8":179,"9":61,"10":14,"11":109,"12":166,"13":242,"14":167,"15":210},"r":{"0":255,"1":18,"2":79,"3":60,"4":244,"5":42,"6":201,"7":192,"8":146,"9":103,"10":201,"11":91,"12":51,"13":91,"14":169,"15":84}}`;
@@ -63,6 +67,7 @@ describe('onRpcRequest', () => {
     const response = request({
       method: 'decrypt',
       params: { value: encryptedValue },
+      origin,
     });
 
     const ui = (await response.getInterface()) as SnapConfirmationInterface;
@@ -71,6 +76,7 @@ describe('onRpcRequest', () => {
       <Box>
         <Heading>Would you like to decrypt this value?</Heading>
         <Text>Value to decrypt: "{encryptedValue}"</Text>
+        <Text>Request origin: {origin}</Text>
       </Box>,
     );
 
@@ -114,6 +120,7 @@ describe('onRpcRequest', () => {
   it('handles fetching the AES key', async () => {
     const { request } = await installSnap();
     const aesKey = 'test-aes-key';
+    const origin = 'https://example-dapp.io';
 
     await request({
       method: 'set-aes-key',
@@ -122,6 +129,7 @@ describe('onRpcRequest', () => {
 
     const response = request({
       method: 'get-aes-key',
+      origin,
     });
 
     const ui = (await response.getInterface()) as SnapConfirmationInterface;
@@ -130,6 +138,7 @@ describe('onRpcRequest', () => {
       <Box>
         <Heading>Unlock Security Key</Heading>
         <Text>Approve to unlock your security key</Text>
+        <Text>Request origin: {origin}</Text>
       </Box>,
     );
 
@@ -178,6 +187,7 @@ describe('onRpcRequest', () => {
   it('deletes AES key with user confirmation', async () => {
     const { request } = await installSnap();
     const aesKey = 'my-aes-key';
+    const origin = 'https://example-dapp.io';
 
     await request({
       method: 'set-aes-key',
@@ -191,6 +201,7 @@ describe('onRpcRequest', () => {
 
     const deleteResponse = request({
       method: 'delete-aes-key',
+      origin,
     });
 
     const ui = (await deleteResponse.getInterface()) as SnapConfirmationInterface;
@@ -199,6 +210,7 @@ describe('onRpcRequest', () => {
       <Box>
         <Heading>Delete AES Key</Heading>
         <Text>Approve to delete the AES Key</Text>
+        <Text>Request origin: {origin}</Text>
       </Box>,
     );
 
