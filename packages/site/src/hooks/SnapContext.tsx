@@ -100,6 +100,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     () => getEnvironmentForChain(isChainSupported ? connectedChainId : undefined),
     [connectedChainId, isChainSupported],
   );
+  const chainIdForStorage = typeof connectedChainId === 'number' ? connectedChainId : null;
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
@@ -116,6 +117,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const lastCheckedAddressRef = useRef<string | null>(null);
   const permissionCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousInstalledSnapRef = useRef<typeof installedSnap>(installedSnap);
+  const previousChainIdRef = useRef<number | null>(null);
 
   const clearTimerIfExists = useCallback((): void => {
     if (timeoutRef.current) {
@@ -135,6 +137,29 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    const currentChainId = chainIdForStorage;
+    const previousChainId = previousChainIdRef.current;
+
+    if (previousChainId !== null && previousChainId !== currentChainId) {
+      setUserHasAesKEY(false);
+      setUserAesKEY(null);
+      setSettingAESKeyError(null);
+      resetOnboardingState();
+      clearTimerIfExists();
+      syncedRef.current = false;
+      initialCheckRef.current = false;
+      lastCheckedAddressRef.current = null;
+      setIsInitializing(true);
+    }
+
+    previousChainIdRef.current = currentChainId ?? null;
+  }, [
+    chainIdForStorage,
+    clearTimerIfExists,
+    resetOnboardingState,
+  ]);
 
   const checkWalletPermissions = useCallback(async (): Promise<boolean> => {
     try {
@@ -374,7 +399,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setSettingAESKeyError(null);
 
         if (address) {
-          setOnboardingCompleted(address);
+          setOnboardingCompleted(address, chainIdForStorage);
         }
 
         setTimeout(() => {
@@ -393,7 +418,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     onboardContractAddress,
     invokeSnap,
     address,
-    resetOnboardingState
+    resetOnboardingState,
+    chainIdForStorage,
   ]);
 
   const handleSetAESKeyError = useCallback((error?: unknown): void => {
@@ -454,7 +480,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setSettingAESKeyError(null);
 
         if (address) {
-          clearOnboardingCompleted(address);
+          clearOnboardingCompleted(address, chainIdForStorage);
         }
       }
     } catch (error) {
@@ -462,7 +488,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [invokeSnap, address]);
+  }, [invokeSnap, address, chainIdForStorage]);
 
   useEffect(() => {
     const syncEnvironmentWithSnap = async (): Promise<void> => {
@@ -496,7 +522,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap || loading || onboardingStep !== null) return;
 
     try {
-      const hasOnboarded = hasCompletedOnboarding(address);
+      const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
       setUserHasAesKEY(hasOnboarded);
 
       setSettingAESKeyError(prev => (prev === 'accountBalanceZero' ? prev : null));
@@ -510,7 +536,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         console.error('SnapContext: Permission check failed:', error);
       }
     }
-  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, clearTimerIfExists, chainIdForStorage]);
 
   useEffect(() => {
     if (loading || onboardingStep !== null) {

@@ -62,7 +62,12 @@ const FundingHelperActions = styled.div`
 `;
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
-  const { setAESKey, loading, settingAESKeyError } = useSnap();
+  const {
+    setAESKey,
+    loading,
+    settingAESKeyError,
+    handleCancelOnboard: resetOnboardingContext,
+  } = useSnap();
   const { isConnected, address, chain } = useAccount();
   const { wrongChain } = useWrongChain();
   const { isInstallingSnap } = useMetaMask();
@@ -78,6 +83,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   });
   const [hasCopiedAddress, setHasCopiedAddress] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousChainIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     setOnboardingState({
@@ -94,6 +100,28 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const currentChainId = typeof chain?.id === 'number' ? chain.id : null;
+    const previousChainId = previousChainIdRef.current;
+
+    if (previousChainId !== null && previousChainId !== currentChainId) {
+      setOnboardingState({
+        isOnboarding: false,
+        isCompleted: false
+      });
+      setHasCopiedAddress(false);
+
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+
+      resetOnboardingContext();
+    }
+
+    previousChainIdRef.current = currentChainId;
+  }, [chain?.id, resetOnboardingContext]);
 
   const shouldShowWizard = useMemo(() => {
     const showWizard =

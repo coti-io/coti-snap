@@ -1,13 +1,19 @@
-/**
- * Utility functions to manage onboarding state persistence in localStorage
- * Stores onboarding completion status per wallet address
- */
-
 const ONBOARDING_KEY = 'snap_onboarding_completed';
 
 interface OnboardingData {
-  [address: string]: boolean;
+  [key: string]: boolean;
 }
+
+const buildStorageKey = (
+  address: string,
+  chainId?: number | string | null,
+): string => {
+  const normalizedAddress = address.toLowerCase();
+  if (chainId === undefined || chainId === null) {
+    return normalizedAddress;
+  }
+  return `${normalizedAddress}:${chainId}`;
+};
 
 /**
  * Get onboarding data from localStorage
@@ -36,32 +42,61 @@ const saveOnboardingData = (data: OnboardingData): void => {
 /**
  * Check if an address has completed onboarding
  */
-export const hasCompletedOnboarding = (address: string): boolean => {
-  if (!address) return false;
-  
+export const hasCompletedOnboarding = (
+  address: string,
+  chainId?: number | string | null,
+): boolean => {
+  if (!address) {
+    return false;
+  }
+
   const data = getOnboardingData();
-  return Boolean(data[address.toLowerCase()]);
+
+  if (chainId !== undefined && chainId !== null) {
+    const keyWithChain = buildStorageKey(address, chainId);
+    return Boolean(data[keyWithChain]);
+  }
+
+  return Boolean(data[buildStorageKey(address)]);
 };
 
 /**
  * Mark an address as having completed onboarding
  */
-export const setOnboardingCompleted = (address: string): void => {
-  if (!address) return;
-  
+export const setOnboardingCompleted = (
+  address: string,
+  chainId?: number | string | null,
+): void => {
+  if (!address || chainId === undefined || chainId === null) {
+    return;
+  }
+
   const data = getOnboardingData();
-  data[address.toLowerCase()] = true;
+
+  data[buildStorageKey(address, chainId)] = true;
+  delete data[buildStorageKey(address)];
+
   saveOnboardingData(data);
 };
 
 /**
  * Clear onboarding status for an address (useful for testing or reset)
  */
-export const clearOnboardingCompleted = (address: string): void => {
-  if (!address) return;
-  
+export const clearOnboardingCompleted = (
+  address: string,
+  chainId?: number | string | null,
+): void => {
+  if (!address) {
+    return;
+  }
+
   const data = getOnboardingData();
-  delete data[address.toLowerCase()];
+  if (chainId === undefined || chainId === null) {
+    delete data[buildStorageKey(address)];
+  } else {
+    delete data[buildStorageKey(address, chainId)];
+    delete data[buildStorageKey(address)];
+  }
   saveOnboardingData(data);
 };
 
