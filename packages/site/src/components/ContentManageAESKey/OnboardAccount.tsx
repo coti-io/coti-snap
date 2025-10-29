@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect, useCallback, memo, useTransition, 
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
-import { Button, ButtonAction } from '../Button';
+import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
-import { isTestnet } from '../../config/snap';
+import { getNetworkConfig, isSupportedChainId } from '../../config/networks';
 import { useSnap } from '../../hooks/SnapContext';
 import { useWrongChain, useMetaMask } from '../../hooks';
 import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
@@ -63,9 +63,13 @@ const FundingHelperActions = styled.div`
 
 export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   const { setAESKey, loading, settingAESKeyError } = useSnap();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const { wrongChain } = useWrongChain();
   const { isInstallingSnap } = useMetaMask();
+  const isSupportedChain = isSupportedChainId(chain?.id);
+  const isTestnetNetwork = Boolean(
+    isSupportedChain && getNetworkConfig(chain?.id).isTestnet
+  );
 
   const [, startTransition] = useTransition();
   const [onboardingState, setOnboardingState] = useState<OnboardingState>({
@@ -92,13 +96,16 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   }, []);
 
   const shouldShowWizard = useMemo(() => {
-    const showWizard = onboardingState.isOnboarding && !onboardingState.isCompleted && isTestnet();
+    const showWizard =
+      onboardingState.isOnboarding &&
+      !onboardingState.isCompleted &&
+      isTestnetNetwork;
     return showWizard;
-  }, [onboardingState]);
+  }, [onboardingState, isTestnetNetwork]);
 
   const handleStartOnboarding = useCallback(async (): Promise<void> => {
     startTransition(() => {
-      if (isTestnet()) {
+      if (isTestnetNetwork) {
         setOnboardingState(prev => ({
           ...prev,
           isOnboarding: true
@@ -106,7 +113,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
       }
     });
 
-    if (!isTestnet()) {
+    if (!isTestnetNetwork) {
       try {
         await setAESKey();
         handleOnboardingComplete();
@@ -114,7 +121,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         console.error('OnboardAccount: Error during AES key setup:', error);
       }
     }
-  }, [isTestnet, setAESKey, startTransition]);
+  }, [isTestnetNetwork, setAESKey, startTransition]);
 
   const handleOnboardingComplete = useCallback((): void => {
     setOnboardingState({
@@ -150,7 +157,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   }
 
   return isConnected ? (
-    (!isTestnet() && loading && !settingAESKeyError) ? (
+    (!isTestnetNetwork && loading && !settingAESKeyError) ? (
       <LoadingWithProgress title="Onboard" actionText="Onboarding account" />
     ) : shouldShowWizard ? (
       <OnboardAccountWizard
@@ -168,10 +175,10 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
           text="Onboard"
           onClick={handleStartOnboarding}
           aria-label="Start account onboarding process"
-          disabled={!isTestnet() && loading}
+          disabled={!isTestnetNetwork && loading}
         />
 
-        {!isTestnet() && settingAESKeyError === 'accountBalanceZero' && (
+        {!isTestnetNetwork && settingAESKeyError === 'accountBalanceZero' && (
           <>
             <Alert type="error">
               Error onboarding account: Insufficient funds.
@@ -190,17 +197,17 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
             </FundingHelper>
           </>
         )}
-        {!isTestnet() && settingAESKeyError === 'invalidAddress' && (
+        {!isTestnetNetwork && settingAESKeyError === 'invalidAddress' && (
           <Alert type="error">
             Error to onboard account, check the contract address
           </Alert>
         )}
-        {!isTestnet() && settingAESKeyError === 'userRejected' && (
+        {!isTestnetNetwork && settingAESKeyError === 'userRejected' && (
           <Alert type="error">
             Transaction rejected by user. Please try again when ready.
           </Alert>
         )}
-        {!isTestnet() && settingAESKeyError === 'unknownError' && (
+        {!isTestnetNetwork && settingAESKeyError === 'unknownError' && (
           <Alert type="error">
             Error to onboard account, try again
           </Alert>

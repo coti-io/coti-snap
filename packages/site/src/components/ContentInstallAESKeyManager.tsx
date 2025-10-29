@@ -1,8 +1,11 @@
 import { useCallback, useTransition } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useAccount } from 'wagmi';
+
 import Metamask from '../assets/metamask_fox.svg';
 import SpinnerIcon from '../assets/spinner.png';
 import { useRequestSnap, useMetaMask } from '../hooks';
+import { getNetworkConfig, isSupportedChainId } from '../config/networks';
 import { ButtonAction } from './Button';
 import { ContentBorderWrapper, ContentContainer, ContentTextInstall, ContentTitle } from './styles';
 
@@ -22,9 +25,14 @@ const SpinnerImage = styled.img`
 `;
 
 export const ContentInstallAESKeyManager = () => {
-  const requestSnap = import.meta.env.VITE_NODE_ENV === 'testnet'
-    ? useRequestSnap()
-    : useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
+  const { chain } = useAccount();
+  const isTestnetNetwork =
+    typeof chain?.id === 'number' && isSupportedChainId(chain.id)
+      ? getNetworkConfig(chain.id).isTestnet
+      : false;
+
+  const snapVersion = isTestnetNetwork ? undefined : import.meta.env.VITE_SNAP_VERSION;
+  const requestSnap = useRequestSnap(undefined, snapVersion);
   const { getSnap, isInstallingSnap } = useMetaMask();
   const [isPending, startTransition] = useTransition();
 

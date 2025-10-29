@@ -1,9 +1,9 @@
-import { useSwitchChain } from 'wagmi';
-import { useCallback, memo, useTransition } from 'react';
-
-import { CHAIN_ID } from '../config/wagmi';
-import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from './styles';
+import { memo, useCallback, useTransition } from 'react';
 import styled from 'styled-components';
+import { useAccount, useSwitchChain } from 'wagmi';
+
+import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from './styles';
+import { getSupportedNetworks, isSupportedChainId } from '../config/networks';
 
 const StyledButton = styled.button`
   display: flex;
@@ -38,13 +38,24 @@ const StyledButton = styled.button`
   }
 `;
 
+const ButtonsWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+`;
+
 export const ContentSwitchNetwork = memo(() => {
   const { switchChain } = useSwitchChain();
   const [, startTransition] = useTransition();
-  
-  const handleSwitchChain = useCallback(() => {
+  const account = useAccount();
+  const connectedChainId = account.chain?.id;
+  const supportedNetworks = getSupportedNetworks();
+
+  const handleSwitchChain = useCallback((targetChainId: number) => {
     startTransition(() => {
-      switchChain({ chainId: CHAIN_ID });
+      switchChain({ chainId: targetChainId });
     });
   }, [switchChain]);
 
@@ -56,7 +67,21 @@ export const ContentSwitchNetwork = memo(() => {
           It looks like you are not on the COTI network, please switch network to
           continue.
         </ContentText>
-        <StyledButton onClick={handleSwitchChain}>Switch Network</StyledButton>
+        <ButtonsWrapper>
+          {supportedNetworks.map((network) => (
+            <StyledButton
+              key={network.id}
+              onClick={() => handleSwitchChain(network.id)}
+              disabled={
+                typeof connectedChainId === 'number' &&
+                isSupportedChainId(connectedChainId) &&
+                connectedChainId === network.id
+              }
+            >
+              Switch to {network.shortName}
+            </StyledButton>
+          ))}
+        </ButtonsWrapper>
       </ContentContainer>
     </ContentBorderWrapper>
   );

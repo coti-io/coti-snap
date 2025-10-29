@@ -1,15 +1,24 @@
 import { ONBOARD_CONTRACT_ADDRESS } from '@coti-io/coti-ethers';
 
-const isTestnet = import.meta.env.VITE_NODE_ENV === 'testnet';
+import { getNetworkConfig, isSupportedChainId } from './networks';
 
-export const USED_ONBOARD_CONTRACT_ADDRESS = ONBOARD_CONTRACT_ADDRESS;
+export const USED_ONBOARD_CONTRACT_ADDRESS =
+  ONBOARD_CONTRACT_ADDRESS as `0x${string}`;
 
-export const ONBOARD_CONTRACT_LINK = isTestnet
-  ? 'https://testnet.cotiscan.io/address/0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9?tab=transactions'
-  : 'https://mainnet.cotiscan.io/address/0x24D6c44eaB7aA09A085dDB8cD25c28FFc9917EC9?tab=transactions';
+const ONBOARD_CONTRACT_EXPLORER_SUFFIX =
+  `/address/${USED_ONBOARD_CONTRACT_ADDRESS}?tab=transactions`;
+
+export const getOnboardContractLink = (
+  chainId?: number | null,
+): string => {
+  const resolvedChainId = isSupportedChainId(chainId) ? chainId : undefined;
+  const { explorerUrl } = getNetworkConfig(resolvedChainId);
+  return `${explorerUrl}${ONBOARD_CONTRACT_EXPLORER_SUFFIX}`;
+};
 
 export const COTI_FAUCET_LINK = 'https://faucet.coti.io';
 
-export const ONBOARD_CONTRACT_GITHUB_LINK="https://github.com/coti-io/coti-contracts/blob/main/contracts/onboard/AccountOnboard.sol";
+export const ONBOARD_CONTRACT_GITHUB_LINK =
+  'https://github.com/coti-io/coti-contracts/blob/main/contracts/onboard/AccountOnboard.sol';
 
 export const COTI_SITE = 'https://coti.io';

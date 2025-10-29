@@ -1,26 +1,20 @@
-const isTestnet = (): boolean => {
-    return import.meta.env.VITE_NODE_ENV === 'testnet';
-};
-
 const isSnapLocal = (): boolean => {
   return import.meta.env.VITE_SNAP_ENV === 'local';
 };
 
-const isMainnet = (): boolean => {
-    return import.meta.env.VITE_NODE_ENV === 'mainnet';
-};
+const DEFAULT_SNAP_ORIGIN = 'npm:@coti-io/coti-snap';
+const DEFAULT_LOCAL_SNAP_URL = 'http://localhost:8080';
 
 const buildSnapOrigin = (): string => {
-    if (isSnapLocal()) {
-        return 'local:http://localhost:8080';
-    } else if (isMainnet()) {
-        return 'npm:@coti-io/coti-snap';
-    } else {
-        console.warn('VITE_NODE_ENV must be either "testnet" or "mainnet"');
-        return 'npm:@coti-io/coti-snap';
-    }
+  if (isSnapLocal()) {
+    const localUrl =
+      import.meta.env.VITE_SNAP_LOCAL_URL ?? DEFAULT_LOCAL_SNAP_URL;
+    return `local:${localUrl}`;
+  }
+
+  return import.meta.env.VITE_SNAP_ORIGIN ?? DEFAULT_SNAP_ORIGIN;
 };
 
 export const defaultSnapOrigin = buildSnapOrigin();
 
-export { isTestnet, isMainnet, buildSnapOrigin };
+export { buildSnapOrigin };
