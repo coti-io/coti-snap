@@ -103,7 +103,7 @@ interface ContentManageTokenProps {
 }
 
 export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aesKey }) => {
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const { data: balance, refetch: refetchBalance } = useBalance({ address });
   const { provider } = useMetaMaskContext();
   const { getAESKey, userAESKey, userHasAESKey } = useSnap();
@@ -123,9 +123,31 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const [transferToken, setTransferToken] = useState<ImportedToken | null>(null);
 
   const prevAddressRef = useRef<string | undefined>();
-  
+  const previousChainIdRef = useRef<number | null>(null);
+  const acknowledgedChainsRef = useRef<Record<number, boolean>>({});
+  const currentChainId = typeof chain?.id === 'number' ? chain.id : null;
+
   useEffect(() => {
-    if (prevAddressRef.current !== address) {
+    const hasAddressChanged = prevAddressRef.current !== address;
+    const hasChainChanged =
+      previousChainIdRef.current !== null &&
+      currentChainId !== null &&
+      previousChainIdRef.current !== currentChainId;
+
+    if (previousChainIdRef.current !== null && currentChainId === null) {
+      setIsRequestingAESKey(false);
+      setShowAESKeyDisplay(false);
+      setShowDeleteConfirmation(false);
+      setModalState({ transfer: false, deposit: false });
+      setSelectedNFT(null);
+      setSelectedToken(null);
+      setTransferToken(null);
+      previousChainIdRef.current = null;
+      acknowledgedChainsRef.current = {};
+      return;
+    }
+
+    if (hasAddressChanged || hasChainChanged) {
       setIsRequestingAESKey(false);
       setShowAESKeyDisplay(false);
       setShowDeleteConfirmation(false);
@@ -134,8 +156,37 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
       setSelectedToken(null);
       setTransferToken(null);
       prevAddressRef.current = address;
+      previousChainIdRef.current = currentChainId;
+      if (hasAddressChanged) {
+        acknowledgedChainsRef.current = {};
+      }
+      return;
     }
-  }, [address]);
+    if (prevAddressRef.current === undefined && address) {
+      prevAddressRef.current = address;
+    }
+    if (
+      previousChainIdRef.current === null &&
+      currentChainId !== null
+    ) {
+      previousChainIdRef.current = currentChainId;
+    }
+  }, [address, currentChainId]);
+
+  useEffect(() => {
+    if (currentChainId === null) {
+      setShowAESKeyDisplay(false);
+      return;
+    }
+
+    if (acknowledgedChainsRef.current[currentChainId]) {
+      return;
+    }
+
+    if (userHasAESKey && (currentAESKey || userAESKey)) {
+      setShowAESKeyDisplay(true);
+    }
+  }, [currentChainId, userHasAESKey, currentAESKey, userAESKey]);
 
   const formattedBalance = useMemo(() => {
     if (!balance) return '0';
@@ -194,6 +245,9 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
       setIsRequestingAESKey(true);
       try {
         await getAESKey();
+        if (currentChainId !== null) {
+          acknowledgedChainsRef.current[currentChainId] = false;
+        }
         setShowAESKeyDisplay(true);
       } catch (error: any) {
         if (error?.code === 4001 || error?.code === -32603) {
@@ -203,13 +257,19 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
         setIsRequestingAESKey(false);
       }
     }
-  }, [currentAESKey, userHasAESKey, getAESKey]);
+  }, [currentAESKey, userHasAESKey, getAESKey, currentChainId]);
 
   const handleLaunchDApp = useCallback(() => {
+    if (currentChainId !== null) {
+      acknowledgedChainsRef.current[currentChainId] = true;
+    }
     setShowAESKeyDisplay(false);
-  }, []);
+  }, [currentChainId]);
 
   const handleDeleteAESKey = useCallback(() => {
+    if (currentChainId !== null) {
+      delete acknowledgedChainsRef.current[currentChainId];
+    }
     setShowDeleteConfirmation(true);
   }, []);
 
