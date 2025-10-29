@@ -46,7 +46,7 @@ interface SnapContextValue {
   readonly deleteAESKey: () => Promise<void>;
   readonly getAESKey: () => Promise<void>;
   readonly userAESKey: string | null;
-  readonly setUserAesKEY: (key: string | null) => void;
+  readonly setUserAesKEY: (key: string | null, chainIdOverride?: number | null) => void;
   readonly userHasAESKey: boolean;
   readonly handleShowDelete: () => void;
   readonly showDelete: boolean;
@@ -100,9 +100,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     () => getEnvironmentForChain(isChainSupported ? connectedChainId : undefined),
     [connectedChainId, isChainSupported],
   );
-  const chainIdForStorage = typeof connectedChainId === 'number' ? connectedChainId : null;
+  const [chainIdForStorage, setChainIdForStorage] = useState<number | null>(
+    isChainSupported && typeof connectedChainId === 'number'
+      ? connectedChainId
+      : null,
+  );
 
-  const [userAESKey, setUserAesKEY] = useState<string | null>(null);
+  const [aesKeysByChain, setAesKeysByChain] = useState<Record<number, string>>({});
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
   const [showDelete, setShowDelete] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -138,13 +142,69 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     setLoading(false);
   }, []);
 
+  const userAESKey = useMemo(() => {
+    if (chainIdForStorage === null) {
+      return null;
+    }
+    return aesKeysByChain[chainIdForStorage] ?? null;
+  }, [aesKeysByChain, chainIdForStorage]);
+
+  const updateUserAesKey = useCallback(
+    (key: string | null, chainIdOverride?: number | null): void => {
+      setAesKeysByChain((prev) => {
+        const targetChainId =
+          chainIdOverride ?? chainIdForStorage;
+        if (targetChainId === null || targetChainId === undefined) {
+          return prev;
+        }
+
+        if (key === null) {
+          if (!(targetChainId in prev)) {
+            return prev;
+          }
+          const { [targetChainId]: _removed, ...rest } = prev;
+          return rest;
+        }
+
+        if (prev[targetChainId] === key) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [targetChainId]: key,
+        };
+      });
+    },
+    [chainIdForStorage],
+  );
+
   useEffect(() => {
-    const currentChainId = chainIdForStorage;
+    const normalizedChainId =
+      typeof connectedChainId === 'number' ? connectedChainId : null;
+    const isValidChainId =
+      normalizedChainId !== null && isSupportedChainId(normalizedChainId);
     const previousChainId = previousChainIdRef.current;
 
-    if (previousChainId !== null && previousChainId !== currentChainId) {
+    if (!isValidChainId) {
+      if (previousChainId !== null) {
+        setUserHasAesKEY(false);
+        setSettingAESKeyError(null);
+        resetOnboardingState();
+        clearTimerIfExists();
+        syncedRef.current = false;
+        initialCheckRef.current = false;
+        lastCheckedAddressRef.current = null;
+        setIsInitializing(true);
+      }
+      previousChainIdRef.current = null;
+      if (chainIdForStorage !== null) {
+        setChainIdForStorage(null);
+      }
+      return;
+    }
+
+    if (previousChainId !== null && previousChainId !== normalizedChainId) {
       setUserHasAesKEY(false);
-      setUserAesKEY(null);
       setSettingAESKeyError(null);
       resetOnboardingState();
       clearTimerIfExists();
@@ -154,8 +214,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setIsInitializing(true);
     }
 
-    previousChainIdRef.current = currentChainId ?? null;
+    previousChainIdRef.current = normalizedChainId;
+    setChainIdForStorage((current) =>
+      current === normalizedChainId ? current : normalizedChainId
+    );
   }, [
+    connectedChainId,
     chainIdForStorage,
     clearTimerIfExists,
     resetOnboardingState,
@@ -184,7 +248,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       console.error('Failed to check wallet permissions:', error);
       return false;
     }
-  }, [invokeSnap]);
+  }, [invokeSnap, updateUserAesKey]);
 
   const connectSnapToWallet = useCallback(async (): Promise<boolean> => {
     try {
@@ -397,6 +461,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setOnboardingStep('done');
         setUserHasAesKEY(true);
         setSettingAESKeyError(null);
+        updateUserAesKey(aesKey);
 
         if (address) {
           setOnboardingCompleted(address, chainIdForStorage);
@@ -420,6 +485,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     address,
     resetOnboardingState,
     chainIdForStorage,
+    updateUserAesKey,
   ]);
 
   const handleSetAESKeyError = useCallback((error?: unknown): void => {
@@ -455,7 +521,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       const result = await invokeSnap({ method: 'get-aes-key' });
 
       if (result !== null) {
-        setUserAesKEY(result as string);
+        updateUserAesKey(result as string);
         setUserHasAesKEY(true);
       } else {
         const rejectionError = new Error('User rejected the request');
@@ -470,6 +536,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [invokeSnap]);
 
   const deleteAESKey = useCallback(async (): Promise<void> => {
+    if (chainIdForStorage === null) {
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await invokeSnap({ method: 'delete-aes-key' });
@@ -478,6 +548,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         setUserHasAesKEY(false);
         setShowDelete(false);
         setSettingAESKeyError(null);
+        updateUserAesKey(null);
 
         if (address) {
           clearOnboardingCompleted(address, chainIdForStorage);
@@ -488,7 +559,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [invokeSnap, address, chainIdForStorage]);
+  }, [invokeSnap, address, chainIdForStorage, updateUserAesKey]);
 
   useEffect(() => {
     const syncEnvironmentWithSnap = async (): Promise<void> => {
@@ -519,7 +590,17 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [installedSnap, address, environment, isChainSupported, invokeSnap]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
-    if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap || loading || onboardingStep !== null) return;
+    if (
+      !address ||
+      !installedSnap ||
+      chainIdForStorage === null ||
+      initialCheckRef.current ||
+      isInstallingSnap ||
+      loading ||
+      onboardingStep !== null
+    ) {
+      return;
+    }
 
     try {
       const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
@@ -536,7 +617,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         console.error('SnapContext: Permission check failed:', error);
       }
     }
-  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, clearTimerIfExists, chainIdForStorage]);
+  }, [address, installedSnap, chainIdForStorage, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
 
   useEffect(() => {
     if (loading || onboardingStep !== null) {
@@ -548,7 +629,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     if (!address || !installedSnap) {
       setUserHasAesKEY(false);
-      setUserAesKEY(null);
+      setAesKeysByChain({});
       setSettingAESKeyError(null);
       return;
     }
@@ -562,7 +643,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, environment, isChainSupported]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, environment, isChainSupported, chainIdForStorage]);
 
   const snapCheckCompletedRef = useRef(false);
 
@@ -594,8 +675,9 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     if (snapCheckCompletedRef.current && !isInstallingSnap && snapWasUninstalled) {
       clearAllOnboardingData();
+      setAesKeysByChain({});
     }
-  }, [installedSnap, isInstallingSnap, provider]);
+  }, [installedSnap, isInstallingSnap, provider, setAesKeysByChain]);
 
   useEffect(() => {
     const handleAccountsChanged = async (accounts: unknown): Promise<void> => {
@@ -603,7 +685,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
       if (!accountsArray?.length || !installedSnap) {
         setUserHasAesKEY(false);
-        setUserAesKEY(null);
+        setAesKeysByChain({});
         setSettingAESKeyError(null);
         initialCheckRef.current = false;
         lastCheckedAddressRef.current = null;
@@ -611,7 +693,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
 
       setUserHasAesKEY(false);
-      setUserAesKEY(null);
+      setAesKeysByChain({});
       setSettingAESKeyError(null);
       initialCheckRef.current = false;
 
@@ -634,7 +716,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       checkPermissionsForAccount(address);
     } else if (!address) {
       setUserHasAesKEY(false);
-      setUserAesKEY(null);
+      setAesKeysByChain({});
       if (settingAESKeyError === 'accountPermissionDenied') {
         setSettingAESKeyError(null);
       }
@@ -648,7 +730,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     getAESKey,
     deleteAESKey,
     userAESKey,
-    setUserAesKEY,
+    setUserAesKEY: updateUserAesKey,
     handleShowDelete,
     showDelete,
     loading,
@@ -664,6 +746,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     getAESKey,
     deleteAESKey,
     userAESKey,
+    updateUserAesKey,
     handleShowDelete,
     showDelete,
     loading,

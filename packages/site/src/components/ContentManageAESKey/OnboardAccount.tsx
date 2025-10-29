@@ -105,6 +105,25 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
     const currentChainId = typeof chain?.id === 'number' ? chain.id : null;
     const previousChainId = previousChainIdRef.current;
 
+    if (currentChainId === null) {
+      if (previousChainId !== null) {
+        setOnboardingState({
+          isOnboarding: false,
+          isCompleted: false
+        });
+        setHasCopiedAddress(false);
+
+        if (copyTimeoutRef.current) {
+          clearTimeout(copyTimeoutRef.current);
+          copyTimeoutRef.current = null;
+        }
+
+        resetOnboardingContext();
+      }
+      previousChainIdRef.current = null;
+      return;
+    }
+
     if (previousChainId !== null && previousChainId !== currentChainId) {
       setOnboardingState({
         isOnboarding: false,

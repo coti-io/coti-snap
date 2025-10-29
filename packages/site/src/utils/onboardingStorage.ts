@@ -54,7 +54,20 @@ export const hasCompletedOnboarding = (
 
   if (chainId !== undefined && chainId !== null) {
     const keyWithChain = buildStorageKey(address, chainId);
-    return Boolean(data[keyWithChain]);
+    if (keyWithChain in data) {
+      return Boolean(data[keyWithChain]);
+    }
+
+    const legacyKey = buildStorageKey(address);
+    if (legacyKey in data) {
+      const migratedData = { ...data };
+      migratedData[keyWithChain] = Boolean(migratedData[legacyKey]);
+      delete migratedData[legacyKey];
+      saveOnboardingData(migratedData);
+      return Boolean(migratedData[keyWithChain]);
+    }
+
+    return false;
   }
 
   return Boolean(data[buildStorageKey(address)]);
