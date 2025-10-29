@@ -6,6 +6,7 @@ import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 
 import { USED_ONBOARD_CONTRACT_ADDRESS } from '../config/onboard';
+import { getEnvironmentForChain, isSupportedChainId } from '../config/networks';
 import { useInvokeSnap } from './useInvokeSnap';
 import { useMetaMask } from './useMetaMask';
 import { useMetaMaskContext } from './MetamaskContext';
@@ -67,7 +68,6 @@ interface ResetOnboardingOptions {
 }
 
 const MAX_RETRIES = 3;
-const ENVIRONMENT = import.meta.env.VITE_NODE_ENV === 'testnet' ? 'testnet' : 'mainnet';
 const SYNC_DELAY = 200;
 
 const isUserRejectedError = (error: unknown): boolean => {
@@ -91,9 +91,15 @@ const SnapContext = createContext<SnapContextValue | undefined>(undefined);
 
 export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const invokeSnap = useInvokeSnap();
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const { installedSnap, isInstallingSnap } = useMetaMask();
   const { error: metamaskError, provider } = useMetaMaskContext();
+  const connectedChainId = chain?.id;
+  const isChainSupported = isSupportedChainId(connectedChainId);
+  const environment = useMemo(
+    () => getEnvironmentForChain(isChainSupported ? connectedChainId : undefined),
+    [connectedChainId, isChainSupported],
+  );
 
   const [userAESKey, setUserAesKEY] = useState<string | null>(null);
   const [userHasAESKey, setUserHasAesKEY] = useState<boolean>(false);
@@ -460,7 +466,9 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const syncEnvironmentWithSnap = async (): Promise<void> => {
-      if (!installedSnap || syncedRef.current || !address) return;
+      if (!installedSnap || syncedRef.current || !address || !isChainSupported) {
+        return;
+      }
 
       try {
         syncedRef.current = true;
@@ -468,7 +476,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
         await invokeSnap({
           method: 'set-environment',
-          params: { environment: ENVIRONMENT }
+          params: { environment }
         });
       } catch (error) {
         if (!(error instanceof Error) || !error.message.includes('No account connected')) {
@@ -478,11 +486,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
     };
 
-    if (installedSnap && address && !syncedRef.current) {
+    if (installedSnap && address && isChainSupported && !syncedRef.current) {
       const timer = setTimeout(syncEnvironmentWithSnap, SYNC_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [installedSnap, address]);
+  }, [installedSnap, address, environment, isChainSupported, invokeSnap]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
     if (!address || !installedSnap || initialCheckRef.current || isInstallingSnap || loading || onboardingStep !== null) return;
@@ -528,7 +536,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep]);
+  }, [address, installedSnap, isInstallingSnap, loading, onboardingStep, environment, isChainSupported]);
 
   const snapCheckCompletedRef = useRef(false);
 

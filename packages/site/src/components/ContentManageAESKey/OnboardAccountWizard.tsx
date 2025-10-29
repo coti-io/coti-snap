@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
 
-import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_LINK, ONBOARD_CONTRACT_GITHUB_LINK } from '../../config/onboard';
+import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_GITHUB_LINK, getOnboardContractLink } from '../../config/onboard';
 import { useWrongChain } from '../../hooks';
 import { useSnap } from '../../hooks/SnapContext';
 import { ButtonAction, ButtonCancel } from '../Button';
@@ -40,10 +40,14 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     handleCancelOnboard: snapCancelOnboard
   } = useSnap();
 
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const [isEditable, setIsEditable] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const contractExplorerLink = useMemo(
+    () => getOnboardContractLink(chain?.id),
+    [chain?.id],
+  );
 
   useEffect(() => {
     setIsEditable(false);
@@ -88,7 +92,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
         <ContentTitle>Onboard</ContentTitle>
         <ContentTextSpaced>
           You are about to interact with the{' '}
-          <Link target="_blank" href={ONBOARD_CONTRACT_LINK}>
+          <Link target="_blank" href={contractExplorerLink}>
             Account Onboard contract
           </Link>{' '}
         </ContentTextSpaced>

@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
+import { useAccount } from 'wagmi';
+
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useSnap } from '../../hooks/SnapContext';
 import { useDropdown } from '../../hooks/useDropdown';
@@ -8,7 +10,7 @@ import { ImportedToken } from '../../types/token';
 import { ImportTokenModal } from './ImportTokenModal';
 import { ImportNFTModal } from './ImportNFTModal';
 import { sortTokens } from '../../utils/tokenHelpers';
-import { getCurrentNetworkConfig } from '../../config/networks';
+import { getNetworkConfig } from '../../config/networks';
 import {
   DownArrow,
   FilterIcon,
@@ -58,6 +60,11 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const { importedTokens, isLoading, refreshTokens } = useImportedTokens();
   const menuDropdown = useDropdown();
   const sortDropdown = useDropdown();
+  const { chain } = useAccount();
+  const networkConfig = useMemo(
+    () => getNetworkConfig(chain?.id),
+    [chain?.id],
+  );
 
   const effectiveAESKey = aesKey || userAESKey;
 
@@ -168,13 +175,12 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
 
         <HeaderBar>
           <NetworkBadge 
-            badgeColor={getCurrentNetworkConfig().badgeColor}
-            textColor={getCurrentNetworkConfig().color}
-            borderColor={getCurrentNetworkConfig().color}
-            isTestnet={getCurrentNetworkConfig().isTestnet}
+            badgeColor={networkConfig.badgeColor}
+            textColor={networkConfig.color}
+            borderColor={networkConfig.color}
+            isTestnet={networkConfig.isTestnet}
           >
-            {getCurrentNetworkConfig().displayName} 
-            {getCurrentNetworkConfig().isTestnet}
+            {networkConfig.displayName}
             <DownArrow />
           </NetworkBadge>
           <HeaderActions style={headerActionsStyle}>
