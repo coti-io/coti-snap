@@ -75,6 +75,7 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
   const { copied, copyToClipboard } = useCopyToClipboard();
   const { removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
+  const closeMenuDropdown = menuDropdown.close;
   const [showHideModal, setShowHideModal] = useState(false);
 
   const effectiveAESKey = aesKey || userAESKey;
@@ -105,6 +106,12 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
       decryptBalance();
     }
   }, [open, token, decryptBalance]);
+
+  useEffect(() => {
+    if (token?.symbol === 'COTI') {
+      closeMenuDropdown();
+    }
+  }, [token?.symbol, closeMenuDropdown]);
 
   const handleCopy = useCallback((text: string) => {
     copyToClipboard(text);
@@ -158,23 +165,27 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
         </IconButton>
       </HeaderBarSlotLeft>
       <HeaderBarSlotRight style={{ position: 'relative' }}>
-        <IconButton 
-          onClick={menuDropdown.toggle}
-          selected={menuDropdown.isOpen}
-          type="button" 
-          aria-label="Menu"
-        >
-          <VerticalMenuIcon />
-        </IconButton>
-        
-        {menuDropdown.isOpen && token?.symbol !== 'COTI' && (
-          <MenuDropdown ref={menuDropdown.ref}>
-            <MenuItem onClick={handleRemoveToken} type="button">
-              <TrashIcon />
-              Hide {token.symbol}
-            </MenuItem>
-          </MenuDropdown>
-        )}
+        {token?.symbol !== 'COTI' ? (
+          <>
+            <IconButton 
+              onClick={menuDropdown.toggle}
+              selected={menuDropdown.isOpen}
+              type="button" 
+              aria-label="Menu"
+            >
+              <VerticalMenuIcon />
+            </IconButton>
+            
+            {menuDropdown.isOpen && (
+              <MenuDropdown ref={menuDropdown.ref}>
+                <MenuItem onClick={handleRemoveToken} type="button">
+                  <TrashIcon />
+                  Hide {token.symbol}
+                </MenuItem>
+              </MenuDropdown>
+            )}
+          </>
+        ) : null}
       </HeaderBarSlotRight>
       </HeaderBar>
 
