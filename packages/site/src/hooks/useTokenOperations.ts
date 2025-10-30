@@ -165,6 +165,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
       const isConfidential = await getTokenConfidentialStatus(tokenAddress);
       const signer = await getBrowserProvider().getSigner();
+      let tx;
 
       if (isConfidential) {
         if (!aesKey) throw new Error('AES key is required for private ERC20 transfer');
@@ -175,23 +176,26 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           tokenAddress,
           getSelector("transfer(address,(uint256,bytes))")
         ) as itUint;
-        const tx = await (contract as any)["transfer(address,(uint256,bytes))"](
+        tx = await (contract as any)["transfer(address,(uint256,bytes))"](
           to,
           encryptedAmount,
           { gasLimit: 12000000 }
         );
-        await tx.wait();
       } else {
         const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
-        const tx = await (contract as any)["transfer(address,uint256)"](
+        tx = await (contract as any)["transfer(address,uint256)"](
           to,
           ethers.toBigInt(amount),
           { gasLimit: 12000000 }
         );
-        await tx.wait();
       }
 
-      return true;
+      if (!tx) {
+        throw new Error('Transaction could not be initiated');
+      }
+
+      await tx.wait();
+      return tx.hash ?? '';
     });
   }, [withLoading, getBrowserProvider, getTokenConfidentialStatus]);
 
@@ -309,7 +313,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       await tx.wait();
       const nftKey = tokenAddress + '-' + tokenId;
       removeImportedToken(nftKey);
-      return true;
+      return tx.hash ?? '';
     });
   }, [withLoading, getContract, getBrowserProvider, getNFTConfidentialStatus]);
 
@@ -356,8 +360,11 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         '0x',
         { gasLimit: 12000000 }
       );
+      if (!tx) {
+        throw new Error('Transaction could not be initiated');
+      }
       await tx.wait();
-      return true;
+      return tx.hash ?? '';
     });
   }, [withLoading, getBrowserProvider]);
 
@@ -391,7 +398,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
       if (!tx) throw new Error('Transaction could not be initiated');
       await tx.wait();
-      return true;
+      return tx.hash ?? '';
     });
   }, [withLoading, getBrowserProvider]);
 

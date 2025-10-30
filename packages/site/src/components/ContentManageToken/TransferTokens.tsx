@@ -72,7 +72,7 @@ interface TransferTokensProps {
   balance: string;
   aesKey?: string | null | undefined;
   initialToken?: any;
-  onTransferSuccess?: () => void;
+  onTransferSuccess?: (txHash: string) => void;
 }
 
 interface Token {
@@ -724,16 +724,16 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     setTxStatus('loading');
 
     try {
-      let success = false;
+      let txHash: string | null = null;
       const targetAddress = resolvedAddress || addressInput;
 
       if (currentToken.symbol === 'COTI' || !currentToken.address) {
-        success = await tokenOps.transferCOTI({
+        txHash = await tokenOps.transferCOTI({
           to: targetAddress,
           amount: amount
         });
       } else if (currentToken.tokenId && currentToken.type === 'ERC721') {
-        success = await tokenOps.transferERC721({
+        txHash = await tokenOps.transferERC721({
           tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
           to: targetAddress,
           tokenId: currentToken.tokenId
@@ -742,7 +742,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         if (!amount || amount === '0') {
           throw new Error('Please enter a valid amount for ERC1155 transfer');
         }
-        success = await tokenOps.transferERC1155({
+        txHash = await tokenOps.transferERC1155({
           tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
           to: targetAddress,
           tokenId: currentToken.tokenId,
@@ -752,7 +752,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         const decimals = currentToken.decimals ?? 18;
         const amountInWei = parseUnits(amount, decimals);
 
-        success = await tokenOps.transferERC20({
+        txHash = await tokenOps.transferERC20({
           tokenAddress: currentToken.address,
           to: targetAddress,
           amount: amountInWei.toString(),
@@ -760,12 +760,12 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
         });
       }
 
-      if (success) {
+      if (txHash) {
         setTxStatus('success');
-        fetchTokenBalance(currentToken);
+        await fetchTokenBalance(currentToken);
 
-        if ((currentToken.symbol === 'COTI' || !currentToken.address) && onTransferSuccess) {
-          onTransferSuccess();
+        if (onTransferSuccess) {
+          onTransferSuccess(txHash);
         } else {
           onBack();
         }
