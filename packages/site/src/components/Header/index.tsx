@@ -1,4 +1,4 @@
-import COTILogo from '../../assets/logo.svg';
+import COTILogo from '../../assets/snap.svg';
 import { HeaderButtons } from './HeaderButtons';
 import { MobileMenu } from './MobileMenu';
 import {
@@ -13,7 +13,7 @@ export const Header = () => {
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        <LinkTransparent href={COTI_SITE} target="_blank" rel="noopener noreferrer">
+        <LinkTransparent target="_blank" rel="noopener noreferrer">
           <COTILogo />
         </LinkTransparent>
       </LogoWrapper>

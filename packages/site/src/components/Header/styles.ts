@@ -27,7 +27,6 @@ export const LogoWrapper = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
   cursor: pointer;
 `;
 
@@ -300,7 +299,7 @@ export const LinkTransparent = styled.a`
   font-weight: 500;
   font-family: ${({ theme }) => theme.fonts.default};
   flex: none;
-  padding: 8px 35px;
+  padding: 0px 35px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
