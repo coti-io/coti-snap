@@ -55,7 +55,7 @@ export const useTokenBalances = ({
               const balance = await decryptERC20Balance(token.address, aesKey || undefined);
               return { address: token.address, balance: balance.toString() };
             } catch (error) {
-              console.error(`Error fetching balance for ${token.symbol}:`, error);
+              void error;
               return { address: token.address, balance: '0' };
             }
           }
@@ -79,7 +79,7 @@ export const useTokenBalances = ({
       }
     } catch (error) {
       if (!signal.aborted) {
-        console.error('Error fetching token balances:', error);
+        void error;
       }
     } finally {
       if (!signal.aborted) {

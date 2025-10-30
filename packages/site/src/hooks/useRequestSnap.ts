@@ -42,7 +42,7 @@ export const useRequestSnap = (
       
       return installedSnap;
     } catch (error) {
-      console.error('Error installing snap:', error);
+      void error;
       setIsInstallingSnap(false);
       throw error;
     }

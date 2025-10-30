@@ -209,7 +209,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
         balanceLoading: false
       });
     } catch (error) {
-      console.error('Error getting token info:', error);
+      void error;
       let errorMessage = 'Error reading token information';
       
       if (error instanceof Error) {
@@ -279,7 +279,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(({
         updateState({ tokenInfoError: MESSAGES.IMPORT_ERROR });
       }
     } catch (error: any) {
-      console.error('Import error:', error);
+      void error;
       if (error.message?.includes('Disconnected from MetaMask background')) {
         updateState({ tokenInfoError: MESSAGES.METAMASK_DISCONNECTED });
       } else {

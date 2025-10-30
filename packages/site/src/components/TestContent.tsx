@@ -13,9 +13,7 @@ export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
       method: 'encrypt',
       params: { value: 'hello' },
     });
-    if (result) {
-      alert(result);
-    }
+    void result;
   };
 
   const handleDecryptClick = async () => {
@@ -34,9 +32,7 @@ export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
         }),
       },
     });
-    if (result) {
-      alert(result);
-    }
+    void result;
   };
 
   return (

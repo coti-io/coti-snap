@@ -20,7 +20,7 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
       await deleteAESKey();
       handleShowDelete();
     } catch (error) {
-      console.error('Error during AES key deletion:', error);
+      void error;
     }
   };
 

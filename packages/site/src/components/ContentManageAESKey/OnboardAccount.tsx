@@ -165,7 +165,7 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         await setAESKey();
         handleOnboardingComplete();
       } catch (error) {
-        console.error('OnboardAccount: Error during AES key setup:', error);
+        void error;
       }
     }
   }, [isTestnetNetwork, setAESKey, startTransition]);

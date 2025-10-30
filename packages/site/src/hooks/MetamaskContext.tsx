@@ -45,7 +45,11 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   const [isInstallingSnap, setIsInstallingSnap] = useState<boolean>(false);
 
   useEffect(() => {
-    getSnapsProvider().then(setProvider).catch(console.error);
+    getSnapsProvider()
+      .then(setProvider)
+      .catch(error => {
+        void error;
+      });
   }, []);
 
   useEffect(() => {

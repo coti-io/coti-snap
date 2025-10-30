@@ -25,7 +25,7 @@ export const useImportedTokens = () => {
           setImportedTokensState([]);
         }
       } catch (error) {
-        console.error('Error loading imported tokens:', error);
+        void error;
       } finally {
         setIsLoading(false);
       }
@@ -45,7 +45,7 @@ export const useImportedTokens = () => {
       const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
     } catch (error) {
-      console.error('Error adding token:', error);
+      void error;
     }
   }, [address]);
 
@@ -59,7 +59,7 @@ export const useImportedTokens = () => {
       const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
     } catch (error) {
-      console.error('Error removing token:', error);
+      void error;
     }
   }, [address]);
 
@@ -70,7 +70,7 @@ export const useImportedTokens = () => {
       clearImportedTokensByAccount(address);
       setImportedTokensState([]);
     } catch (error) {
-      console.error('Error clearing tokens:', error);
+      void error;
     }
   }, [address]);
 
@@ -89,7 +89,7 @@ export const useImportedTokens = () => {
       const tokens = getImportedTokensByAccount(address);
       setImportedTokensState(tokens);
     } catch (error) {
-      console.error('Error refreshing tokens:', error);
+      void error;
     }
   }, [address]);
 

@@ -48,7 +48,7 @@ export const ContentInstallAESKeyManager = () => {
       
       await getSnap();
     } catch (error) {
-      console.error('Failed to install snap:', error);
+      void error;
     }
   }, [requestSnap, getSnap]);
 

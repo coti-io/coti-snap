@@ -56,7 +56,7 @@ export const useZNSResolver = () => {
 
       return userOwnerAddress;
     } catch (error) {
-      console.error('ZNS resolution failed:', error);
+      void error;
       
       const errorMessage = error instanceof Error 
         ? error.message 

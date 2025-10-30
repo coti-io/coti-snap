@@ -245,7 +245,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
       return Boolean(caveat?.value?.length);
     } catch (error) {
-      console.error('Failed to check wallet permissions:', error);
+      void error;
       return false;
     }
   }, [invokeSnap, updateUserAesKey]);
@@ -255,7 +255,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       const result = await invokeSnap({ method: 'connect-to-wallet' });
       return Boolean(result);
     } catch (error) {
-      console.error('Failed to connect snap to wallet:', error);
+      void error;
       return false;
     }
   }, [invokeSnap]);
@@ -313,7 +313,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
           permittedAccounts: caveat.value
         };
       } catch (fallbackError) {
-        console.error('Permission check fallback failed:', fallbackError);
+        void fallbackError;
         throw fallbackError;
       }
     }
@@ -345,7 +345,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         if (error instanceof Error && error.message.includes('No account connected')) {
           return;
         }
-        console.warn('Permission check failed for account:', targetAddress, error);
+        void error;
       }
     }, 800);
   }, [installedSnap, checkAccountPermissions, settingAESKeyError]);
@@ -446,7 +446,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       }
 
       if (!aesKey) {
-        console.error('Failed to generate AES key after all retries');
         setSettingAESKeyError('unknownError');
         resetOnboardingState();
         return;
@@ -498,11 +497,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       } else if (isUserRejectedError(error)) {
         setSettingAESKeyError('userRejected');
       } else {
-        console.error('Error setting AES key:', error.message);
+        void error;
         setSettingAESKeyError('unknownError');
       }
     } else if (metamaskError) {
-      console.error('MetaMask error details:', metamaskError.message, metamaskError);
+      void metamaskError;
       if (isUserRejectedError(metamaskError)) {
         setSettingAESKeyError('userRejected');
       } else {
@@ -555,7 +554,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Failed to delete AES key:', error);
+      void error;
     } finally {
       setLoading(false);
     }
@@ -577,7 +576,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         });
       } catch (error) {
         if (!(error instanceof Error) || !error.message.includes('No account connected')) {
-          console.error('Failed to sync environment:', error);
+          void error;
         }
         syncedRef.current = false;
       }
@@ -614,7 +613,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       setIsInitializing(false);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.includes('No account connected')) {
-        console.error('SnapContext: Permission check failed:', error);
+        void error;
       }
     }
   }, [address, installedSnap, chainIdForStorage, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
@@ -629,7 +628,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     if (!address || !installedSnap) {
       setUserHasAesKEY(false);
-      setAesKeysByChain({});
+      setAesKeysByChain(prev => (Object.keys(prev).length > 0 ? {} : prev));
       setSettingAESKeyError(null);
       return;
     }
@@ -716,7 +715,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       checkPermissionsForAccount(address);
     } else if (!address) {
       setUserHasAesKEY(false);
-      setAesKeysByChain({});
+      setAesKeysByChain(prev => (Object.keys(prev).length > 0 ? {} : prev));
       if (settingAESKeyError === 'accountPermissionDenied') {
         setSettingAESKeyError(null);
       }
