@@ -62,7 +62,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
       snapCancelOnboard();
       handleCancelOnboard();
     } catch (error) {
-      console.error('Error during onboarding cancellation:', error);
+      void error;
     }
   };
 
@@ -71,7 +71,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
       setIsValidating(true);
       await setAESKey();
     } catch (error) {
-      console.error('OnboardAccountWizard: Error during AES key setup:', error);
+      void error;
     } finally {
       setIsValidating(false);
     }

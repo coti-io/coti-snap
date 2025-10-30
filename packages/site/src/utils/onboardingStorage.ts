@@ -23,7 +23,7 @@ const getOnboardingData = (): OnboardingData => {
     const data = localStorage.getItem(ONBOARDING_KEY);
     return data ? JSON.parse(data) : {};
   } catch (error) {
-    console.warn('Failed to read onboarding data from localStorage:', error);
+    void error;
     return {};
   }
 };
@@ -35,7 +35,7 @@ const saveOnboardingData = (data: OnboardingData): void => {
   try {
     localStorage.setItem(ONBOARDING_KEY, JSON.stringify(data));
   } catch (error) {
-    console.warn('Failed to save onboarding data to localStorage:', error);
+    void error;
   }
 };
 
@@ -120,6 +120,6 @@ export const clearAllOnboardingData = (): void => {
   try {
     localStorage.removeItem(ONBOARDING_KEY);
   } catch (error) {
-    console.warn('Failed to clear onboarding data from localStorage:', error);
+    void error;
   }
 };

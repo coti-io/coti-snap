@@ -185,7 +185,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
       if (isERC721) return 'ERC721';
       return 'ERC721';
     } catch (error) {
-      console.warn('Failed to detect token type, defaulting to ERC721:', error);
+      void error;
       return 'ERC721';
     }
   }, [provider]);
@@ -205,7 +205,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
         const info = await getNFTInfo(formData.address);
         setNftInfo(info);
       } catch (error) {
-        console.error('Failed to fetch NFT info:', error);
+        void error;
         let errorMessage = 'Failed to fetch NFT information from contract';
         
         if (error instanceof Error) {
@@ -281,7 +281,7 @@ export const ImportNFTModal: React.FC<ImportNFTModalProps> = React.memo(({
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Failed to import NFT:', error);
+      void error;
       let errorMessage: string = ERROR_MESSAGES.IMPORT_FAILED;
       
       if (error instanceof Error) {

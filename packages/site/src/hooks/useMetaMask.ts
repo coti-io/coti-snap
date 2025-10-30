@@ -52,15 +52,18 @@ export const useMetaMask = () => {
       }
     };
 
-    detect().catch(console.error);
+    detect().catch(error => {
+      void error;
+    });
   }, [provider]);
 
   useEffect(() => {
     if (!provider) return;
 
     const handleSnapUpdate = () => {
-      console.log('[useMetaMask] Snap update detected, re-checking snap installation');
-      getSnap().catch(console.error);
+      getSnap().catch(error => {
+        void error;
+      });
     };
 
     const interval = setInterval(handleSnapUpdate, 3000);

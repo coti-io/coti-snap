@@ -109,7 +109,7 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
       const formatted = trimmedFractional.length > 0 ? `${wholeStr}.${trimmedFractional}` : wholeStr;
       return formatBalance(formatted);
     } catch (error) {
-      console.error('Error formatting token balance:', error);
+      void error;
       return formatBalance(balance);
     }
   }

@@ -62,7 +62,7 @@ export const getImportedTokensByAccount = (address: string): ImportedToken[] => 
     }
     return [];
   } catch (error) {
-    console.error('Error reading imported tokens from localStorage:', error);
+    void error;
     return [];
   }
 };
@@ -80,7 +80,7 @@ export const getImportedTokens = (): ImportedToken[] => {
     }
     return [];
   } catch (error) {
-    console.error('Error reading imported tokens from localStorage:', error);
+    void error;
     return [];
   }
 };
@@ -98,7 +98,7 @@ export const setImportedTokensByAccount = (address: string, tokens: ImportedToke
     const accountKey = getAccountTokensKey(address);
     setLocalStorage(accountKey, JSON.stringify(tokens));
   } catch (error) {
-    console.error('Error saving imported tokens to localStorage:', error);
+    void error;
   }
 };
 
@@ -111,7 +111,7 @@ export const setImportedTokens = (tokens: ImportedToken[]) => {
   try {
     setLocalStorage(IMPORTED_TOKENS_KEY, JSON.stringify(tokens));
   } catch (error) {
-    console.error('Error saving imported tokens to localStorage:', error);
+    void error;
   }
 };
 

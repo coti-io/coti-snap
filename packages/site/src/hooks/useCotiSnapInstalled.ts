@@ -13,7 +13,7 @@ export const useCotiSnapInstalled = () => {
         const isMySnapInstalled = Object.keys(snaps).includes('npm:snap');
         setIsInstalled(isMySnapInstalled);
       } catch (error) {
-        console.error('Error checking if snap is installed:', error);
+        void error;
         setIsInstalled(false);
       }
     };

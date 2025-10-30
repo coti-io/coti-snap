@@ -26,7 +26,7 @@ export const useCopyToClipboard = (
       
       setTimeout(() => setCopied(false), successDuration);
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      void error;
       
       try {
         const clipboardItem = new ClipboardItem({
@@ -37,11 +37,9 @@ export const useCopyToClipboard = (
         onSuccess?.();
         setTimeout(() => setCopied(false), successDuration);
       } catch (fallbackError) {
-        console.error('Fallback clipboard method failed:', fallbackError);
+        void fallbackError;
         const copyError = fallbackError instanceof Error ? fallbackError : new Error('Failed to copy to clipboard');
         onError?.(copyError);
-        
-        alert('Failed to copy to clipboard. Please copy manually.');
       }
     }
   }, [successDuration, onSuccess, onError]);
