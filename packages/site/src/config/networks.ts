@@ -45,7 +45,7 @@ export const NETWORKS: Record<number, NetworkConfig> = {
   },
   [COTI_MAINNET_CHAIN_ID]: {
     id: COTI_MAINNET_CHAIN_ID,
-    name: 'COTI',
+    name: 'COTI Mainnet',
     displayName: 'COTI MAINNET',
     shortName: 'MAINNET',
     rpcUrl: 'https://mainnet.coti.io/rpc',
