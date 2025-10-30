@@ -64,7 +64,7 @@ import XIcon from '../../assets/x.svg';
 import SearchIcon from '../../assets/icons/search.svg';
 import { CotiLogo } from '../../assets/icons';
 import { formatTokenSymbol, formatBalance, formatTokenBalance } from '../../utils/formatters';
-import { parseUnits } from 'ethers';
+import { parseUnits, formatUnits } from 'ethers';
 
 interface TransferTokensProps {
   onBack: () => void;
@@ -592,13 +592,60 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     }
   }, []);
 
-  const handleSetMaxAmount = useCallback(() => {
-    startTransition(() => {
-      if (!currentBalance || currentBalance === '0') {
+  const handleSetMaxAmount = useCallback(async () => {
+    if (!currentBalance || currentBalance === '0') {
+      startTransition(() => {
         setAmount('0');
+      });
+      return;
+    }
+
+    if (currentToken && (currentToken.symbol === 'COTI' || !currentToken.address)) {
+      if (!browserProvider) {
+        startTransition(() => {
+          setAmount(currentBalance);
+        });
         return;
       }
 
+      try {
+        const feeData = await browserProvider.getFeeData();
+        const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n;
+        const gasLimit = 21000n;
+        const estimatedFeeWei = gasPrice > 0n ? gasPrice * gasLimit : 0n;
+        const balanceWei = parseUnits(currentBalance, 18);
+
+        if (estimatedFeeWei === 0n) {
+          startTransition(() => {
+            setAmount(currentBalance);
+          });
+          return;
+        }
+
+        if (balanceWei <= estimatedFeeWei) {
+          startTransition(() => {
+            setAmount('0');
+          });
+          return;
+        }
+
+        const maxSendableWei = balanceWei - estimatedFeeWei;
+        const maxSendable = formatUnits(maxSendableWei, 18);
+        const normalizedAmount = maxSendable.replace(/\.?0+$/, '') || '0';
+
+        startTransition(() => {
+          setAmount(normalizedAmount);
+        });
+        return;
+      } catch (error) {
+        startTransition(() => {
+          setAmount(currentBalance);
+        });
+        return;
+      }
+    }
+
+    startTransition(() => {
       const formattedBalance = currentToken ? (() => {
         const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
         return formatTokenBalance(currentBalance, decimals);
@@ -606,7 +653,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       setAmount(formattedBalance);
     });
-  }, [currentBalance, currentToken, startTransition]);
+  }, [browserProvider, currentBalance, currentToken, startTransition]);
 
   const handleClearAmount = useCallback(() => {
     startTransition(() => {
