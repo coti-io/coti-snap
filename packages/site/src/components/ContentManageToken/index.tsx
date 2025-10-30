@@ -14,6 +14,7 @@ import TokenDetails from './TokenDetails';
 import { ImportedToken } from '../../types/token';
 import { TransferTokens } from './TransferTokens';
 import { DepositTokens } from './DepositTokens';
+import { ButtonAction } from '../Button';
 import SendIcon from '../../assets/send.svg';
 import ReceiveIcon from '../../assets/receive.svg';
 import { useMetaMaskContext } from '../../hooks/MetamaskContext';
@@ -22,6 +23,7 @@ import { truncateString } from '../../utils';
 import { Loading } from '../Loading';
 import { DeleteAESKey } from '../ContentManageAESKey/DeleteAESKey';
 import { ContentWrapper } from './ContentWrapper';
+import { getNetworkConfig } from '../../config/networks';
 
 interface ModalState {
   transfer: boolean;
@@ -98,6 +100,64 @@ const DepositModal = memo(({ isOpen, onClose, address }: {
 
 DepositModal.displayName = 'DepositModal';
 
+const SuccessWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 320px;
+`;
+
+const SuccessCard = styled.div`
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 28px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+  text-align: center;
+`;
+
+const SuccessText = styled.p`
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.45;
+  color: #000000 !important;
+  font-weight: 600;
+`;
+
+const SuccessHashRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const SuccessHashLabel = styled.span`
+  font-size: 1.4rem;
+  color: #000000 !important;
+  font-weight: 600;
+`;
+
+const SuccessHashLink = styled.a`
+  display: inline-block;
+  margin-top: 0;
+  font-size: 1.5rem;
+  color: #1E29F6 !important;
+  word-break: break-all;
+  text-decoration: underline;
+`;
+
+const SuccessActions = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
+`;
+
 interface ContentManageTokenProps {
   aesKey?: string | null;
 }
@@ -112,6 +172,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const [isRequestingAESKey, setIsRequestingAESKey] = useState(false);
   const [showAESKeyDisplay, setShowAESKeyDisplay] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [transferSuccessHash, setTransferSuccessHash] = useState<string | null>(null);
 
   const [modalState, setModalState] = useState<ModalState>({
     transfer: false,
@@ -209,32 +270,47 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
   const shouldShowConnectWallet = !isWalletConnected;
 
   const handleSendClick = useCallback(() => {
+    setTransferSuccessHash(null);
     setModalState(prev => ({ ...prev, transfer: true }));
   }, []);
 
   const handleTokenSendClick = useCallback((token: ImportedToken) => {
+    setTransferSuccessHash(null);
     setTransferToken(token);
     setModalState(prev => ({ ...prev, transfer: true }));
   }, []);
 
   const handleNFTSendClick = useCallback((nft: ImportedToken) => {
+    setTransferSuccessHash(null);
     setTransferToken(nft);
     setModalState(prev => ({ ...prev, transfer: true }));
   }, []);
 
   const handleReceiveClick = useCallback(() => {
+    setTransferSuccessHash(null);
     setModalState(prev => ({ ...prev, deposit: true }));
   }, []);
 
   const handleCloseTransfer = useCallback(() => {
     setModalState(prev => ({ ...prev, transfer: false }));
     setTransferToken(null);
+    setTransferSuccessHash(null);
   }, []);
 
-  const handleTransferSuccess = useCallback(() => {
+  const handleTransferSuccess = useCallback((txHash: string) => {
     refetchBalance();
     handleCloseTransfer();
+    setTransferSuccessHash(txHash);
   }, [refetchBalance, handleCloseTransfer]);
+
+  const handleGoToWallet = useCallback(() => {
+    setTransferSuccessHash(null);
+  }, []);
+
+  const explorerBaseUrl = useMemo(() => {
+    const { explorerUrl } = getNetworkConfig(currentChainId);
+    return `${explorerUrl.replace(/\/$/, '')}/tx/`;
+  }, [currentChainId]);
 
   const handleCloseDeposit = useCallback(() => {
     setModalState(prev => ({ ...prev, deposit: false }));
@@ -309,6 +385,33 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
           onLaunchDApp={handleLaunchDApp}
           onDeleteAESKey={handleDeleteAESKey}
         />
+      </MainStack>
+    );
+  }
+
+  if (transferSuccessHash) {
+    const txLink = `${explorerBaseUrl}${transferSuccessHash}`;
+
+    return (
+      <MainStack>
+        <SuccessWrapper>
+          <SuccessCard>
+            <SuccessText>Transaction sent successfully</SuccessText>
+            <SuccessHashRow>
+              <SuccessHashLabel>Transaction Hash:</SuccessHashLabel>
+              <SuccessHashLink
+                href={txLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {transferSuccessHash}
+              </SuccessHashLink>
+            </SuccessHashRow>
+            <SuccessActions>
+              <ButtonAction text="Wallet" onClick={handleGoToWallet} />
+            </SuccessActions>
+          </SuccessCard>
+        </SuccessWrapper>
       </MainStack>
     );
   }
