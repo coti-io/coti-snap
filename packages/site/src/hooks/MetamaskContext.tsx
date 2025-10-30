@@ -10,6 +10,7 @@ type MetaMaskContextType = {
   installedSnap: Snap | null;
   error: Error | null;
   isInstallingSnap: boolean;
+  hasCheckedForProvider: boolean;
   setInstalledSnap: (snap: Snap | null) => void;
   setError: (error: Error) => void;
   setIsInstallingSnap: (installing: boolean) => void;
@@ -20,6 +21,7 @@ export const MetaMaskContext = createContext<MetaMaskContextType>({
   installedSnap: null,
   error: null,
   isInstallingSnap: false,
+  hasCheckedForProvider: false,
   setInstalledSnap: () => {
     /* no-op */
   },
@@ -43,13 +45,31 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   const [installedSnap, setInstalledSnap] = useState<Snap | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isInstallingSnap, setIsInstallingSnap] = useState<boolean>(false);
+  const [hasCheckedForProvider, setHasCheckedForProvider] = useState<boolean>(false);
 
   useEffect(() => {
-    getSnapsProvider()
-      .then(setProvider)
-      .catch(error => {
+    let isMounted = true;
+
+    const detectProvider = async () => {
+      try {
+        const snapsProvider = await getSnapsProvider();
+        if (isMounted) {
+          setProvider(snapsProvider);
+        }
+      } catch (error) {
         void error;
-      });
+      } finally {
+        if (isMounted) {
+          setHasCheckedForProvider(true);
+        }
+      }
+    };
+
+    void detectProvider();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -75,7 +95,8 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
         installedSnap, 
         setInstalledSnap,
         isInstallingSnap,
-        setIsInstallingSnap
+        setIsInstallingSnap,
+        hasCheckedForProvider
       }}
     >
       {children}

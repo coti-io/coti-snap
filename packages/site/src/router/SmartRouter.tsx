@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import styled from 'styled-components';
@@ -8,7 +8,8 @@ import { useSnap } from '../hooks/SnapContext';
 import { Header } from '../components';
 import { Footer } from '../components/Footer';
 import { Loading } from '../components/Loading';
-import { ContentBorderWrapper, ContentContainer } from '../components/styles';
+import { ButtonAction } from '../components/Button';
+import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from '../components/styles';
 
 const Container = styled.div`
   display: flex;
@@ -31,14 +32,25 @@ const Container = styled.div`
   }
 `;
 
+const InstallActions = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
 export function SmartRouter() {
   const { isConnected } = useAccount();
   const { wrongChain } = useWrongChain();
-  const { installedSnap, isInstallingSnap } = useMetaMask();
+  const { installedSnap, isInstallingSnap, snapsDetected, hasCheckedForProvider } = useMetaMask();
   const { isInitializing } = useSnap();
   const navigate = useNavigate();
   const [hasInitialized, setHasInitialized] = useState(false);
   const [, startTransition] = useTransition();
+  const shouldShowInstallModal = hasCheckedForProvider && !snapsDetected;
+  const handleInstallMetaMask = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.open('https://metamask.io/download.html', '_blank', 'noopener,noreferrer');
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,6 +100,26 @@ export function SmartRouter() {
         <ContentBorderWrapper>
           <ContentContainer>
             <Loading title="Loading..." actionText="" />
+          </ContentContainer>
+        </ContentBorderWrapper>
+        <Footer />
+      </Container>
+    );
+  }
+
+  if (shouldShowInstallModal) {
+    return (
+      <Container>
+        <Header />
+        <ContentBorderWrapper>
+          <ContentContainer>
+            <ContentTitle>It looks like MetaMask isn&apos;t installed.</ContentTitle>
+            <ContentText>
+              Install MetaMask to continue using the COTI dApp. Once you have it, refresh this page and we&apos;ll take you straight to the next step.
+            </ContentText>
+            <InstallActions>
+              <ButtonAction text="Install MetaMask" onClick={handleInstallMetaMask} />
+            </InstallActions>
           </ContentContainer>
         </ContentBorderWrapper>
         <Footer />

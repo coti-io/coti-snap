@@ -93,7 +93,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const invokeSnap = useInvokeSnap();
   const { address, chain } = useAccount();
   const { installedSnap, isInstallingSnap } = useMetaMask();
-  const { error: metamaskError, provider } = useMetaMaskContext();
+  const { error: metamaskError, provider, hasCheckedForProvider } = useMetaMaskContext();
   const connectedChainId = chain?.id;
   const isChainSupported = isSupportedChainId(connectedChainId);
   const environment = useMemo(
@@ -224,6 +224,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     clearTimerIfExists,
     resetOnboardingState,
   ]);
+
+  useEffect(() => {
+    if (hasCheckedForProvider && provider === null && !isInstallingSnap) {
+      setIsInitializing(false);
+    }
+  }, [hasCheckedForProvider, provider, isInstallingSnap]);
 
   const checkWalletPermissions = useCallback(async (): Promise<boolean> => {
     try {

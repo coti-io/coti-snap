@@ -10,7 +10,7 @@ import { useRequest } from './useRequest';
  * @returns The informations.
  */
 export const useMetaMask = () => {
-  const { provider, setInstalledSnap, installedSnap, isInstallingSnap } = useMetaMaskContext();
+  const { provider, setInstalledSnap, installedSnap, isInstallingSnap, hasCheckedForProvider } = useMetaMaskContext();
   const request = useRequest();
 
   const [isFlask, setIsFlask] = useState(false);
@@ -76,5 +76,12 @@ export const useMetaMask = () => {
     };
   }, [provider]);
 
-  return { isFlask, snapsDetected, installedSnap, getSnap, isInstallingSnap };
+  return { 
+    isFlask, 
+    snapsDetected, 
+    installedSnap, 
+    getSnap, 
+    isInstallingSnap,
+    hasCheckedForProvider
+  };
 };
