@@ -58,6 +58,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
   const { userAESKey, userHasAESKey, getAESKey } = useSnap();
   const [isDecrypted, setIsDecrypted] = useState(!!userAESKey || !!aesKey);
+  const [nftImageMap, setNftImageMap] = useState<Record<string, string>>({});
   
   const { importedTokens, isLoading, refreshTokens, removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
@@ -154,7 +155,25 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   }, []);
 
   const headerActionsStyle = useMemo(() => ({ position: 'relative' as const }), []);
-  const { getERC1155Balance, getERC721Owner } = useTokenOperations(provider);
+  const { getERC1155Balance, getERC721Owner, getNFTMetadata } = useTokenOperations(provider);
+
+  useEffect(() => {
+    setNftImageMap(prev => {
+      const currentAddresses = new Set(nftTokens.map(nft => nft.address));
+      let hasChanges = false;
+      const nextEntries: Record<string, string> = {};
+
+      for (const [address, url] of Object.entries(prev)) {
+        if (currentAddresses.has(address)) {
+          nextEntries[address] = url;
+        } else {
+          hasChanges = true;
+        }
+      }
+
+      return hasChanges ? nextEntries : prev;
+    });
+  }, [nftTokens]);
 
   useEffect(() => {
     if (!provider || nftTokens.length === 0) return;
@@ -203,6 +222,49 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
       cancelled = true;
     };
   }, [provider, nftTokens, getERC1155Balance, getERC721Owner, removeToken]);
+
+  useEffect(() => {
+    if (!provider || nftTokens.length === 0) return;
+
+    const missingNFTs = nftTokens.filter(nft => nft.address && !nftImageMap[nft.address]);
+    if (missingNFTs.length === 0) return;
+
+    let cancelled = false;
+
+    const loadImages = async () => {
+      for (const nft of missingNFTs) {
+        if (!nft.address || !nft.type) continue;
+        const { contractAddress, tokenId } = parseNFTAddress(nft.address);
+        if (!contractAddress || !tokenId) continue;
+
+        try {
+          const metadata = await getNFTMetadata({
+            tokenAddress: contractAddress,
+            tokenId,
+            tokenType: nft.type
+          });
+
+          const image = metadata?.image;
+          if (!cancelled && image) {
+            setNftImageMap(prev => ({
+              ...prev,
+              [nft.address]: image
+            }));
+          }
+        } catch (error) {
+          if (!cancelled) {
+            void error;
+          }
+        }
+      }
+    };
+
+    void loadImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, nftTokens, getNFTMetadata, nftImageMap]);
 
   return (
     <>
@@ -298,6 +360,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
               onOpenImportNFTModal={handleOpenImportNFTModal} 
               onRefreshNFTs={refreshTokens}
               onSelectNFT={onSelectNFT || setSelectedNFT}
+              nftImages={nftImageMap}
             />
           )}
         </TabContentContainer>
@@ -326,6 +389,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
           setActiveTab={setActiveTab}
           setSelectedNFT={setSelectedNFT}
           provider={provider}
+          imageUrl={selectedNFT ? nftImageMap[selectedNFT.address] : undefined}
         />
       )}
       {!onSelectToken && (

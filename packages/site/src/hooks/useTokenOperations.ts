@@ -9,6 +9,7 @@ import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { removeImportedToken, removeImportedTokenByAccount } from '../utils/localStorage';
 import { notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
+import { resolveTokenUri, extractImageUri, parseDataUriJson, fetchImageAsDataUri } from '../utils/nftMetadata';
 
 // Helper function to get function selector
 const getSelector = (functionSignature: string): string => {
@@ -56,6 +57,157 @@ export interface ImportTokenParams {
   image?: string;
   tokenId?: string;
 }
+
+export interface NFTMetadataResult {
+  uri: string | null;
+  metadata: Record<string, any> | null;
+  image: string | null;
+  originalImage?: string | null;
+  imageDataUri?: string | null;
+}
+
+const decodePotentialString = (raw: unknown): string => {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'number' || typeof raw === 'bigint') {
+    return raw.toString();
+  }
+  if (Array.isArray(raw)) {
+    try {
+      return raw.map(item => decodePotentialString(item)).join('');
+    } catch (error) {
+      void error;
+      return '';
+    }
+  }
+  if (typeof raw === 'object') {
+    const value = (raw as { value?: unknown }).value;
+    if (value !== undefined) {
+      return decodePotentialString(value);
+    }
+
+    if (typeof (raw as { toString?: () => string }).toString === 'function') {
+      return (raw as { toString: () => string }).toString();
+    }
+  }
+  return '';
+};
+
+const imageDataUriCache = new Map<string, string>();
+
+const getCachedImageDataUri = async (imageUrl: string): Promise<string | null> => {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('data:')) {
+    return imageUrl;
+  }
+  if (imageDataUriCache.has(imageUrl)) {
+    return imageDataUriCache.get(imageUrl)!;
+  }
+  const dataUri = await fetchImageAsDataUri(imageUrl);
+  if (dataUri) {
+    imageDataUriCache.set(imageUrl, dataUri);
+  }
+  return dataUri;
+};
+
+const buildMetadataResult = async (uri: string | null, metadata: Record<string, any> | null, tokenId?: string): Promise<NFTMetadataResult> => {
+  const { resolved, original, fallbacks } = extractImageUri(metadata ?? undefined, tokenId);
+  const sources: string[] = [];
+
+  const pushUnique = (value: string | null) => {
+    if (!value) return;
+    if (!sources.includes(value)) {
+      sources.push(value);
+    }
+  };
+
+  pushUnique(original);
+  pushUnique(resolved);
+  fallbacks.forEach(fallback => pushUnique(fallback));
+
+  let imageDataUri: string | null = null;
+  for (const source of sources) {
+    if (!source) continue;
+    if (source.startsWith('data:')) {
+      imageDataUri = source;
+      break;
+    }
+    if (!/^https?:/i.test(source)) {
+      continue;
+    }
+    const dataUri = await getCachedImageDataUri(source);
+    if (dataUri) {
+      imageDataUri = dataUri;
+      break;
+    }
+  }
+
+  let fallbackImage: string | null = null;
+  for (const source of sources) {
+    if (!source) continue;
+    if (/^https?:/i.test(source)) {
+      fallbackImage = source;
+      break;
+    }
+  }
+
+  if (!fallbackImage && sources.length > 0) {
+    fallbackImage = sources[0];
+  }
+
+  const displayImage = imageDataUri ?? fallbackImage ?? null;
+
+  return {
+    uri,
+    metadata,
+    image: displayImage,
+    originalImage: original ?? null,
+    imageDataUri: imageDataUri ?? null
+  };
+};
+
+const fetchMetadataFromUri = async (uri: string, tokenId?: string): Promise<NFTMetadataResult> => {
+  if (!uri) {
+    return buildMetadataResult(null, null, tokenId);
+  }
+
+  if (uri.startsWith('data:application/json')) {
+    const metadata = parseDataUriJson(uri);
+    return buildMetadataResult(uri, metadata, tokenId);
+  }
+
+  try {
+    const response = await fetch(uri, {
+      method: 'GET',
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      return buildMetadataResult(uri, null, tokenId);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const metadata = await response.json();
+      return buildMetadataResult(uri, metadata, tokenId);
+    }
+
+    const text = await response.text();
+    if (text) {
+      try {
+        const metadata = JSON.parse(text);
+        return buildMetadataResult(uri, metadata, tokenId);
+      } catch (error) {
+        void error;
+      }
+    }
+
+    return buildMetadataResult(uri, null, tokenId);
+  } catch (error) {
+    void error;
+    return buildMetadataResult(uri, null, tokenId);
+  }
+};
 
 // Interface for ERC20 contract
 interface IERC20 {
@@ -300,6 +452,30 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     }
   }, [getBrowserProvider]);
 
+  const getERC721TokenURI = useCallback(async (tokenAddress: string, tokenId: string): Promise<string | null> => {
+    try {
+      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+      const contract = await getContract(tokenAddress, abi);
+      const result = await (contract as any).tokenURI(tokenId);
+      const uri = decodePotentialString(result);
+      return uri || null;
+    } catch (error) {
+      throw new Error(`Failed to fetch token URI: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [getContract, getNFTConfidentialStatus]);
+
+  const getERC1155TokenURI = useCallback(async (tokenAddress: string, tokenId: string): Promise<string | null> => {
+    try {
+      const contract = await getContract(tokenAddress, ERC1155_ABI);
+      const result = await (contract as any).uri(tokenId);
+      const uri = decodePotentialString(result);
+      return uri || null;
+    } catch (error) {
+      throw new Error(`Failed to fetch token URI: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [getContract]);
+
   const transferERC721 = useCallback(async ({ tokenAddress, to, tokenId }: TransferParams & { tokenId: string }) => {
     return withLoading(async () => {
       if (!tokenId) throw new Error('Token ID is required for ERC721 transfer');
@@ -396,13 +572,40 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
   const getERC1155Details = useCallback(async (tokenAddress: string, tokenId: string): Promise<ERC1155TokenDetails> => {
     return withLoading(async () => {
-      const contract = await getContract(tokenAddress, ERC1155_ABI);
-      const uri = await (contract as any).uri(tokenId);
+      const uri = await getERC1155TokenURI(tokenAddress, tokenId);
 
       if (!uri) throw new Error('Could not retrieve token URI');
       return { uri };
     });
-  }, [withLoading, getContract]);
+  }, [withLoading, getERC1155TokenURI]);
+
+  const getNFTMetadata = useCallback(async ({ tokenAddress, tokenId, tokenType }: { tokenAddress: string; tokenId: string; tokenType?: TokenType; }): Promise<NFTMetadataResult | null> => {
+    if (!tokenAddress || !tokenId) return null;
+
+    try {
+      const rawUri = tokenType === 'ERC1155'
+        ? await getERC1155TokenURI(tokenAddress, tokenId)
+        : await getERC721TokenURI(tokenAddress, tokenId);
+
+      if (!rawUri) {
+        return { uri: null, metadata: null, image: null };
+      }
+
+      const resolvedUri = resolveTokenUri(rawUri, tokenId);
+      if (!resolvedUri) {
+        return { uri: null, metadata: null, image: null };
+      }
+
+      const { metadata, image } = await fetchMetadataFromUri(resolvedUri, tokenId);
+      return {
+        uri: resolvedUri,
+        metadata,
+        image
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch NFT metadata: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [getERC1155TokenURI, getERC721TokenURI]);
 
   // COTI/Ether Operations
   const transferCOTI = useCallback(async ({ to, amount }: { to: string; amount: string }) => {
@@ -554,10 +757,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     transferERC721,
     getERC721Balance,
     getERC721Details,
+    getERC721TokenURI,
+    getNFTMetadata,
     getERC721Owner,
     transferERC1155,
     getERC1155Balance,
     getERC1155Details,
+    getERC1155TokenURI,
     transferCOTI,
     getTokenInfo,
     getNFTInfo,
