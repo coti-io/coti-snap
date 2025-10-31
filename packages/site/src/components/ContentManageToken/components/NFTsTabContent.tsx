@@ -17,11 +17,13 @@ interface NFTsTabContentProps {
   onOpenImportNFTModal: () => void;
   onRefreshNFTs: () => void;
   onSelectNFT: (nft: ImportedToken) => void;
+  nftImages?: Record<string, string | undefined>;
 }
 
 export const NFTsTabContent: React.FC<NFTsTabContentProps> = React.memo(({ 
   nfts, 
-  onSelectNFT 
+  onSelectNFT,
+  nftImages
 }) => {
 
   const containerStyle = useMemo(() => ({
@@ -42,7 +44,12 @@ export const NFTsTabContent: React.FC<NFTsTabContentProps> = React.memo(({
             </NoNFTsMessage>
           ) : (
             nfts.map((nft) => (
-              <NFTCardComponent key={nft.address} nft={nft} onClick={() => onSelectNFT(nft)} />
+              <NFTCardComponent
+                key={nft.address}
+                nft={nft}
+                imageUrl={nftImages?.[nft.address]}
+                onClick={() => onSelectNFT(nft)}
+              />
             ))
           )}
         </NFTGrid>

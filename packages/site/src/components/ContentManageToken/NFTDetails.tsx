@@ -43,14 +43,16 @@ interface NFTDetailModalProps {
   provider?: BrowserProvider;
   onNFTRemoved?: () => void;
   onSendClick?: (nft: ImportedToken) => void;
+  imageUrl?: string;
 }
 
-const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActiveTab, setSelectedNFT, provider, onNFTRemoved, onSendClick }) => {
+const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActiveTab, setSelectedNFT, provider, onNFTRemoved, onSendClick, imageUrl }) => {
   const { copyToClipboard, copied } = useCopyToClipboard();
   const { removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
   const [erc1155Balance, setErc1155Balance] = useState<string>('1');
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [displayImage, setDisplayImage] = useState<string>(imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage);
   const balanceCache = useRef<Map<string, string>>(new Map());
   const fetchingRef = useRef<Set<string>>(new Set());
 
@@ -59,6 +61,10 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
   if (!open || !nft) return null;
 
   const { contractAddress: contract, tokenId } = useMemo(() => parseNFTAddress(nft.address), [nft.address]);
+
+  useEffect(() => {
+    setDisplayImage(imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage);
+  }, [imageUrl]);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -90,6 +96,37 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
 
     fetchBalance();
   }, [nft?.type, contract, tokenId, tokenOps, provider]);
+
+  useEffect(() => {
+    if (!nft || !tokenOps || !provider) return;
+    if (imageUrl && imageUrl.trim() !== '') return;
+    if (!contract || !tokenId) return;
+
+    let cancelled = false;
+
+    const loadMetadataImage = async () => {
+      try {
+        const metadata = await tokenOps.getNFTMetadata({
+          tokenAddress: contract,
+          tokenId,
+          tokenType: nft.type
+        });
+        if (!cancelled && metadata?.image) {
+          setDisplayImage(metadata.image);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          void error;
+        }
+      }
+    };
+
+    void loadMetadataImage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [nft, tokenOps, provider, contract, tokenId, imageUrl]);
   
   const shortAddress = contract ? formatAddressForDisplay(contract) : '';
 
@@ -137,7 +174,16 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
       </HeaderBar>
       <NFTDetailsImageContainer>
         <NFTCard style={{ width: 140, height: 140, borderRadius: 16 }}>
-          <NFTCardImage src={DefaultNFTImage} alt="NFT" />
+          <NFTCardImage
+            src={displayImage}
+            alt="NFT"
+            loading="lazy"
+            onError={() => {
+              if (displayImage !== DefaultNFTImage) {
+                setDisplayImage(DefaultNFTImage);
+              }
+            }}
+          />
           <NFTCornerIcon>C</NFTCornerIcon>
         </NFTCard>
       </NFTDetailsImageContainer>
