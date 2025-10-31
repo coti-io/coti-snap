@@ -7,7 +7,8 @@ import { abi as PRIVATE_ERC721_ABI } from '../abis/ERC721Confidential.json';
 import { abi as ERC721_ABI } from '../abis/ERC721.json';
 import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
-import { removeImportedToken } from '../utils/localStorage';
+import { removeImportedToken, removeImportedTokenByAccount } from '../utils/localStorage';
+import { notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
 
 // Helper function to get function selector
 const getSelector = (functionSignature: string): string => {
@@ -307,12 +308,15 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
       const contract = await getContract(tokenAddress, abi, true);
       const signer = await getBrowserProvider().getSigner();
-      const tx = await (contract as any).transferFrom(await signer.getAddress(), to, tokenId);
+      const fromAddress = await signer.getAddress();
+      const tx = await (contract as any).transferFrom(fromAddress, to, tokenId);
 
       if (!tx) throw new Error('Transaction could not be initiated');
       await tx.wait();
-      const nftKey = tokenAddress + '-' + tokenId;
+      const nftKey = `${tokenAddress.toLowerCase()}-${tokenId.toLowerCase()}`;
       removeImportedToken(nftKey);
+      removeImportedTokenByAccount(fromAddress, nftKey);
+      notifyImportedTokensUpdated();
       return tx.hash ?? '';
     });
   }, [withLoading, getContract, getBrowserProvider, getNFTConfidentialStatus]);
@@ -343,6 +347,19 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       return { name, symbol };
     });
   }, [withLoading, getContract, getNFTConfidentialStatus]);
+
+  const getERC721Owner = useCallback(async (tokenAddress: string, tokenId: string): Promise<string> => {
+    try {
+      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
+      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
+      const contract = await getContract(tokenAddress, abi);
+      const owner = await (contract as any).ownerOf(tokenId);
+      if (!owner) throw new Error('Could not retrieve owner');
+      return owner.toString();
+    } catch (error) {
+      throw new Error(`Failed to fetch owner: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [getContract, getNFTConfidentialStatus]);
 
   // ERC1155 Operations
   const transferERC1155 = useCallback(async ({ tokenAddress, to, tokenId, amount }: TransferParams & { tokenId: string; amount: string }) => {
@@ -537,6 +554,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     transferERC721,
     getERC721Balance,
     getERC721Details,
+    getERC721Owner,
     transferERC1155,
     getERC1155Balance,
     getERC1155Details,

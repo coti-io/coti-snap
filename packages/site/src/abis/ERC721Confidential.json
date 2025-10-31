@@ -487,16 +487,9 @@
 			"name": "tokenURI",
 			"outputs": [
 				{
-					"components": [
-						{
-							"internalType": "ctUint64[]",
-							"name": "value",
-							"type": "uint256[]"
-						}
-					],
-					"internalType": "struct ctString",
+					"internalType": "string",
 					"name": "",
-					"type": "tuple"
+					"type": "string"
 				}
 			],
 			"stateMutability": "view",

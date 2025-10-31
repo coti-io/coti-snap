@@ -9,31 +9,42 @@ import {
   getNFTTokensByAccount
 } from '../utils/localStorage';
 import { ImportedToken } from '../types/token';
+import { subscribeImportedTokens, notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
 
 export const useImportedTokens = () => {
   const { address } = useAccount();
   const [importedTokens, setImportedTokensState] = useState<ImportedToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadTokens = () => {
-      try {
-        if (address) {
-          const tokens = getImportedTokensByAccount(address);
-          setImportedTokensState(tokens);
-        } else {
-          setImportedTokensState([]);
-        }
-      } catch (error) {
-        void error;
-      } finally {
-        setIsLoading(false);
+  const loadTokens = useCallback(() => {
+    try {
+      if (address) {
+        const tokens = getImportedTokensByAccount(address);
+        setImportedTokensState(tokens);
+      } else {
+        setImportedTokensState([]);
       }
-    };
+    } catch (error) {
+      void error;
+      setImportedTokensState([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [address]);
 
+  useEffect(() => {
     setIsLoading(true);
     loadTokens();
-  }, [address]);
+  }, [loadTokens]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeImportedTokens(() => {
+      setIsLoading(true);
+      loadTokens();
+    });
+
+    return unsubscribe;
+  }, [loadTokens]);
 
   // Add a new token
   const addToken = useCallback((token: ImportedToken) => {
@@ -44,6 +55,7 @@ export const useImportedTokens = () => {
       // Reload tokens from localStorage to ensure consistency
       const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
+      notifyImportedTokensUpdated();
     } catch (error) {
       void error;
     }
@@ -58,6 +70,7 @@ export const useImportedTokens = () => {
       // Reload tokens from localStorage to ensure consistency
       const updatedTokens = getImportedTokensByAccount(address);
       setImportedTokensState(updatedTokens);
+      notifyImportedTokensUpdated();
     } catch (error) {
       void error;
     }
@@ -69,6 +82,7 @@ export const useImportedTokens = () => {
     try {
       clearImportedTokensByAccount(address);
       setImportedTokensState([]);
+      notifyImportedTokensUpdated();
     } catch (error) {
       void error;
     }
@@ -80,7 +94,7 @@ export const useImportedTokens = () => {
       token => token.address.toLowerCase() === tokenAddress.toLowerCase()
     );
   }, [importedTokens]);
-
+  
   // Refresh tokens from localStorage
   const refreshTokens = useCallback(() => {
     if (!address) return;

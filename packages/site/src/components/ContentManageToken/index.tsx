@@ -303,9 +303,12 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(({ aes
     setTransferSuccessHash(txHash);
   }, [refetchBalance, handleCloseTransfer]);
 
-  const handleGoToWallet = useCallback(() => {
-    setTransferSuccessHash(null);
-  }, []);
+const handleGoToWallet = useCallback(() => {
+  setTransferSuccessHash(null);
+  setSelectedNFT(null);
+  setSelectedToken(null);
+  setModalState({ transfer: false, deposit: false });
+}, []);
 
   const explorerBaseUrl = useMemo(() => {
     const { explorerUrl } = getNetworkConfig(currentChainId);

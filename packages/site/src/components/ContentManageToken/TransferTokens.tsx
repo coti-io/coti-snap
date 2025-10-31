@@ -429,7 +429,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const [loadedTokenAddress, setLoadedTokenAddress] = useState<string>('');
   const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
   const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
-  const { getERC20TokensList, importedTokens } = useImportedTokens();
+  const { getERC20TokensList, importedTokens, removeToken } = useImportedTokens();
   const { getAESKey, userHasAESKey } = useSnap();
 
   const accountBoxRef = useRef<HTMLDivElement>(null);
@@ -809,7 +809,12 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       if (txHash) {
         setTxStatus('success');
-        await fetchTokenBalance(currentToken);
+
+        if (currentToken.type === 'ERC721' && currentToken.address) {
+          removeToken(currentToken.address);
+        } else {
+          await fetchTokenBalance(currentToken);
+        }
 
         if (onTransferSuccess) {
           onTransferSuccess(txHash);
@@ -822,7 +827,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     } catch (error: any) {
       setTxStatus('error');
     }
-  }, [provider, canContinue, tokenOps, addressInput, resolvedAddress, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess]);
+  }, [provider, canContinue, tokenOps, addressInput, resolvedAddress, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess, removeToken]);
 
   const handleCancel = useCallback(() => {
     startTransition(() => {
