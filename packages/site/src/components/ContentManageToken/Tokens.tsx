@@ -10,6 +10,7 @@ import { ImportedToken } from '../../types/token';
 import { ImportTokenModal } from './ImportTokenModal';
 import { ImportNFTModal } from './ImportNFTModal';
 import { sortTokens } from '../../utils/tokenHelpers';
+import { parseNFTAddress } from '../../utils/tokenValidation';
 import { getNetworkConfig } from '../../config/networks';
 import {
   DownArrow,
@@ -36,6 +37,7 @@ import {
 } from './components';
 import NFTDetails from './NFTDetails';
 import TokenDetails from './TokenDetails';
+import { useTokenOperations } from '../../hooks/useTokenOperations';
 
 interface TokensProps {
   balance: string;
@@ -57,7 +59,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const { userAESKey, userHasAESKey, getAESKey } = useSnap();
   const [isDecrypted, setIsDecrypted] = useState(!!userAESKey || !!aesKey);
   
-  const { importedTokens, isLoading, refreshTokens } = useImportedTokens();
+  const { importedTokens, isLoading, refreshTokens, removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
   const sortDropdown = useDropdown();
   const { chain } = useAccount();
@@ -152,6 +154,55 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   }, []);
 
   const headerActionsStyle = useMemo(() => ({ position: 'relative' as const }), []);
+  const { getERC1155Balance, getERC721Owner } = useTokenOperations(provider);
+
+  useEffect(() => {
+    if (!provider || nftTokens.length === 0) return;
+
+    let cancelled = false;
+
+    const verifyOwnership = async () => {
+      try {
+        const signer = await provider.getSigner();
+        const userAddress = (await signer.getAddress()).toLowerCase();
+
+        for (const nft of nftTokens) {
+          if (!nft.address || !nft.type) continue;
+
+          const { contractAddress, tokenId } = parseNFTAddress(nft.address);
+          if (!contractAddress || !tokenId) continue;
+
+          try {
+            if (nft.type === 'ERC1155') {
+              const balance = await getERC1155Balance(contractAddress, userAddress, tokenId);
+              if (!cancelled && BigInt(balance || '0') === 0n) {
+                removeToken(nft.address);
+              }
+            } else {
+              const owner = await getERC721Owner(contractAddress, tokenId);
+              if (!cancelled && owner && owner.toLowerCase() !== userAddress) {
+                removeToken(nft.address);
+              }
+            }
+          } catch (error) {
+            if (!cancelled) {
+              void error;
+            }
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          void error;
+        }
+      }
+    };
+
+    void verifyOwnership();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, nftTokens, getERC1155Balance, getERC721Owner, removeToken]);
 
   return (
     <>
