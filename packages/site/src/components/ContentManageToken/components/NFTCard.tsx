@@ -5,7 +5,7 @@ import DefaultNFTImage from '../../../assets/images/default_nft.png';
 
 interface NFTCardProps {
   nft: ImportedToken;
-  imageUrl?: string;
+  imageUrl?: string | undefined;
   onClick?: () => void;
 }
 
