@@ -43,10 +43,11 @@ interface NFTDetailModalProps {
   provider?: BrowserProvider;
   onNFTRemoved?: () => void;
   onSendClick?: (nft: ImportedToken) => void;
-  imageUrl?: string;
+  imageUrl?: string | undefined;
+  aesKey?: string | null | undefined;
 }
 
-const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActiveTab, setSelectedNFT, provider, onNFTRemoved, onSendClick, imageUrl }) => {
+const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActiveTab, setSelectedNFT, provider, onNFTRemoved, onSendClick, imageUrl, aesKey }) => {
   const { copyToClipboard, copied } = useCopyToClipboard();
   const { removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
@@ -109,7 +110,8 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
         const metadata = await tokenOps.getNFTMetadata({
           tokenAddress: contract,
           tokenId,
-          tokenType: nft.type
+          tokenType: nft.type,
+          ...(aesKey && { aesKey })
         });
         if (!cancelled && metadata?.image) {
           setDisplayImage(metadata.image);

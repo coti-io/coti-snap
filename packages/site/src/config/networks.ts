@@ -45,7 +45,7 @@ export const NETWORKS: Record<number, NetworkConfig> = {
   },
   [COTI_MAINNET_CHAIN_ID]: {
     id: COTI_MAINNET_CHAIN_ID,
-    name: 'COTI Mainnet',
+    name: 'COTI',
     displayName: 'COTI MAINNET',
     shortName: 'MAINNET',
     rpcUrl: 'https://mainnet.coti.io/rpc',
@@ -85,7 +85,7 @@ export const getNetworkConfig = (
   chainId?: number | null,
 ): NetworkConfig => {
   const normalizedChainId = normalizeChainId(chainId ?? undefined);
-  return NETWORKS[normalizedChainId];
+  return NETWORKS[normalizedChainId]!;
 };
 
 export const getNetworkStatus = (
@@ -110,5 +110,5 @@ export const getEnvironmentForChain = (
 };
 
 export const getSupportedNetworks = (): NetworkConfig[] => {
-  return SUPPORTED_CHAIN_IDS.map((chainId) => NETWORKS[chainId]);
+  return SUPPORTED_CHAIN_IDS.map((chainId) => NETWORKS[chainId]!);
 };
