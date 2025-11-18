@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Eip1193Provider, ethers } from 'ethers';
 import { BrowserProvider, Contract, itUint } from '@coti-io/coti-ethers';
-import { decryptUint } from '@coti-io/coti-sdk-typescript';
+import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
 import { abi as PRIVATE_ERC20_ABI } from '../abis/ERC20Confidential.json';
 import { abi as PRIVATE_ERC721_ABI } from '../abis/ERC721Confidential.json';
 import { abi as ERC721_ABI } from '../abis/ERC721.json';
@@ -152,7 +152,7 @@ const buildMetadataResult = async (uri: string | null, metadata: Record<string, 
   }
 
   if (!fallbackImage && sources.length > 0) {
-    fallbackImage = sources[0];
+    fallbackImage = sources[0] ?? null;
   }
 
   const displayImage = imageDataUri ?? fallbackImage ?? null;
@@ -452,14 +452,22 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     }
   }, [getBrowserProvider]);
 
-  const getERC721TokenURI = useCallback(async (tokenAddress: string, tokenId: string): Promise<string | null> => {
+  const getERC721TokenURI = useCallback(async (tokenAddress: string, tokenId: string, aesKey?: string): Promise<string | null> => {
     try {
       const isConfidential = await getNFTConfidentialStatus(tokenAddress);
       const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
       const contract = await getContract(tokenAddress, abi);
       const result = await (contract as any).tokenURI(tokenId);
-      const uri = decodePotentialString(result);
-      return uri || null;
+
+      if (isConfidential && aesKey) {
+        // For confidential NFTs, decrypt the tokenURI
+        const decryptedURI = decryptString(result, aesKey);
+        return decryptedURI || null;
+      } else {
+        // For standard NFTs, decode the string
+        const uri = decodePotentialString(result);
+        return uri || null;
+      }
     } catch (error) {
       throw new Error(`Failed to fetch token URI: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -579,13 +587,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     });
   }, [withLoading, getERC1155TokenURI]);
 
-  const getNFTMetadata = useCallback(async ({ tokenAddress, tokenId, tokenType }: { tokenAddress: string; tokenId: string; tokenType?: TokenType; }): Promise<NFTMetadataResult | null> => {
+  const getNFTMetadata = useCallback(async ({ tokenAddress, tokenId, tokenType, aesKey }: { tokenAddress: string; tokenId: string; tokenType?: TokenType; aesKey?: string; }): Promise<NFTMetadataResult | null> => {
     if (!tokenAddress || !tokenId) return null;
 
     try {
       const rawUri = tokenType === 'ERC1155'
         ? await getERC1155TokenURI(tokenAddress, tokenId)
-        : await getERC721TokenURI(tokenAddress, tokenId);
+        : await getERC721TokenURI(tokenAddress, tokenId, aesKey);
 
       if (!rawUri) {
         return { uri: null, metadata: null, image: null };

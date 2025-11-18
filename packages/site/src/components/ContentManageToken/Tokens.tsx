@@ -241,7 +241,8 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
           const metadata = await getNFTMetadata({
             tokenAddress: contractAddress,
             tokenId,
-            tokenType: nft.type
+            tokenType: nft.type,
+            ...(effectiveAESKey && { aesKey: effectiveAESKey })
           });
 
           const image = metadata?.image;
@@ -379,9 +380,9 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
         onImport={refreshTokens}
       />
       {!onSelectNFT && (
-        <NFTDetails 
-          nft={selectedNFT} 
-          open={!!selectedNFT} 
+        <NFTDetails
+          nft={selectedNFT}
+          open={!!selectedNFT}
           onClose={() => {
             setActiveTab('nfts');
             setSelectedNFT(null);
@@ -390,6 +391,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
           setSelectedNFT={setSelectedNFT}
           provider={provider}
           imageUrl={selectedNFT ? nftImageMap[selectedNFT.address] : undefined}
+          aesKey={effectiveAESKey}
         />
       )}
       {!onSelectToken && (
