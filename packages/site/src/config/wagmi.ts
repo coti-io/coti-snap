@@ -72,7 +72,7 @@ const COTI_MAINNET = defineChain({
   contracts: {},
 });
 
-export const COTI_CHAINS = [COTI_MAINNET, COTI_TESTNET];
+export const COTI_CHAINS = [COTI_MAINNET, COTI_TESTNET] as const;
 
 export const config = createConfig({
   chains: COTI_CHAINS,
