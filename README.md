@@ -4,7 +4,7 @@
     <img src=".github/coti_snap_preview.jpg" alt="COTI Snap Preview">
     <br>
 </p>
-
+[![COTI Website](https://img.shields.io/badge/COTI%20WEBSITE-4CAF50?style=for-the-badge)](https://coti.io)
 # COTI Snap
 
 The COTI Snap allows users to onboard their COTI account, add and view balances for encrypted private tokens on the COTI network, and interact with COTI dapps.
