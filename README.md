@@ -29,7 +29,7 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 # In packages/site/.env.local
 VITE_NODE_ENV=local
 VITE_SNAP_ENV=local
-VITE_SNAP_VERSION=0.0.0
+VITE_SNAP_VERSION=*
 ```
 
 ### For Production (Mainnet)
