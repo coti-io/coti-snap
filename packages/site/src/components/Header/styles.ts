@@ -28,6 +28,11 @@ export const LogoWrapper = styled.div`
   flex-direction: row;
   align-items: center;
   cursor: pointer;
+
+  svg {
+    height: 40px;
+    width: auto;
+  }
 `;
 
 export const ButtonsContainer = styled.div`
@@ -79,9 +84,9 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
   
   opacity: ${(props) => (props.$isVisible ? '1' : '0')};
   visibility: ${(props) => (props.$isVisible ? 'visible' : 'hidden')};
-  transform: ${(props) => 
-    props.$isVisible 
-      ? 'translateY(0) scale(1)' 
+  transform: ${(props) =>
+    props.$isVisible
+      ? 'translateY(0) scale(1)'
       : 'translateY(-10px) scale(0.95)'
   };
   transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -188,9 +193,9 @@ export const Dropdown = styled.div<{ $isVisible: boolean }>`
   
   opacity: ${(props) => (props.$isVisible ? '1' : '0')};
   visibility: ${(props) => (props.$isVisible ? 'visible' : 'hidden')};
-  transform: ${(props) => 
-    props.$isVisible 
-      ? 'translateY(0) scale(1)' 
+  transform: ${(props) =>
+    props.$isVisible
+      ? 'translateY(0) scale(1)'
       : 'translateY(-10px) scale(0.95)'
   };
   transition: all 200ms cubic-bezier(0.4, 0.0, 0.2, 1);
