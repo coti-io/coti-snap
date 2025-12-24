@@ -111,7 +111,11 @@ const getCachedImageDataUri = async (imageUrl: string): Promise<string | null> =
 };
 
 const buildMetadataResult = async (uri: string | null, metadata: Record<string, any> | null, tokenId?: string): Promise<NFTMetadataResult> => {
+  console.log('[buildMetadataResult] Input metadata:', metadata);
+
   const { resolved, original, fallbacks } = extractImageUri(metadata ?? undefined, tokenId);
+  console.log('[buildMetadataResult] Extracted image URIs - original:', original, 'resolved:', resolved, 'fallbacks:', fallbacks);
+
   const sources: string[] = [];
 
   const pushUnique = (value: string | null) => {
@@ -125,12 +129,19 @@ const buildMetadataResult = async (uri: string | null, metadata: Record<string, 
   pushUnique(resolved);
   fallbacks.forEach(fallback => pushUnique(fallback));
 
+  console.log('[buildMetadataResult] All sources to try:', sources);
+
   let imageDataUri: string | null = null;
   for (const source of sources) {
     if (!source) continue;
     if (source.startsWith('data:')) {
       imageDataUri = source;
       break;
+    }
+    // Skip data URI conversion for IPFS URLs to avoid CORS issues
+    // Just use the HTTP gateway URL directly
+    if (source.startsWith('ipfs://')) {
+      continue;
     }
     if (!/^https?:/i.test(source)) {
       continue;
@@ -152,10 +163,13 @@ const buildMetadataResult = async (uri: string | null, metadata: Record<string, 
   }
 
   if (!fallbackImage && sources.length > 0) {
+    // If no HTTP URL found, try to use any available source
     fallbackImage = sources[0] ?? null;
   }
 
   const displayImage = imageDataUri ?? fallbackImage ?? null;
+
+  console.log('[buildMetadataResult] Final result - displayImage:', displayImage, 'imageDataUri:', imageDataUri, 'fallbackImage:', fallbackImage);
 
   return {
     uri,
@@ -421,33 +435,20 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         throw new Error('No contract deployed at this address');
       }
 
-      const confidentialSelectors = [
-        ethers.id('mint(address,(tuple(uint256[]),bytes[]))').slice(0, 10),
-        ethers.id('tokenURI(uint256)').slice(0, 10),
-      ];
+      // Only check for the unique confidential selector
+      // mint(address,(tuple(uint256[]),bytes[])) is ONLY in confidential contracts
+      const confidentialMintSelector = ethers.id('mint(address,(tuple(uint256[]),bytes[]))').slice(0, 10);
 
-      let hasConfidentialMethods = false;
-      for (const selector of confidentialSelectors) {
-        if (code.includes(selector.slice(2))) {
-          hasConfidentialMethods = true;
-          break;
-        }
-      }
-
-      if (hasConfidentialMethods) {
-        try {
-          const confidentialContract = new ethers.Contract(tokenAddress, PRIVATE_ERC721_ABI, browserProvider);
-          if (confidentialContract.tokenURI) {
-            await confidentialContract.tokenURI(BigInt(0));
-          }
-          return true;
-        } catch {
-          return true;
-        }
+      // Check if the bytecode contains the confidential mint selector
+      if (code.includes(confidentialMintSelector.slice(2))) {
+        console.log('[getNFTConfidentialStatus] Contract is CONFIDENTIAL:', tokenAddress);
+        return true;
       } else {
+        console.log('[getNFTConfidentialStatus] Contract is PUBLIC:', tokenAddress);
         return false;
       }
     } catch (error) {
+      console.error('[getNFTConfidentialStatus] Error:', error);
       throw new Error(`Failed to analyze NFT: ${error}`);
     }
   }, [getBrowserProvider]);
@@ -595,22 +596,29 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         ? await getERC1155TokenURI(tokenAddress, tokenId)
         : await getERC721TokenURI(tokenAddress, tokenId, aesKey);
 
+      console.log('[NFT Metadata] Raw URI from contract:', rawUri);
+
       if (!rawUri) {
         return { uri: null, metadata: null, image: null };
       }
 
       const resolvedUri = resolveTokenUri(rawUri, tokenId);
+      console.log('[NFT Metadata] Resolved URI:', resolvedUri);
+
       if (!resolvedUri) {
         return { uri: null, metadata: null, image: null };
       }
 
-      const { metadata, image } = await fetchMetadataFromUri(resolvedUri, tokenId);
+      const result = await fetchMetadataFromUri(resolvedUri, tokenId);
+      console.log('[NFT Metadata] Fetched metadata result:', result);
+
       return {
         uri: resolvedUri,
-        metadata,
-        image
+        metadata: result.metadata,
+        image: result.image
       };
     } catch (error) {
+      console.error('[NFT Metadata] Error:', error);
       throw new Error(`Failed to fetch NFT metadata: ${error instanceof Error ? error.message : String(error)}`);
     }
   }, [getERC1155TokenURI, getERC721TokenURI]);
