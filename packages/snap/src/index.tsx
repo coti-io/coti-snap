@@ -359,7 +359,41 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           await importToken(address, name, symbol, decimals);
           await recalculateBalances();
           await returnToHomePage(id);
-        } catch {
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Token already exists') {
+            await snap.request({
+              method: 'snap_dialog',
+              params: {
+                type: 'alert',
+                content: (
+                  <Box>
+                    <Heading>Duplicate Token</Heading>
+                    <Text>This token is already in your list.</Text>
+                  </Box>
+                ),
+              },
+            });
+            await returnToHomePage(id);
+            return;
+          }
+
+          if (error instanceof Error && error.message === 'Invalid token type') {
+            await snap.request({
+              method: 'snap_dialog',
+              params: {
+                type: 'alert',
+                content: (
+                  <Box>
+                    <Heading>Invalid Token</Heading>
+                    <Text>The contract address provided is not a valid ERC20 token.</Text>
+                  </Box>
+                ),
+              },
+            });
+            await returnToHomePage(id);
+            return;
+          }
+
           await snap.request({
             method: 'snap_updateInterface',
             params: {
