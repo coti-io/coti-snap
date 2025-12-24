@@ -55,10 +55,10 @@ export function Footer() {
         </Link>{' '}
         •
         © 2025 COTI{' '}
-        •
-        <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">{' '}
+        •{' '}
+        <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">
           Terms of Use
-        </Link>{' '} • {' '}
+        </Link>{' '}•{' '}
         <Link href="https://coti.io/privacy" target="_blank" rel="noopener noreferrer">
           Privacy Policy
         </Link>{' '}

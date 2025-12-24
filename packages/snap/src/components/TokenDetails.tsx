@@ -13,9 +13,9 @@ import {
 import type { Token } from 'src/types';
 import { TokenViewSelector } from '../types';
 import { formatTokenBalance } from '../utils/token';
+import { generateTokenAvatar } from '../utils/image';
 
 import defaultToken from '../../images/default.svg';
-import logo from '../../images/logo.svg';
 
 export const TokenDetails = ({ token }: { token: Token }) => {
   const renderNFTDetails = () => (
@@ -52,7 +52,7 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Box alignment="space-between" direction="horizontal">
             <Box alignment="center" direction="horizontal">
               <Box alignment="center" direction="vertical">
-                <Image src={logo} alt="Token logo" />
+                <Image src={generateTokenAvatar(token.symbol)} alt="Token logo" />
               </Box>
               <Box direction="vertical" alignment="center">
                 <Text>{token.name}</Text>

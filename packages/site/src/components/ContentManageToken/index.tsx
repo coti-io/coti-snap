@@ -411,7 +411,7 @@ const handleGoToWallet = useCallback(() => {
               </SuccessHashLink>
             </SuccessHashRow>
             <SuccessActions>
-              <ButtonAction text="Wallet" onClick={handleGoToWallet} />
+              <ButtonAction text="Back" onClick={handleGoToWallet} />
             </SuccessActions>
           </SuccessCard>
         </SuccessWrapper>

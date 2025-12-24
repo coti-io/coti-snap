@@ -26,3 +26,18 @@ export const getSVGfromMetadata = async (
     return null;
   }
 };
+
+/**
+ * Generates an SVG avatar with the first letter of the token symbol
+ * @param symbol - The token symbol
+ * @returns SVG string with gray background and first letter
+ */
+export const generateTokenAvatar = (symbol: string): string => {
+  const firstLetter = symbol.charAt(0).toUpperCase();
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="16" fill="#CCCCCC"/>
+      <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#000000" text-anchor="middle" dominant-baseline="central">${firstLetter}</text>
+    </svg>
+  `;
+};
