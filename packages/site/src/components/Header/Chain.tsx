@@ -17,10 +17,10 @@ export const Chain = () => {
   };
 
   return (
-    <ConnectedDetails 
+    <ConnectedDetails
       $wrongChain={wrongChain}
       onClick={wrongChain ? handleSwitchChain : undefined}
-      $padding="14px 30px"
+      $padding="10px 20px"
     >
       {wrongChain ? 'Wrong chain' : currentNetworkName}
     </ConnectedDetails>
