@@ -613,6 +613,7 @@ export const NFTCardImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   z-index: 0;
   opacity: 0.9;
 `;

@@ -14,8 +14,18 @@ const resolveDefaultGateway = (): string => {
   if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_IPFS_GATEWAY) {
     return ensureTrailingSlash(process.env.NEXT_PUBLIC_IPFS_GATEWAY);
   }
-  return 'https://ipfs.io/ipfs/';
+  // Use Cloudflare IPFS gateway as default (better CORS support)
+  return 'https://cloudflare-ipfs.com/ipfs/';
 };
+
+// Multiple public IPFS gateways to try as fallbacks
+// Ordered by reliability and CORS support
+const IPFS_GATEWAYS = [
+  'https://cloudflare-ipfs.com/ipfs/',
+  'https://ipfs.io/ipfs/',
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://dweb.link/ipfs/',
+];
 
 const IPFS_GATEWAY = resolveDefaultGateway();
 
@@ -111,15 +121,27 @@ export const extractImageUri = (metadata: Record<string, any> | null | undefined
       const original = value.trim();
       const resolved = resolveTokenUri(original, tokenId) ?? original;
       const fallbacks: string[] = [];
+
       if (IPFS_FALLBACK_ENABLED) {
         const gatewayFromHttp = toGatewayFromHttpIpfsPath(original);
         if (gatewayFromHttp && gatewayFromHttp !== resolved) {
           fallbacks.push(gatewayFromHttp);
         }
       }
+
       if (resolved !== original) {
         fallbacks.push(resolved);
       }
+
+      // Add subdomain format for IPFS URLs
+      if (original.startsWith('ipfs://')) {
+        const cid = original.slice(7);
+        const subdomainUrl = `https://${cid}.ipfs.dweb.link/`;
+        if (!fallbacks.includes(subdomainUrl)) {
+          fallbacks.push(subdomainUrl);
+        }
+      }
+
       return { resolved, original, fallbacks };
     }
   }
@@ -151,25 +173,81 @@ export const parseDataUriJson = (uri: string): Record<string, any> | null => {
   }
 };
 
+// Extract CID from IPFS HTTP gateway URL (supports both path and subdomain formats)
+const extractCIDFromGatewayUrl = (url: string): string | null => {
+  try {
+    // Path-based format: https://ipfs.io/ipfs/Qm...
+    const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
+    if (pathMatch) return pathMatch[1];
+
+    // Subdomain format: https://Qm....ipfs.dweb.link/
+    const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
+    if (subdomainMatch) return subdomainMatch[1];
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchImageAsDataUri = async (url: string): Promise<string | null> => {
   if (typeof window === 'undefined' || !url) return null;
 
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    if (!response.ok) return null;
+  // Resolve IPFS URLs to HTTP gateways
+  let urlsToTry: string[] = [];
 
-    const blob = await response.blob();
+  if (url.startsWith('ipfs://')) {
+    const cid = url.slice(7); // Remove 'ipfs://'
+    // Try multiple gateways for IPFS URLs (both path and subdomain formats)
+    urlsToTry = [
+      ...IPFS_GATEWAYS.map(gateway => `${gateway}${cid}`),
+      // Add subdomain format URLs
+      `https://${cid}.ipfs.dweb.link/`,
+      `https://${cid}.ipfs.cf-ipfs.com/`,
+    ];
+  } else if (url.startsWith('http://') || url.startsWith('https://')) {
+    // If it's already an HTTP URL, try it first
+    urlsToTry = [url];
 
-    return await new Promise<string | null>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(typeof reader.result === 'string' ? reader.result : null);
-      };
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    void error;
+    // If it's an IPFS gateway URL, also try alternative gateways
+    const cid = extractCIDFromGatewayUrl(url);
+    if (cid) {
+      // Generate alternative URLs in both path and subdomain formats
+      const alternativeUrls = [
+        ...IPFS_GATEWAYS.map(gateway => `${gateway}${cid}`),
+        `https://${cid}.ipfs.dweb.link/`,
+        `https://${cid}.ipfs.cf-ipfs.com/`,
+      ].filter(altUrl => altUrl !== url); // Don't retry the same URL
+
+      urlsToTry.push(...alternativeUrls);
+    }
+  } else {
     return null;
   }
+
+  // Try each URL until one succeeds
+  for (const tryUrl of urlsToTry) {
+    try {
+      const response = await fetch(tryUrl, { mode: 'cors' });
+      if (!response.ok) continue;
+
+      const blob = await response.blob();
+
+      const dataUri = await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(typeof reader.result === 'string' ? reader.result : null);
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+
+      if (dataUri) return dataUri;
+    } catch (error) {
+      void error;
+      continue; // Try next gateway
+    }
+  }
+
+  return null;
 };

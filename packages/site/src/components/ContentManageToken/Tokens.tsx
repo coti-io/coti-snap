@@ -245,15 +245,24 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
             ...(effectiveAESKey && { aesKey: effectiveAESKey })
           });
 
+          console.log(`[Tokens] NFT ${nft.address} - Metadata:`, metadata);
+
           const image = metadata?.image;
+          console.log(`[Tokens] NFT ${nft.address} - Image URL:`, image);
+
           if (!cancelled && image) {
-            setNftImageMap(prev => ({
-              ...prev,
-              [nft.address]: image
-            }));
+            setNftImageMap(prev => {
+              const newMap = {
+                ...prev,
+                [nft.address]: image
+              };
+              console.log(`[Tokens] Updated nftImageMap:`, newMap);
+              return newMap;
+            });
           }
         } catch (error) {
           if (!cancelled) {
+            console.error(`[Tokens] Error loading NFT ${nft.address}:`, error);
             void error;
           }
         }

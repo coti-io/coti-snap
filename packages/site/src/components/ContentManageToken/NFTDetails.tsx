@@ -1,4 +1,29 @@
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
+
+// Alternative IPFS gateways for fallback
+const IPFS_GATEWAYS = [
+  'https://cloudflare-ipfs.com/ipfs/',
+  'https://ipfs.io/ipfs/',
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://dweb.link/ipfs/',
+];
+
+// Extract CID from IPFS gateway URL (supports both path and subdomain formats)
+const extractCIDFromUrl = (url: string): string | null => {
+  try {
+    // Path-based format: https://ipfs.io/ipfs/Qm...
+    const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
+    if (pathMatch) return pathMatch[1];
+
+    // Subdomain format: https://Qm....ipfs.dweb.link/
+    const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
+    if (subdomainMatch) return subdomainMatch[1];
+
+    return null;
+  } catch {
+    return null;
+  }
+};
 import { BrowserProvider } from '@coti-io/coti-ethers';
 import { ImportedToken } from '../../types/token';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
@@ -54,6 +79,8 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
   const [erc1155Balance, setErc1155Balance] = useState<string>('1');
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [displayImage, setDisplayImage] = useState<string>(imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage);
+  const [fallbackIndex, setFallbackIndex] = useState<number>(0);
+  const originalImageRef = useRef<string | undefined>(imageUrl);
   const balanceCache = useRef<Map<string, string>>(new Map());
   const fetchingRef = useRef<Set<string>>(new Set());
 
@@ -64,8 +91,54 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
   const { contractAddress: contract, tokenId } = useMemo(() => parseNFTAddress(nft.address), [nft.address]);
 
   useEffect(() => {
-    setDisplayImage(imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage);
+    console.log('[NFTDetails] Received imageUrl:', imageUrl);
+    originalImageRef.current = imageUrl;
+    const finalImage = imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage;
+    console.log('[NFTDetails] Setting displayImage to:', finalImage);
+    setDisplayImage(finalImage);
+    setFallbackIndex(0);
   }, [imageUrl]);
+
+  const handleImageError = useCallback(() => {
+    console.log('[NFTDetails] Image load error for:', displayImage);
+
+    if (displayImage === DefaultNFTImage) return;
+
+    const originalUrl = originalImageRef.current;
+    if (!originalUrl) {
+      console.log('[NFTDetails] No original URL, using default image');
+      setDisplayImage(DefaultNFTImage);
+      return;
+    }
+
+    // Try to extract CID and use alternative gateways
+    const cid = extractCIDFromUrl(originalUrl);
+    console.log('[NFTDetails] Extracted CID:', cid);
+
+    if (!cid) {
+      console.log('[NFTDetails] Could not extract CID, using default image');
+      setDisplayImage(DefaultNFTImage);
+      return;
+    }
+
+    // Generate all possible gateway URLs (both path and subdomain formats)
+    const allGateways = [
+      ...IPFS_GATEWAYS.map(gateway => `${gateway}${cid}`),
+      `https://${cid}.ipfs.dweb.link/`,
+      `https://${cid}.ipfs.cf-ipfs.com/`,
+    ];
+
+    if (fallbackIndex < allGateways.length) {
+      const nextUrl = allGateways[fallbackIndex];
+      console.log(`[NFTDetails] Trying fallback ${fallbackIndex + 1}/${allGateways.length}:`, nextUrl);
+      setDisplayImage(nextUrl);
+      setFallbackIndex(prev => prev + 1);
+    } else {
+      // No more fallbacks, use default image
+      console.log('[NFTDetails] All fallbacks exhausted, using default image');
+      setDisplayImage(DefaultNFTImage);
+    }
+  }, [displayImage, fallbackIndex]);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -180,11 +253,7 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
             src={displayImage}
             alt="NFT"
             loading="lazy"
-            onError={() => {
-              if (displayImage !== DefaultNFTImage) {
-                setDisplayImage(DefaultNFTImage);
-              }
-            }}
+            onError={handleImageError}
           />
           <NFTCornerIcon>C</NFTCornerIcon>
         </NFTCard>
