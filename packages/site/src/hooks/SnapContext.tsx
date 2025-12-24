@@ -594,6 +594,26 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
   }, [installedSnap, address, environment, isChainSupported, invokeSnap]);
 
+  const checkSnapHasAESKey = useCallback(async (): Promise<boolean> => {
+    try {
+      const result = await invokeSnap({ method: 'has-aes-key' });
+      return Boolean(result);
+    } catch (error) {
+      void error;
+      return false;
+    }
+  }, [invokeSnap]);
+
+  const getAESKeyFromSnap = useCallback(async (): Promise<string | null> => {
+    try {
+      const result = await invokeSnap({ method: 'get-aes-key' });
+      return result as string | null;
+    } catch (error) {
+      void error;
+      return null;
+    }
+  }, [invokeSnap]);
+
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
     if (
       !address ||
@@ -608,8 +628,24 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
 
     try {
-      const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
-      setUserHasAesKEY(hasOnboarded);
+      // First, check if the snap already has the AES key stored (no user prompt)
+      const snapHasKey = await checkSnapHasAESKey();
+
+      if (snapHasKey) {
+        // Snap has the key - mark user as having AES key
+        // We don't retrieve it yet to avoid showing confirmation popup
+        // The key will be retrieved only when needed (e.g., for transactions)
+        setUserHasAesKEY(true);
+
+        // Also update localStorage for consistency
+        if (address) {
+          setOnboardingCompleted(address, chainIdForStorage);
+        }
+      } else {
+        // Snap doesn't have key, check localStorage
+        const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
+        setUserHasAesKEY(hasOnboarded);
+      }
 
       setSettingAESKeyError(prev => (prev === 'accountBalanceZero' ? prev : null));
       setOnboardingStep(null);
@@ -621,8 +657,22 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       if (!(error instanceof Error) || !error.message.includes('No account connected')) {
         void error;
       }
+      // On error, fall back to localStorage
+      const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
+      setUserHasAesKEY(hasOnboarded);
+      initialCheckRef.current = true;
+      setIsInitializing(false);
     }
-  }, [address, installedSnap, chainIdForStorage, isInstallingSnap, loading, onboardingStep, clearTimerIfExists]);
+  }, [
+    address,
+    installedSnap,
+    chainIdForStorage,
+    isInstallingSnap,
+    loading,
+    onboardingStep,
+    clearTimerIfExists,
+    checkSnapHasAESKey,
+  ]);
 
   useEffect(() => {
     if (loading || onboardingStep !== null) {

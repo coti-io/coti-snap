@@ -241,24 +241,31 @@ export const decryptBalance = (balance: ctUint, aesKey: string): bigint | null =
 };
 
 export const checkChainId = async (): Promise<boolean> => {
-  const provider = new BrowserProvider(ethereum);
+  try {
+    const provider = new BrowserProvider(ethereum);
+    const network = await provider.getNetwork();
+    const currentChainId = network.chainId.toString();
 
-  const chainId = await provider.getNetwork();
-  const currentChainId = chainId.chainId.toString();
-  
-  const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
-    
-  if (currentChainId === COTI_TESTNET_CHAIN_ID) {
-    setEnvironment('testnet');
-    return true;
+    const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
+
+    // Check if connected to COTI Testnet
+    if (currentChainId === COTI_TESTNET_CHAIN_ID) {
+      setEnvironment('testnet');
+      return true;
+    }
+
+    // Check if connected to COTI Mainnet
+    if (currentChainId === COTI_MAINNET_CHAIN_ID) {
+      setEnvironment('mainnet');
+      return true;
+    }
+
+    // Not connected to a supported COTI network
+    return false;
+  } catch (error) {
+    // If there's an error getting the network, assume wrong chain
+    return false;
   }
-  
-  if (currentChainId === COTI_MAINNET_CHAIN_ID) {
-    setEnvironment('mainnet');
-    return true;
-  }
-  
-  return false;
 };
 
 export const checkIfERC20Unique = async (address: string): Promise<boolean> => {
