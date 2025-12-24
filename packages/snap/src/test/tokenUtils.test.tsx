@@ -392,44 +392,90 @@ describe('Token Utilities', () => {
       const mockState = { tokenBalances: [] };
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
       (setStateByChainIdAndAddress as jest.Mock).mockResolvedValue(undefined);
-      
-      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType')
-        .mockImplementation(async () => ({ 
-          type: TokenViewSelector.ERC20, 
-          confidential: false 
-        }));
+
+      // Mock for ERC165 check (will return false for NFT check)
+      const mockERC165Contract = {
+        supportsInterface: jest.fn().mockResolvedValue(false),
+      };
+
+      // Mock for ERC20 standard contract
+      const mockERC20Contract = {
+        decimals: jest.fn().mockResolvedValue(18),
+        symbol: jest.fn().mockResolvedValue('TKN'),
+        totalSupply: jest.fn().mockResolvedValue('1000000'),
+        balanceOf: jest.fn().mockResolvedValue('1000'),
+      };
+
+      // Mock for confidential ERC20 contract (will fail to indicate non-confidential)
+      const mockERC20ConfidentialContract = {
+        accountEncryptionAddress: undefined,
+      };
+
+      (ethers.Contract as jest.Mock)
+        .mockImplementationOnce(() => mockERC165Contract)
+        .mockImplementationOnce(() => mockERC20Contract)
+        .mockImplementationOnce(() => mockERC20ConfidentialContract);
 
       await expect(tokenUtils.importToken('0xToken', 'Test Token', 'TT', '18')).resolves.not.toThrow();
 
-      getTokenTypeSpy.mockRestore();
+      expect(setStateByChainIdAndAddress).toHaveBeenCalledWith({
+        tokenBalances: [{
+          address: '0xToken',
+          name: 'Test Token',
+          symbol: 'TT',
+          balance: null,
+          type: TokenViewSelector.ERC20,
+          confidential: false,
+          decimals: '18',
+          tokenId: null,
+        }],
+      });
     });
 
     it('should not import unknown token type', async () => {
       const mockState = { tokenBalances: [] };
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
-      
-      const mockTokenType = { type: TokenViewSelector.UNKNOWN, confidential: false };
-      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType').mockResolvedValue(mockTokenType);
 
-      await tokenUtils.importToken('0xToken', 'Unknown Token', 'UT', '18');
+      // Mock for ERC165 check (will return false for NFT check)
+      const mockERC165Contract = {
+        supportsInterface: jest.fn().mockResolvedValue(false),
+      };
+
+      // Mock for ERC20 contract that will fail (to trigger UNKNOWN type)
+      const mockERC20Contract = {
+        decimals: jest.fn().mockRejectedValue(new Error('Contract error')),
+      };
+
+      (ethers.Contract as jest.Mock)
+        .mockImplementationOnce(() => mockERC165Contract)
+        .mockImplementationOnce(() => mockERC20Contract);
+
+      await expect(tokenUtils.importToken('0xToken', 'Unknown Token', 'UT', '18')).rejects.toThrow('Invalid token type');
 
       expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
-
-      getTokenTypeSpy.mockRestore();
     });
 
     it('should not import NFT without tokenId', async () => {
       const mockState = { tokenBalances: [] };
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
-      
-      const mockTokenType = { type: TokenViewSelector.NFT, confidential: false };
-      const getTokenTypeSpy = jest.spyOn(tokenUtils, 'getTokenType').mockResolvedValue(mockTokenType);
 
-      await tokenUtils.importToken('0xNFT', 'NFT Token', 'NFT', '0');
+      // Mock for ERC165 check (will return true for NFT check)
+      const mockERC165Contract = {
+        supportsInterface: jest.fn().mockResolvedValue(true),
+      };
+
+      // Mock for ERC721 confidential contract
+      const mockERC721Contract = {
+        tokenURI: jest.fn().mockResolvedValue('mockURI'),
+      };
+
+      (ethers.Contract as jest.Mock)
+        .mockImplementationOnce(() => mockERC165Contract)
+        .mockImplementationOnce(() => mockERC721Contract);
+
+      await expect(tokenUtils.importToken('0xNFT', 'NFT Token', 'NFT', '0')).rejects.toThrow('Token ID required for NFT');
 
       expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
-
-      getTokenTypeSpy.mockRestore();
     });
   });
 
