@@ -365,10 +365,10 @@ export const importToken = async (
   const tokens = oldState.tokenBalances;
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
-    return;
+    throw new Error('Invalid token type');
   }
   if (type === TokenViewSelector.NFT && !tokenId) {
-    return;
+    throw new Error('Token ID required for NFT');
   }
   tokens.push({
     address,
