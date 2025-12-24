@@ -29,23 +29,33 @@ export const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
 let currentEnvironment: 'testnet' | 'mainnet' | null = null;
 
 export const detectEnvironment = (): 'testnet' | 'mainnet' => {
+  // Always return the current environment if it's set
   if (currentEnvironment) {
     return currentEnvironment;
   }
 
+  // Check for local development environment
   if (typeof globalThis !== 'undefined' && (globalThis as any).__SNAP_ENV__ === 'local') {
+    currentEnvironment = 'testnet';
     return 'testnet';
   }
 
+  // Check for development mode
   const isDevelopment = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') ||
     (typeof globalThis !== 'undefined' && (globalThis as any).__DEV__ === true);
 
+  // Default to mainnet for production, testnet for development
   const environment = isDevelopment ? 'testnet' : 'mainnet';
+  currentEnvironment = environment;
   return environment;
 };
 
 export const setEnvironment = (environment: 'testnet' | 'mainnet'): void => {
   currentEnvironment = environment;
+};
+
+export const resetEnvironment = (): void => {
+  currentEnvironment = null;
 };
 
 export const getCurrentNetworkConfig = (): NetworkConfig => {
