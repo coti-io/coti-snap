@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "test": "jest"
+    "test": "jest",
+    "deploy-testnet": "aws s3 sync dist/ s3://dev.metamask.coti.io --delete"
   },
   "dependencies": {
     "@coti-io/coti-ethers": "^1.0.3",
