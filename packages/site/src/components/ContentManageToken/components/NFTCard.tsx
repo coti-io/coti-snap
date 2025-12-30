@@ -22,11 +22,11 @@ const extractCIDFromUrl = (url: string): string | null => {
   try {
     // Path-based format: https://ipfs.io/ipfs/Qm...
     const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
-    if (pathMatch) return pathMatch[1];
+    if (pathMatch && pathMatch[1]) return pathMatch[1];
 
     // Subdomain format: https://Qm....ipfs.dweb.link/
     const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
-    if (subdomainMatch) return subdomainMatch[1];
+    if (subdomainMatch && subdomainMatch[1]) return subdomainMatch[1];
 
     return null;
   } catch {
@@ -70,8 +70,10 @@ export const NFTCardComponent: React.FC<NFTCardProps> = React.memo(({ nft, image
 
     if (fallbackIndex < allGateways.length) {
       const nextUrl = allGateways[fallbackIndex];
-      setImageSrc(nextUrl);
-      setFallbackIndex(prev => prev + 1);
+      if (nextUrl) {
+        setImageSrc(nextUrl);
+        setFallbackIndex(prev => prev + 1);
+      }
     } else {
       // No more fallbacks, use default image
       setImageSrc(DefaultNFTImage);

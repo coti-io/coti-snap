@@ -13,11 +13,11 @@ const extractCIDFromUrl = (url: string): string | null => {
   try {
     // Path-based format: https://ipfs.io/ipfs/Qm...
     const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
-    if (pathMatch) return pathMatch[1];
+    if (pathMatch && pathMatch[1]) return pathMatch[1];
 
     // Subdomain format: https://Qm....ipfs.dweb.link/
     const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
-    if (subdomainMatch) return subdomainMatch[1];
+    if (subdomainMatch && subdomainMatch[1]) return subdomainMatch[1];
 
     return null;
   } catch {
@@ -130,9 +130,11 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
 
     if (fallbackIndex < allGateways.length) {
       const nextUrl = allGateways[fallbackIndex];
-      console.log(`[NFTDetails] Trying fallback ${fallbackIndex + 1}/${allGateways.length}:`, nextUrl);
-      setDisplayImage(nextUrl);
-      setFallbackIndex(prev => prev + 1);
+      if (nextUrl) {
+        console.log(`[NFTDetails] Trying fallback ${fallbackIndex + 1}/${allGateways.length}:`, nextUrl);
+        setDisplayImage(nextUrl);
+        setFallbackIndex(prev => prev + 1);
+      }
     } else {
       // No more fallbacks, use default image
       console.log('[NFTDetails] All fallbacks exhausted, using default image');

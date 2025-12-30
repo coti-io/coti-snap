@@ -178,11 +178,11 @@ const extractCIDFromGatewayUrl = (url: string): string | null => {
   try {
     // Path-based format: https://ipfs.io/ipfs/Qm...
     const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
-    if (pathMatch) return pathMatch[1];
+    if (pathMatch && pathMatch[1]) return pathMatch[1];
 
     // Subdomain format: https://Qm....ipfs.dweb.link/
     const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
-    if (subdomainMatch) return subdomainMatch[1];
+    if (subdomainMatch && subdomainMatch[1]) return subdomainMatch[1];
 
     return null;
   } catch {
