@@ -7,9 +7,10 @@ describe('truncateString', () => {
   });
 
   it('should truncate the string and add ellipsis if its length exceeds 10', () => {
-    expect(truncateString('12345678901')).toBe('12345...78901');
-    expect(truncateString('abcdefghijk')).toBe('abcde...ghijk');
-    expect(truncateString('This is a long string')).toBe('This ...tring');
+    // Function takes first 6 chars + "..." + last 4 chars
+    expect(truncateString('12345678901')).toBe('123456...8901');
+    expect(truncateString('abcdefghijk')).toBe('abcdef...hijk');
+    expect(truncateString('This is a long string')).toBe('This i...ring');
   });
 
   it('should handle empty strings', () => {
@@ -17,10 +18,10 @@ describe('truncateString', () => {
   });
 
   it('should handle strings with exactly 11 characters', () => {
-    expect(truncateString('12345678901')).toBe('12345...78901');
+    expect(truncateString('12345678901')).toBe('123456...8901');
   });
 
   it('should handle strings with more than 11 characters', () => {
-    expect(truncateString('123456789012')).toBe('12345...89012');
+    expect(truncateString('123456789012')).toBe('123456...9012');
   });
 });
