@@ -1,7 +1,6 @@
 import { useCallback, memo, useTransition } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 
-import { Chain } from './Chain';
 import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
 import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 import LogOutIcon from '../../assets/icons/logOut.svg';
@@ -23,18 +22,15 @@ export const WalletManager = memo(() => {
   }, [disconnect, close]);
 
   return (
-    <>
-      <ConnectedDetails $wrongChain={false} onClick={toggle} $padding="10px 18px">
-        <AddressDisplay address={address || ''} isOpen={isOpen} />
-        <Dropdown ref={dropdownRef} $isVisible={isOpen}>
-          <DisconnectButton onClick={handleDisconnect}>
-            <LogOutIcon/>
-            Disconnect
-          </DisconnectButton>
-        </Dropdown>
-      </ConnectedDetails>
-      <Chain />
-    </>
+    <ConnectedDetails $wrongChain={false} onClick={toggle} $padding="10px 18px">
+      <AddressDisplay address={address || ''} isOpen={isOpen} />
+      <Dropdown ref={dropdownRef} $isVisible={isOpen}>
+        <DisconnectButton onClick={handleDisconnect}>
+          <LogOutIcon/>
+          Disconnect
+        </DisconnectButton>
+      </Dropdown>
+    </ConnectedDetails>
   );
 });
 

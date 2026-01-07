@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
 import { Header } from '../components';
+import { Chain } from '../components/Header/Chain';
 import { Footer } from '../components/Footer';
 import { Loading } from '../components/Loading';
 import { ButtonAction } from '../components/Button';
@@ -35,6 +36,13 @@ const Container = styled.div`
 const InstallActions = styled.div`
   display: flex;
   justify-content: center;
+`;
+
+const ChainIndicator = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  box-sizing: border-box;
 `;
 
 export function SmartRouter() {
@@ -130,7 +138,12 @@ export function SmartRouter() {
   return (
     <Container>
       <Header />
-        <Outlet />
+      {isConnected && (
+        <ChainIndicator>
+          <Chain />
+        </ChainIndicator>
+      )}
+      <Outlet />
       <Footer />
     </Container>
   );
