@@ -185,9 +185,13 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       normalizedChainId !== null && isSupportedChainId(normalizedChainId);
     const previousChainId = previousChainIdRef.current;
 
+    console.log('[FRONTEND] Network change effect - connectedChainId:', connectedChainId, 'previousChainId:', previousChainId, 'normalizedChainId:', normalizedChainId);
+
     if (!isValidChainId) {
       if (previousChainId !== null) {
+        console.log('[FRONTEND] Invalid chain - clearing state');
         setUserHasAesKEY(false);
+        setAesKeysByChain({});
         setSettingAESKeyError(null);
         resetOnboardingState();
         clearTimerIfExists();
@@ -204,7 +208,9 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
 
     if (previousChainId !== null && previousChainId !== normalizedChainId) {
+      console.log('[FRONTEND] Chain changed from', previousChainId, 'to', normalizedChainId, '- clearing state');
       setUserHasAesKEY(false);
+      setAesKeysByChain({});
       setSettingAESKeyError(null);
       resetOnboardingState();
       clearTimerIfExists();
@@ -457,9 +463,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         return;
       }
 
+      console.log('[FRONTEND] setAESKey - saving with chainId:', chainIdForStorage);
       const result = await invokeSnap({
         method: 'set-aes-key',
-        params: { newUserAesKey: aesKey }
+        params: { newUserAesKey: aesKey, chainId: chainIdForStorage?.toString() }
       });
 
       if (result) {
@@ -523,7 +530,12 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const getAESKey = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const result = await invokeSnap({ method: 'get-aes-key' });
+      console.log('[FRONTEND] getAESKey - chainIdForStorage:', chainIdForStorage);
+      const result = await invokeSnap({
+        method: 'get-aes-key',
+        params: { chainId: chainIdForStorage?.toString() },
+      });
+      console.log('[FRONTEND] getAESKey - result received');
 
       if (result !== null) {
         updateUserAesKey(result as string);
@@ -538,7 +550,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [invokeSnap]);
+  }, [invokeSnap, updateUserAesKey, chainIdForStorage]);
 
   const deleteAESKey = useCallback(async (): Promise<void> => {
     if (chainIdForStorage === null) {
@@ -547,7 +559,11 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     setLoading(true);
     try {
-      const result = await invokeSnap({ method: 'delete-aes-key' });
+      console.log('[FRONTEND] deleteAESKey - deleting for chainId:', chainIdForStorage);
+      const result = await invokeSnap({
+        method: 'delete-aes-key',
+        params: { chainId: chainIdForStorage?.toString() }
+      });
 
       if (result) {
         setUserHasAesKEY(false);
@@ -596,23 +612,31 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
   const checkSnapHasAESKey = useCallback(async (): Promise<boolean> => {
     try {
-      const result = await invokeSnap({ method: 'has-aes-key' });
+      console.log('[FRONTEND] checkSnapHasAESKey - chainIdForStorage:', chainIdForStorage);
+      const result = await invokeSnap({
+        method: 'has-aes-key',
+        params: { chainId: chainIdForStorage?.toString() },
+      });
+      console.log('[FRONTEND] checkSnapHasAESKey - result:', result);
       return Boolean(result);
     } catch (error) {
       void error;
       return false;
     }
-  }, [invokeSnap]);
+  }, [invokeSnap, chainIdForStorage]);
 
   const getAESKeyFromSnap = useCallback(async (): Promise<string | null> => {
     try {
-      const result = await invokeSnap({ method: 'get-aes-key' });
+      const result = await invokeSnap({
+        method: 'get-aes-key',
+        params: { chainId: chainIdForStorage?.toString() },
+      });
       return result as string | null;
     } catch (error) {
       void error;
       return null;
     }
-  }, [invokeSnap]);
+  }, [invokeSnap, chainIdForStorage]);
 
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
     if (
@@ -630,6 +654,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     try {
       // First, check if the snap already has the AES key stored (no user prompt)
       const snapHasKey = await checkSnapHasAESKey();
+      console.log('[FRONTEND] handlePermissionCheck - snapHasKey:', snapHasKey, 'for chainId:', chainIdForStorage);
 
       if (snapHasKey) {
         // Snap has the key - mark user as having AES key
@@ -642,9 +667,14 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
           setOnboardingCompleted(address, chainIdForStorage);
         }
       } else {
-        // Snap doesn't have key, check localStorage
-        const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
-        setUserHasAesKEY(hasOnboarded);
+        // Snap is the source of truth - if snap says no key, then no key
+        // Don't use localStorage as it may have incorrect/legacy data
+        setUserHasAesKEY(false);
+
+        // Clear localStorage for this chain to keep it consistent with snap
+        if (address) {
+          clearOnboardingCompleted(address, chainIdForStorage);
+        }
       }
 
       setSettingAESKeyError(prev => (prev === 'accountBalanceZero' ? prev : null));
@@ -657,7 +687,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       if (!(error instanceof Error) || !error.message.includes('No account connected')) {
         void error;
       }
-      // On error, fall back to localStorage
+      // On error, fall back to localStorage (only as fallback for communication errors)
       const hasOnboarded = hasCompletedOnboarding(address, chainIdForStorage);
       setUserHasAesKEY(hasOnboarded);
       initialCheckRef.current = true;
@@ -679,17 +709,24 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       return;
     }
 
-    initialCheckRef.current = false;
+    // No resetear initialCheckRef aquí - el efecto de cambio de red ya lo maneja
+    // Solo resetear syncedRef para re-sincronizar el environment
     syncedRef.current = false;
 
     if (!address || !installedSnap) {
       setUserHasAesKEY(false);
       setAesKeysByChain(prev => (Object.keys(prev).length > 0 ? {} : prev));
       setSettingAESKeyError(null);
+      initialCheckRef.current = false;
       return;
     }
 
     if (isInstallingSnap) {
+      return;
+    }
+
+    // Solo ejecutar el check si no se ha hecho ya
+    if (initialCheckRef.current) {
       return;
     }
 
