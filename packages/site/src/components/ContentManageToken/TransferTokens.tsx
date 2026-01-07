@@ -703,27 +703,41 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
   const fetchTokenBalance = useCallback(async (token: Token) => {
     if (!browserProvider || !tokenOps) return;
 
+    // Check cache first before showing loading state
+    const tokenKey = `${token.symbol}-${token.address || ''}`;
+    if (tokenBalances[tokenKey]) {
+      setCurrentBalance(tokenBalances[tokenKey]);
+      return;
+    }
+
+    // For COTI, use the balance prop directly (no loading needed)
+    if (token.symbol === 'COTI' || !token.address) {
+      setCurrentBalance(balance);
+      return;
+    }
+
+    // Only show loading for tokens that need async fetching
     setLoadingBalance(true);
     try {
-      if (token.symbol === 'COTI' || !token.address) {
-        setCurrentBalance(balance);
-      } else if (token.type === 'ERC1155' && token.contractAddress && token.tokenId) {
+      if (token.type === 'ERC1155' && token.contractAddress && token.tokenId) {
         // For ERC1155 tokens, use getERC1155Balance
         const signer = await browserProvider.getSigner();
         const userAddress = await signer.getAddress();
         const tokenBalance = await tokenOps.getERC1155Balance(token.contractAddress, userAddress, token.tokenId);
         setCurrentBalance(tokenBalance);
+        setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance }));
       } else {
         // For ERC20 tokens, use decryptERC20Balance
         const tokenBalance = await tokenOps.decryptERC20Balance(token.address, aesKey || '');
         setCurrentBalance(tokenBalance.toString());
+        setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance.toString() }));
       }
     } catch (error) {
       setCurrentBalance('0');
     } finally {
       setLoadingBalance(false);
     }
-  }, [browserProvider, tokenOps, balance, aesKey]);
+  }, [browserProvider, tokenOps, balance, aesKey, tokenBalances]);
 
   const handleTokenSelect = useCallback((token: Token) => {
     setSelectedToken(token);
@@ -736,21 +750,36 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
     const tokenKey = `${currentToken?.symbol || 'COTI'}-${currentToken?.address || ''}`;
 
     if (currentToken && browserProvider && tokenOps && loadedTokenAddress !== tokenKey) {
+      // Check cache first
+      if (tokenBalances[tokenKey]) {
+        setCurrentBalance(tokenBalances[tokenKey]);
+        setLoadedTokenAddress(tokenKey);
+        return;
+      }
+
+      // For COTI, use balance prop directly (no async needed)
+      if (currentToken.symbol === 'COTI' || !currentToken.address) {
+        setCurrentBalance(balance);
+        setLoadedTokenAddress(tokenKey);
+        return;
+      }
+
+      // Only show loading for tokens that need async fetching
       const loadBalance = async () => {
         setLoadingBalance(true);
         try {
-          if (currentToken.symbol === 'COTI' || !currentToken.address) {
-            setCurrentBalance(balance);
-          } else if (currentToken.type === 'ERC1155' && currentToken.contractAddress && currentToken.tokenId) {
+          if (currentToken.type === 'ERC1155' && currentToken.contractAddress && currentToken.tokenId) {
             // For ERC1155 tokens, use getERC1155Balance
             const signer = await browserProvider.getSigner();
             const userAddress = await signer.getAddress();
             const tokenBalance = await tokenOps.getERC1155Balance(currentToken.contractAddress, userAddress, currentToken.tokenId);
             setCurrentBalance(tokenBalance);
+            setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance }));
           } else {
             // For ERC20 tokens, use decryptERC20Balance
             const tokenBalance = await tokenOps.decryptERC20Balance(currentToken.address, aesKey || '');
             setCurrentBalance(tokenBalance.toString());
+            setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance.toString() }));
           }
           setLoadedTokenAddress(tokenKey);
         } catch (error) {
@@ -763,7 +792,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
 
       loadBalance();
     }
-  }, [currentToken?.symbol, currentToken?.address, currentToken?.type, currentToken?.contractAddress, currentToken?.tokenId, browserProvider, tokenOps, balance, aesKey, loadedTokenAddress]);
+  }, [currentToken?.symbol, currentToken?.address, currentToken?.type, currentToken?.contractAddress, currentToken?.tokenId, browserProvider, tokenOps, balance, aesKey, loadedTokenAddress, tokenBalances]);
 
   const handleContinue = useCallback(async () => {
     if (!provider || !canContinue || !tokenOps) return;
