@@ -775,7 +775,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
             const tokenBalance = await tokenOps.getERC1155Balance(currentToken.contractAddress, userAddress, currentToken.tokenId);
             setCurrentBalance(tokenBalance);
             setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance }));
-          } else {
+          } else if (currentToken.address) {
             // For ERC20 tokens, use decryptERC20Balance
             const tokenBalance = await tokenOps.decryptERC20Balance(currentToken.address, aesKey || '');
             setCurrentBalance(tokenBalance.toString());
