@@ -546,7 +546,12 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'has-aes-key':
-      const currentState = await getStateByChainIdAndAddress();
+      const hasKeyParams = request.params as { chainId?: string } | undefined;
+      const requestedChainId = hasKeyParams?.chainId;
+      console.log('[SNAP] has-aes-key called with chainId:', requestedChainId);
+      const currentState = await getStateByChainIdAndAddress(requestedChainId);
+      console.log('[SNAP] has-aes-key state for chainId', requestedChainId, ':', JSON.stringify(currentState));
+      console.log('[SNAP] has-aes-key result:', !!currentState.aesKey);
       if (currentState.aesKey) {
         return true;
       }
@@ -554,7 +559,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return false;
 
     case 'get-aes-key':
-      const currentAESState = await getStateByChainIdAndAddress();
+      const getKeyParams = request.params as { chainId?: string } | undefined;
+      const getRequestedChainId = getKeyParams?.chainId;
+      console.log('[SNAP] get-aes-key called with chainId:', getRequestedChainId);
+      const currentAESState = await getStateByChainIdAndAddress(getRequestedChainId);
+      console.log('[SNAP] get-aes-key state for chainId', getRequestedChainId, ':', currentAESState.aesKey ? 'HAS KEY' : 'NO KEY');
       if (!currentAESState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -594,7 +603,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'delete-aes-key':
-      const currentDeleteState = await getStateByChainIdAndAddress();
+      const deleteKeyParams = request.params as { chainId?: string } | undefined;
+      const deleteChainId = deleteKeyParams?.chainId;
+      console.log('[SNAP] delete-aes-key called with chainId:', deleteChainId);
+      const currentDeleteState = await getStateByChainIdAndAddress(deleteChainId);
       if (!currentDeleteState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -629,14 +641,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         await setStateByChainIdAndAddress({
           ...currentDeleteState,
           aesKey: null,
-        });
+        }, deleteChainId);
         return true;
       }
 
       return null;
 
     case 'set-aes-key':
-      const { newUserAesKey } = request.params as { newUserAesKey: string };
+      const { newUserAesKey, chainId: setChainId } = request.params as { newUserAesKey: string; chainId?: string };
+      console.log('[SNAP] set-aes-key called with chainId:', setChainId);
 
       if (!newUserAesKey) {
         await snap.request({
@@ -654,12 +667,12 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const currentStateForSet = await getStateByChainIdAndAddress();
+      const currentStateForSet = await getStateByChainIdAndAddress(setChainId);
 
       await setStateByChainIdAndAddress({
         ...currentStateForSet,
         aesKey: newUserAesKey,
-      });
+      }, setChainId);
 
       return true;
 
