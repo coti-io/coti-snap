@@ -755,6 +755,28 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
   }, [provider, isInstallingSnap, address, installedSnap]);
 
+  // Fallback: ensure isInitializing is set to false after network switch completes
+  // This handles the race condition where handlePermissionCheck might miss due to chainIdForStorage timing
+  useEffect(() => {
+    if (!isInitializing) return;
+
+    // Only apply fallback when we have all the prerequisites
+    if (!address || !installedSnap || chainIdForStorage === null || isInstallingSnap) {
+      return;
+    }
+
+    // Give handlePermissionCheck time to complete (it has a 1s delay + execution time)
+    // If isInitializing is still true after 3 seconds, force it to false and trigger check
+    const fallbackTimer = setTimeout(() => {
+      if (isInitializing && !initialCheckRef.current) {
+        console.log('[FRONTEND] Fallback: forcing permission check after network switch');
+        void handlePermissionCheck();
+      }
+    }, 3000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [isInitializing, address, installedSnap, chainIdForStorage, isInstallingSnap, handlePermissionCheck]);
+
   useEffect(() => {
     const previousSnap = previousInstalledSnapRef.current;
     const currentSnap = installedSnap;
