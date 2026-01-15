@@ -753,7 +753,7 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
       return () => clearTimeout(timer);
     }
-  }, [provider, isInstallingSnap, address, installedSnap]);
+  }, [provider, isInstallingSnap, address, installedSnap, chainIdForStorage]);
 
   // Fallback: ensure isInitializing is set to false after network switch completes
   // This handles the race condition where handlePermissionCheck might miss due to chainIdForStorage timing
