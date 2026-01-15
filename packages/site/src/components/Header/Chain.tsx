@@ -105,7 +105,7 @@ export const Chain = memo(() => {
   }, [switchChain, currentChainId, isPending, close]);
 
   const displayName = !isSupported
-    ? 'Wrong chain'
+    ? 'Wrong Chain'
     : currentNetwork?.name || 'Unknown';
 
   return (
