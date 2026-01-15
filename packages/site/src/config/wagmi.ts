@@ -52,7 +52,7 @@ const COTI_TESTNET = defineChain({
 
 const COTI_MAINNET = defineChain({
   id: COTI_MAINNET_CHAIN_ID,
-  name: 'COTI Mainnet',
+  name: 'COTI',
   caipNetworkId: 'eip155:2632500',
   chainNamespace: 'eip155',
   nativeCurrency: {
