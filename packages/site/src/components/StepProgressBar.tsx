@@ -34,10 +34,10 @@ const StepCircle = styled.div<{ $completed: boolean; $current: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: ${props => 
-    props.$completed ? '#1E29F6' : 
+  background-color: ${props =>
+    props.$completed ? '#1E29F6' :
     props.$current ? '#1E29F6' : '#e0e0e0'};
-  color: ${props => 
+  color: ${props =>
     props.$completed || props.$current ? 'white' : '#666'};
   display: flex;
   align-items: center;
@@ -46,9 +46,10 @@ const StepCircle = styled.div<{ $completed: boolean; $current: boolean }>`
   font-weight: bold;
   position: relative;
   z-index: 1;
-  border: 2px solid ${props => 
-    props.$completed ? '#1E29F6' : 
+  border: 2px solid ${props =>
+    props.$completed ? '#1E29F6' :
     props.$current ? '#1E29F6' : '#e0e0e0'};
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 `;
 
 const StepLabel = styled.div<{ $completed: boolean; $current: boolean }>`
