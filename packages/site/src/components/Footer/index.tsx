@@ -15,7 +15,7 @@ const FooterContainer = styled.footer`
   height: 120px; /* Fixed height to prevent layout shift */
   box-sizing: border-box;
   contain: layout style;
-  z-index: 10;
+  z-index: -1;
 `;
 
 const Title = styled.h3`
