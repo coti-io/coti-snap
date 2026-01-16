@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
-import { useAccount } from 'wagmi';
 
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useSnap } from '../../hooks/SnapContext';
@@ -11,15 +10,12 @@ import { ImportTokenModal } from './ImportTokenModal';
 import { ImportNFTModal } from './ImportNFTModal';
 import { sortTokens } from '../../utils/tokenHelpers';
 import { parseNFTAddress } from '../../utils/tokenValidation';
-import { getNetworkConfig } from '../../config/networks';
 import {
-  DownArrow,
   FilterIcon,
   MenuIcon,
 } from '../../assets/icons';
-import { 
-  HeaderBar, 
-  NetworkBadge,
+import {
+  HeaderBar,
   HeaderActions, 
   CenteredTabsWrapper, 
   TabsWrapper, 
@@ -63,12 +59,6 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const { importedTokens, isLoading, refreshTokens, removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
   const sortDropdown = useDropdown();
-  const { chain } = useAccount();
-  const networkConfig = useMemo(
-    () => getNetworkConfig(chain?.id),
-    [chain?.id],
-  );
-
   const effectiveAESKey = aesKey || userAESKey;
 
   useEffect(() => {
@@ -154,7 +144,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
     setIsDecrypted(prev => !prev);
   }, []);
 
-  const headerActionsStyle = useMemo(() => ({ position: 'relative' as const }), []);
+  const headerActionsStyle = useMemo(() => ({ position: 'relative' as const, marginTop: '4px' }), []);
   const { getERC1155Balance, getERC721Owner, getNFTMetadata } = useTokenOperations(provider);
 
   useEffect(() => {
@@ -297,15 +287,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
         </TabsWrapper>
 
         <HeaderBar>
-          <NetworkBadge 
-            badgeColor={networkConfig.badgeColor}
-            textColor={networkConfig.color}
-            borderColor={networkConfig.color}
-            isTestnet={networkConfig.isTestnet}
-          >
-            {networkConfig.displayName}
-            <DownArrow />
-          </NetworkBadge>
+          <div />
           <HeaderActions style={headerActionsStyle}>
             <IconButton 
               onClick={sortDropdown.toggle} 
