@@ -198,8 +198,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         syncedRef.current = false;
         initialCheckRef.current = false;
         lastCheckedAddressRef.current = null;
-        setIsInitializing(true);
       }
+      // Don't set isInitializing to true for unsupported chains - there's nothing to initialize
+      // The user is on a wrong chain, so we just need to show the network switch UI
+      setIsInitializing(false);
       previousChainIdRef.current = null;
       if (chainIdForStorage !== null) {
         setChainIdForStorage(null);
