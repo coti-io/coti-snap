@@ -11,6 +11,7 @@ import { TokenViewSelector } from '../types';
 import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress,
+  getExpectedEnvironment,
 } from './snap';
 
 const ERC165_ABI = [
@@ -242,28 +243,45 @@ export const decryptBalance = (balance: ctUint, aesKey: string): bigint | null =
 
 export const checkChainId = async (): Promise<boolean> => {
   try {
-    const provider = new BrowserProvider(ethereum);
-    const network = await provider.getNetwork();
-    const currentChainId = network.chainId.toString();
-
     const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
 
-    // Check if connected to COTI Testnet
+    // IMPORTANT: eth_chainId in snaps does NOT sync when MetaMask changes networks
+    // So we MUST prioritize the expectedEnvironment set by the webapp
+    const expectedEnv = await getExpectedEnvironment();
+
+    if (expectedEnv) {
+      // Webapp has told us which environment we should be in - trust it
+      setEnvironment(expectedEnv);
+      console.log('[SNAP] checkChainId - using expectedEnvironment from webapp:', expectedEnv);
+      return true;
+    }
+
+    // Fallback: try eth_chainId (only works on initial load before network changes)
+    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    const currentChainId = parseInt(chainIdHex, 16).toString();
+    console.log('[SNAP] checkChainId - no expectedEnv, falling back to eth_chainId:', currentChainId);
+
     if (currentChainId === COTI_TESTNET_CHAIN_ID) {
       setEnvironment('testnet');
       return true;
     }
 
-    // Check if connected to COTI Mainnet
     if (currentChainId === COTI_MAINNET_CHAIN_ID) {
       setEnvironment('mainnet');
       return true;
     }
 
     // Not connected to a supported COTI network
+    console.log('[SNAP] checkChainId - not on COTI network');
     return false;
   } catch (error) {
-    // If there's an error getting the network, assume wrong chain
+    console.log('[SNAP] checkChainId - error:', error);
+    const expectedEnv = await getExpectedEnvironment();
+    if (expectedEnv) {
+      const { setEnvironment } = await import('../config');
+      setEnvironment(expectedEnv);
+      return true;
+    }
     return false;
   }
 };
@@ -283,69 +301,79 @@ export const checkIfERC721Unique = async (address: string, tokenId: string): Pro
 };
 
 export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBalances: Tokens }> => {
+  // IMPORTANT: BrowserProvider(ethereum) does NOT sync when MetaMask changes networks
+  // So we must use JsonRpcProvider with the correct RPC URL based on expectedEnvironment
+  const expectedEnv = await getExpectedEnvironment();
+  const rpcUrl = expectedEnv === 'testnet'
+    ? 'https://testnet.coti.io/rpc'
+    : 'https://mainnet.coti.io/rpc';
+
+  console.log('[SNAP] recalculateBalances - expectedEnv:', expectedEnv, '-> using RPC:', rpcUrl);
+
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
 
-  const provider = new BrowserProvider(ethereum);
+  // Use JsonRpcProvider with direct RPC URL instead of BrowserProvider
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
 
   try {
     const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
     const signerAddress = accounts.length > 0 ? accounts[0] : null;
-    
+
     if (!signerAddress) {
       throw new Error('No account connected');
     }
-    
-    const signer = await provider.getSigner();
+
     const balance = await provider.getBalance(signerAddress);
+    console.log('[SNAP] recalculateBalances - balance for', signerAddress, 'on', expectedEnv, ':', balance.toString());
 
-  const tokenBalances: Tokens = await Promise.all(
-    tokens.map(async (token) => {
-      if (token.type === TokenViewSelector.ERC20) {
-        const tokenContract = new Contract(token.address, erc20Abi, signer);
-        const tok = tokenContract.connect(signer) as Contract;
-        let tokenBalance = tok.balanceOf
-          ? await tok.balanceOf(signerAddress)
-          : null;
-        if (token.confidential && state.aesKey && tokenBalance) {
-          tokenBalance = decryptBalance(tokenBalance, state.aesKey);
-        } else if (token.confidential && !state.aesKey) {
-          tokenBalance = null;
+    const tokenBalances: Tokens = await Promise.all(
+      tokens.map(async (token) => {
+        if (token.type === TokenViewSelector.ERC20) {
+          // Use provider instead of signer for read-only operations
+          const tokenContract = new Contract(token.address, erc20Abi, provider);
+          let tokenBalance = tokenContract.balanceOf
+            ? await tokenContract.balanceOf(signerAddress)
+            : null;
+          if (token.confidential && state.aesKey && tokenBalance) {
+            tokenBalance = decryptBalance(tokenBalance, state.aesKey);
+          } else if (token.confidential && !state.aesKey) {
+            tokenBalance = null;
+          }
+
+          return {
+            ...token,
+            balance: tokenBalance?.toString() ?? null,
+          };
         }
 
-        return {
-          ...token,
-          balance: tokenBalance?.toString() ?? null,
-        };
-      }
-
-      if (token.type === TokenViewSelector.NFT) {
-        const tokenContract = new Contract(
-          token.address,
-          erc721ConfidentialAbi,
-          signer,
-        );
-        const tok = tokenContract.connect(signer) as Contract;
-        const tokenBalance = tok.balanceOf
-          ? await tok.balanceOf(signerAddress)
-          : null;
-        let tokenUri: string | null = token.uri ?? null;
-        if (token.confidential && token.tokenId && state.aesKey) {
-          tokenUri = await getTokenURI(
+        if (token.type === TokenViewSelector.NFT) {
+          // Use provider instead of signer for read-only operations
+          const tokenContract = new Contract(
             token.address,
-            token.tokenId,
-            state.aesKey,
+            erc721ConfidentialAbi,
+            provider,
           );
+          const tokenBalance = tokenContract.balanceOf
+            ? await tokenContract.balanceOf(signerAddress)
+            : null;
+          let tokenUri: string | null = token.uri ?? null;
+          if (token.confidential && token.tokenId && state.aesKey) {
+            tokenUri = await getTokenURI(
+              token.address,
+              token.tokenId,
+              state.aesKey,
+            );
+          }
+          return {
+            ...token,
+            balance: tokenBalance?.toString() ?? null,
+            uri: tokenUri,
+          };
         }
-        return {
-          ...token,
-          balance: tokenBalance?.toString() ?? null,
-          uri: tokenUri,
-        };
-      }
-      return { ...token, balance: null };
-    }),
-  );
+        return { ...token, balance: null };
+      }),
+    );
 
     await setStateByChainIdAndAddress({
       ...state,

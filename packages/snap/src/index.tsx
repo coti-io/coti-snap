@@ -31,7 +31,9 @@ import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
 import {
   getStateByChainIdAndAddress,
-  setStateByChainIdAndAddress
+  setStateByChainIdAndAddress,
+  setExpectedEnvironment,
+  getExpectedEnvironment
 } from './utils/snap';
 import { setEnvironment } from './config';
 import {
@@ -545,6 +547,22 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
       return null;
 
+    case 'debug-state':
+      const allState = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      });
+      const debugChainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+      const debugChainId = parseInt(debugChainIdHex, 16).toString();
+      const debugExpectedEnv = await getExpectedEnvironment();
+      return {
+        currentChainId: debugChainId,
+        currentChainIdHex: debugChainIdHex,
+        expectedEnvironment: debugExpectedEnv,
+        storedChainIds: allState ? Object.keys(allState as object) : [],
+        fullState: allState,
+      };
+
     case 'has-aes-key':
       const hasKeyParams = request.params as { chainId?: string } | undefined;
       const requestedChainId = hasKeyParams?.chainId;
@@ -697,7 +715,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     case 'set-environment':
       const { environment } = request.params as { environment: 'testnet' | 'mainnet' };
-      
+
       if (!environment || (environment !== 'testnet' && environment !== 'mainnet')) {
         await snap.request({
           method: 'snap_dialog',
@@ -713,8 +731,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         });
         return false;
       }
-      
+
       setEnvironment(environment);
+      await setExpectedEnvironment(environment);
       return true;
 
     case 'check-account-permissions':
