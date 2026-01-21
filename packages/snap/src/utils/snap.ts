@@ -1,6 +1,5 @@
 import type { Json } from '@metamask/snaps-sdk';
 import { type SnapsProvider } from '@metamask/snaps-sdk';
-import { BrowserProvider } from 'ethers';
 import type { GeneralState, State, StateIdentifier } from 'src/types';
 
 declare const snap: SnapsProvider;
@@ -34,17 +33,23 @@ export async function setStateData<StateType>(data: StateType): Promise<void> {
 }
 
 export const getStateIdentifier = async (): Promise<StateIdentifier> => {
-  const provider = new BrowserProvider(ethereum);
-  const network = await provider.getNetwork();
-  
   const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
   const currentAddress = accounts.length > 0 ? accounts[0] : null;
-  
+
   if (!currentAddress) {
     throw new Error('No account connected');
   }
 
-  const chainId = network.chainId.toString();
+  const expectedEnv = await getExpectedEnvironment();
+
+  let chainId: string;
+  if (expectedEnv) {
+    chainId = expectedEnv === 'testnet' ? '7082400' : '2632500';
+  } else {
+    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    chainId = parseInt(chainIdHex, 16).toString();
+  }
+
   return { chainId, address: currentAddress };
 };
 
@@ -79,4 +84,36 @@ export const setStateByChainIdAndAddress = async (
     },
   };
   await setStateData<GeneralState>(newState);
+};
+
+type GlobalSettings = {
+  expectedEnvironment?: 'testnet' | 'mainnet' | null;
+};
+
+const GLOBAL_SETTINGS_KEY = '__global_settings__';
+
+export const getGlobalSettings = async (): Promise<GlobalSettings> => {
+  const state = (await getStateData<Record<string, unknown>>()) || {};
+  return (state[GLOBAL_SETTINGS_KEY] as GlobalSettings) || {};
+};
+
+export const setGlobalSettings = async (settings: GlobalSettings): Promise<void> => {
+  const state = (await getStateData<Record<string, unknown>>()) || {};
+  await setStateData({
+    ...state,
+    [GLOBAL_SETTINGS_KEY]: settings,
+  });
+};
+
+export const setExpectedEnvironment = async (environment: 'testnet' | 'mainnet'): Promise<void> => {
+  const settings = await getGlobalSettings();
+  await setGlobalSettings({
+    ...settings,
+    expectedEnvironment: environment,
+  });
+};
+
+export const getExpectedEnvironment = async (): Promise<'testnet' | 'mainnet' | null> => {
+  const settings = await getGlobalSettings();
+  return settings.expectedEnvironment ?? null;
 };

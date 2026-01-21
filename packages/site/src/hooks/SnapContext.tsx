@@ -584,29 +584,33 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
   }, [invokeSnap, address, chainIdForStorage, updateUserAesKey]);
 
+  const lastSyncedEnvironmentRef = useRef<string | null>(null);
+
   useEffect(() => {
     const syncEnvironmentWithSnap = async (): Promise<void> => {
-      if (!installedSnap || syncedRef.current || !address || !isChainSupported) {
+      if (!installedSnap || !address || !isChainSupported) {
+        return;
+      }
+
+      if (lastSyncedEnvironmentRef.current === environment) {
         return;
       }
 
       try {
-        syncedRef.current = true;
-        await new Promise(resolve => setTimeout(resolve, SYNC_DELAY));
-
         await invokeSnap({
           method: 'set-environment',
           params: { environment }
         });
+        lastSyncedEnvironmentRef.current = environment;
+        syncedRef.current = true;
       } catch (error) {
         if (!(error instanceof Error) || !error.message.includes('No account connected')) {
-          void error;
         }
         syncedRef.current = false;
       }
     };
 
-    if (installedSnap && address && isChainSupported && !syncedRef.current) {
+    if (installedSnap && address && isChainSupported) {
       const timer = setTimeout(syncEnvironmentWithSnap, SYNC_DELAY);
       return () => clearTimeout(timer);
     }
