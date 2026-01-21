@@ -1,5 +1,3 @@
-import { BrowserProvider } from 'ethers';
-
 import {
   getStateData,
   setStateData,
@@ -9,16 +7,16 @@ import {
 } from '../utils/snap';
 import type { GeneralState, State } from '../types';
 
-jest.mock('ethers');
-
 const mockSnapRequest = jest.fn();
 
-(global as any).snap = {
+(global as unknown as { snap: { request: jest.Mock } }).snap = {
   request: mockSnapRequest,
 };
 
 declare const global: {
-  ethereum: any;
+  ethereum: {
+    request: jest.Mock;
+  };
 };
 
 global.ethereum = {
@@ -34,7 +32,7 @@ describe('Snap State Management Utilities', () => {
 
   describe('getStateData', () => {
     it('should retrieve state data from snap', async () => {
-      const mockState = { chainId: '2033', address: '0x123', balance: '100' };
+      const mockState = { chainId: '7082400', address: '0x123', balance: '100' };
       mockSnapRequest.mockResolvedValue(mockState);
 
       const result = await getStateData<typeof mockState>();
@@ -51,14 +49,14 @@ describe('Snap State Management Utilities', () => {
     it('should handle empty state', async () => {
       mockSnapRequest.mockResolvedValue(null);
 
-      const result = await getStateData<any>();
+      const result = await getStateData<unknown>();
       expect(result).toBeNull();
     });
   });
 
   describe('setStateData', () => {
     it('should update state data in snap', async () => {
-      const newState = { chainId: '2033', balance: '200' };
+      const newState = { chainId: '7082400', balance: '200' };
       mockSnapRequest.mockResolvedValue({});
 
       await setStateData(newState);
@@ -74,12 +72,12 @@ describe('Snap State Management Utilities', () => {
 
     it('should handle complex state objects', async () => {
       const complexState: GeneralState = {
-        '2033': {
+        '7082400': {
           '0x123': {
             balance: '100',
             tokenBalances: [],
             aesKey: 'test-key',
-            tokenView: 'ERC20' as any,
+            tokenView: 'ERC20' as unknown as import('../types').TokenViewSelector,
           },
         },
       };
@@ -98,23 +96,21 @@ describe('Snap State Management Utilities', () => {
   });
 
   describe('getStateIdentifier', () => {
-    it('should return current chain ID and address', async () => {
-      const mockChainId = BigInt(2033);
+    it('should return current chain ID and address using expectedEnvironment', async () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: mockChainId,
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
-
+      // Mock eth_accounts
       (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+
+      // Mock getExpectedEnvironment (returns state with expectedEnvironment)
+      mockSnapRequest.mockResolvedValue({
+        __global_settings__: { expectedEnvironment: 'testnet' },
+      });
 
       const result = await getStateIdentifier();
 
       expect(result).toEqual({
-        chainId: '2033',
+        chainId: '7082400', // testnet chainId
         address: mockAddress,
       });
       expect(global.ethereum.request).toHaveBeenCalledWith({
@@ -122,28 +118,29 @@ describe('Snap State Management Utilities', () => {
       });
     });
 
+    it('should return chain ID from eth_chainId when no expectedEnvironment', async () => {
+      const mockAddress = '0x1234567890123456789012345678901234567890';
+
+      // Mock eth_accounts and eth_chainId
+      (global.ethereum.request as jest.Mock)
+        .mockResolvedValueOnce([mockAddress]) // eth_accounts
+        .mockResolvedValueOnce('0x6c11a0'); // eth_chainId (7082400 in hex)
+
+      // Mock getExpectedEnvironment (returns state without expectedEnvironment)
+      mockSnapRequest.mockResolvedValue({});
+
+      const result = await getStateIdentifier();
+
+      expect(result).toEqual({
+        chainId: '7082400',
+        address: mockAddress,
+      });
+    });
+
     it('should throw error when no account is connected', async () => {
-      const mockChainId = BigInt(2033);
-
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: mockChainId,
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
-
       (global.ethereum.request as jest.Mock).mockResolvedValue([]);
 
       await expect(getStateIdentifier()).rejects.toThrow('No account connected');
-    });
-
-    it('should handle network errors gracefully', async () => {
-      const mockProvider = {
-        getNetwork: jest.fn().mockRejectedValue(new Error('Network error')),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
-
-      await expect(getStateIdentifier()).rejects.toThrow('Network error');
     });
   });
 
@@ -154,23 +151,17 @@ describe('Snap State Management Utilities', () => {
         balance: '100',
         tokenBalances: [],
         aesKey: 'test-key',
-        tokenView: 'ERC20' as any,
+        tokenView: 'ERC20' as unknown as import('../types').TokenViewSelector,
       };
 
-      const mockGeneralState: GeneralState = {
-        '2033': {
+      const mockGeneralState = {
+        __global_settings__: { expectedEnvironment: 'testnet' },
+        '7082400': {
           [mockAddress]: expectedState,
         },
       };
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: BigInt(2033),
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
       (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
-
       mockSnapRequest.mockResolvedValue(mockGeneralState);
 
       const result = await getStateByChainIdAndAddress();
@@ -181,15 +172,10 @@ describe('Snap State Management Utilities', () => {
     it('should return empty state for new chain/address combination', async () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: BigInt(2033),
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
       (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
-
-      mockSnapRequest.mockResolvedValue({});
+      mockSnapRequest.mockResolvedValue({
+        __global_settings__: { expectedEnvironment: 'testnet' },
+      });
 
       const result = await getStateByChainIdAndAddress();
 
@@ -199,13 +185,9 @@ describe('Snap State Management Utilities', () => {
     it('should handle null state gracefully', async () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: BigInt(2033),
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      (global.ethereum.request as jest.Mock)
+        .mockResolvedValueOnce([mockAddress])
+        .mockResolvedValueOnce('0x6c11a0'); // eth_chainId fallback
 
       mockSnapRequest.mockResolvedValue(null);
 
@@ -222,41 +204,39 @@ describe('Snap State Management Utilities', () => {
         balance: '200',
         tokenBalances: [],
         aesKey: 'new-key',
-        tokenView: 'NFT' as any,
+        tokenView: 'NFT' as unknown as import('../types').TokenViewSelector,
       };
 
-      const existingState: GeneralState = {
-        '2033': {
+      const existingState = {
+        __global_settings__: { expectedEnvironment: 'testnet' },
+        '7082400': {
           [mockAddress]: {
             balance: '100',
             tokenBalances: [],
             aesKey: 'old-key',
-            tokenView: 'ERC20' as any,
+            tokenView: 'ERC20',
           },
         },
       };
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: BigInt(2033),
-        }),
-      };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
       (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
 
       mockSnapRequest
-        .mockResolvedValueOnce(existingState)
-        .mockResolvedValueOnce({});
+        .mockResolvedValueOnce(existingState) // getExpectedEnvironment
+        .mockResolvedValueOnce(existingState) // getStateData
+        .mockResolvedValueOnce({}); // setStateData
 
       await setStateByChainIdAndAddress(newState);
 
-      expect(mockSnapRequest).toHaveBeenCalledTimes(2);
-      expect(mockSnapRequest).toHaveBeenNthCalledWith(2, {
+      // Should have called snap.request 3 times
+      expect(mockSnapRequest).toHaveBeenCalledTimes(3);
+      expect(mockSnapRequest).toHaveBeenLastCalledWith({
         method: 'snap_manageState',
         params: {
           operation: 'update',
           newState: {
-            '2033': {
+            __global_settings__: { expectedEnvironment: 'testnet' },
+            '7082400': {
               [mockAddress]: newState,
             },
           },
@@ -270,30 +250,30 @@ describe('Snap State Management Utilities', () => {
         balance: '100',
         tokenBalances: [],
         aesKey: 'test-key',
-        tokenView: 'ERC20' as any,
+        tokenView: 'ERC20' as unknown as import('../types').TokenViewSelector,
       };
 
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({
-          chainId: BigInt(2033),
-        }),
+      const existingState = {
+        __global_settings__: { expectedEnvironment: 'testnet' },
       };
-      (BrowserProvider as unknown as jest.Mock).mockImplementation(() => mockProvider);
+
       (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
 
       mockSnapRequest
-        .mockResolvedValueOnce({}) 
-        .mockResolvedValueOnce({});
+        .mockResolvedValueOnce(existingState) // getExpectedEnvironment
+        .mockResolvedValueOnce(existingState) // getStateData
+        .mockResolvedValueOnce({}); // setStateData
 
       await setStateByChainIdAndAddress(newState);
 
-      expect(mockSnapRequest).toHaveBeenCalledTimes(2);
-      expect(mockSnapRequest).toHaveBeenNthCalledWith(2, {
+      expect(mockSnapRequest).toHaveBeenCalledTimes(3);
+      expect(mockSnapRequest).toHaveBeenLastCalledWith({
         method: 'snap_manageState',
         params: {
           operation: 'update',
           newState: {
-            '2033': {
+            __global_settings__: { expectedEnvironment: 'testnet' },
+            '7082400': {
               [mockAddress]: newState,
             },
           },
