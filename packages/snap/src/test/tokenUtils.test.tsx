@@ -10,10 +10,11 @@ jest.mock('@coti-io/coti-sdk-typescript', () => ({
   decryptString: jest.fn(),
   decryptUint: jest.fn(),
 }));
-const { getStateByChainIdAndAddress, setStateByChainIdAndAddress } = require('../utils/snap');
+const { getStateByChainIdAndAddress, setStateByChainIdAndAddress, getExpectedEnvironment } = require('../utils/snap');
 jest.mock('../utils/snap', () => ({
   getStateByChainIdAndAddress: jest.fn(),
   setStateByChainIdAndAddress: jest.fn(),
+  getExpectedEnvironment: jest.fn(),
 }));
 
 declare const global: {
@@ -182,23 +183,27 @@ describe('Token Utilities', () => {
   });
 
   describe('checkChainId', () => {
-    it('should return true when chain ID matches', async () => {
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({ chainId: CHAIN_ID }),
-      };
-      (ethers.BrowserProvider as unknown as jest.Mock).mockReturnValue(mockProvider);
+    it('should return true when expectedEnvironment is set to testnet', async () => {
+      (getExpectedEnvironment as jest.Mock).mockResolvedValue('testnet');
 
       const result = await tokenUtils.checkChainId();
 
-      expect(mockProvider.getNetwork).toHaveBeenCalled();
+      expect(getExpectedEnvironment).toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
-    it('should return false when chain ID does not match', async () => {
-      const mockProvider = {
-        getNetwork: jest.fn().mockResolvedValue({ chainId: 2 }),
-      };
-      (ethers.BrowserProvider as unknown as jest.Mock).mockReturnValue(mockProvider);
+    it('should return true when expectedEnvironment is set to mainnet', async () => {
+      (getExpectedEnvironment as jest.Mock).mockResolvedValue('mainnet');
+
+      const result = await tokenUtils.checkChainId();
+
+      expect(getExpectedEnvironment).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+
+    it('should return false when chain ID does not match and no expectedEnvironment', async () => {
+      (getExpectedEnvironment as jest.Mock).mockResolvedValue(null);
+      global.ethereum.request.mockResolvedValue('0x1'); // Ethereum mainnet
 
       const result = await tokenUtils.checkChainId();
 

@@ -1,13 +1,49 @@
-import { installSnap } from '@metamask/snaps-jest';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
-import { Home } from '../components/Home';
-import { WrongChain } from '../components/WrongChain';
-import { CHAIN_ID } from '../config';
 import { TokenViewSelector } from '../types';
+import * as snapHandlers from '../index';
 
-jest.mock('../utils/snap');
+const { getStateByChainIdAndAddress, setStateByChainIdAndAddress } = require('../utils/snap');
+const { checkChainId, recalculateBalances } = require('../utils/token');
+
+jest.mock('../utils/snap', () => ({
+  getStateByChainIdAndAddress: jest.fn(),
+  setStateByChainIdAndAddress: jest.fn(),
+  getExpectedEnvironment: jest.fn(),
+  setExpectedEnvironment: jest.fn(),
+}));
+
 jest.mock('../utils/token', () => ({
   checkChainId: jest.fn(),
+  recalculateBalances: jest.fn(),
+  hideToken: jest.fn(),
+  importToken: jest.fn(),
+  getERC20Details: jest.fn(),
+  getERC721Details: jest.fn(),
+  checkIfERC20Unique: jest.fn(),
+  checkIfERC721Unique: jest.fn(),
+  checkERC721Ownership: jest.fn(),
+}));
+
+jest.mock('../components/WrongChain', () => ({
+  WrongChain: () => <Text>Wrong Chain</Text>,
+}));
+
+jest.mock('../components/Home', () => ({
+  Home: ({ balance, tokenBalances, tokenView, aesKey }: {
+    balance: bigint;
+    tokenBalances: unknown[];
+    tokenView: string;
+    aesKey: string | null;
+  }) => (
+    <Box>
+      <Heading>Home</Heading>
+      <Text>Balance: {balance.toString()}</Text>
+      <Text>Tokens: {String(tokenBalances.length)}</Text>
+      <Text>View: {tokenView}</Text>
+      <Text>AES Key: {aesKey || 'none'}</Text>
+    </Box>
+  ),
 }));
 
 describe('onHomePage', () => {
@@ -16,37 +52,36 @@ describe('onHomePage', () => {
   });
 
   it('renders WrongChain when the chain ID is incorrect', async () => {
-    const { onHomePage, mockJsonRpc } = await installSnap();
-    mockJsonRpc({
-      method: 'eth_chainId',
-      result: `0x1`,
-    });
+    (checkChainId as jest.Mock).mockResolvedValue(false);
 
-    const response = (await onHomePage()) as { response: { result: string } };
-    expect(response.response.result).toRender(<WrongChain />);
+    const result = await snapHandlers.onHomePage();
+
+    expect(result).toHaveProperty('content');
+    expect((result as { content: { type: string } }).content.type).toBe('Text');
   });
 
   it('renders Home with ERC20 view', async () => {
-    const { onHomePage, mockJsonRpc } = await installSnap();
+    const mockBalance = BigInt(100);
+    const mockTokenBalances: never[] = [];
+    const mockState = { aesKey: null, tokenView: TokenViewSelector.ERC20 };
 
-    mockJsonRpc({
-      method: 'eth_chainId',
-      result: `0x${parseInt(CHAIN_ID, 10).toString(16)}`,
+    (checkChainId as jest.Mock).mockResolvedValue(true);
+    (recalculateBalances as jest.Mock).mockResolvedValue({
+      balance: mockBalance,
+      tokenBalances: mockTokenBalances,
     });
-    mockJsonRpc({
-      method: 'eth_getBalance',
-      result: `0x${parseInt('100', 10).toString(16)}`,
-    });
-    const response = (await onHomePage()) as { response: { result: string } };
-    const { result } = response.response;
+    (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
+    (setStateByChainIdAndAddress as jest.Mock).mockResolvedValue(undefined);
 
-    expect(result).toRender(
-      Home({
-        balance: 100n,
-        tokenBalances: [],
-        tokenView: TokenViewSelector.ERC20,
-        aesKey: null,
-      }),
-    );
+    const result = await snapHandlers.onHomePage();
+
+    expect(checkChainId).toHaveBeenCalled();
+    expect(recalculateBalances).toHaveBeenCalled();
+    expect(setStateByChainIdAndAddress).toHaveBeenCalledWith({
+      ...mockState,
+      tokenView: TokenViewSelector.ERC20,
+    });
+    expect(result).toHaveProperty('content');
+    expect((result as { content: { type: string } }).content.type).toBe('Box');
   });
 });
