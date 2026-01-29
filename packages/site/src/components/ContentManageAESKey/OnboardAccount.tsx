@@ -4,7 +4,6 @@ import styled from 'styled-components';
 
 import { ButtonAction } from '../Button';
 import { ContentText, ContentTitle } from '../styles';
-import { getNetworkConfig, isSupportedChainId } from '../../config/networks';
 import { getOnboardContractLink, ONBOARD_CONTRACT_GITHUB_LINK } from '../../config/onboard';
 import { useSnap } from '../../hooks/SnapContext';
 import { useWrongChain, useMetaMask } from '../../hooks';
@@ -19,43 +18,6 @@ interface OnboardAccountProps { }
 
 const ONBOARDING_DESCRIPTION = `Onboarding your account will securely store your network key within the metamask to be used with secured dApp interactions.
 For example: viewing your balance on a Private ERC20 token.`;
-
-const FUND_WALLET_URL = 'https://www.binance.com/en/price/coti';
-
-const FundingHelper = styled.div`
-  margin-top: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-radius: 8px;
-  background: rgba(30, 41, 246, 0.08);
-  border: 1px solid rgba(30, 41, 246, 0.2);
-`;
-
-const FundingHelperText = styled.span`
-  display: block;
-  font-size: 1.4rem;
-  line-height: 1.4;
-  color: #000000 !important;
-
-  strong {
-    color: #000000 !important;
-  }
-`;
-
-const FundingHelperActions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-
-  & > * {
-    flex: 1 1 200px;
-    min-width: 160px;
-  }
-`;
 
 const ContractInfo = styled.div`
   display: flex;
@@ -85,17 +47,6 @@ const ContractHeader = styled.div`
   align-items: center;
   gap: 8px;
   padding-left: 8px;
-`;
-
-const ContractIcon = styled.span`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: #1E29F6 !important;
-  border-radius: 8px;
-  font-size: 1.4rem;
 `;
 
 const ContractLabel = styled.span`
@@ -164,10 +115,6 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
   const { isConnected, chain } = useAccount();
   const { wrongChain } = useWrongChain();
   const { isInstallingSnap } = useMetaMask();
-  const isSupportedChain = isSupportedChainId(chain?.id);
-  const isTestnetNetwork = Boolean(
-    isSupportedChain && getNetworkConfig(chain?.id).isTestnet
-  );
 
   const contractExplorerLink = useMemo(
     () => getOnboardContractLink(chain?.id),
@@ -181,12 +128,6 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
       void error;
     }
   }, [setAESKey]);
-
-  const handleFundWalletClick = useCallback((): void => {
-    if (typeof window !== 'undefined') {
-      window.open(FUND_WALLET_URL, '_blank', 'noopener,noreferrer');
-    }
-  }, []);
 
   if (isConnected && wrongChain) {
     return <ContentSwitchNetwork />;
@@ -235,25 +176,9 @@ export const OnboardAccount: React.FC<OnboardAccountProps> = memo(() => {
         />
 
         {settingAESKeyError === 'accountBalanceZero' && (
-          <>
-            <Alert type="error">
-              Error onboarding account: Insufficient funds.
-            </Alert>
-            {!isTestnetNetwork && (
-              <FundingHelper>
-                <FundingHelperText>
-                  Add funds to your wallet so you can proceed with onboarding, then click&nbsp;
-                  <strong>Onboard</strong> again.
-                </FundingHelperText>
-                <FundingHelperActions>
-                  <ButtonAction
-                    text="Fund wallet"
-                    onClick={handleFundWalletClick}
-                  />
-                </FundingHelperActions>
-              </FundingHelper>
-            )}
-          </>
+          <Alert type="error">
+            Error onboarding account: Insufficient funds.
+          </Alert>
         )}
         {settingAESKeyError === 'invalidAddress' && (
           <Alert type="error">

@@ -7,7 +7,11 @@
     "url": "https://github.com/coti-io/coti-snap.git"
   },
   "source": {
+<<<<<<< HEAD
     "shasum": "5dDGz2+qDamt4fkz5u06WHil0JYN2MqTl51oonMlgIo=",
+=======
+    "shasum": "c3HBpf5wJTtHBytEcSLNj85JtSKFtE2DlimN8WirRD0=",
+>>>>>>> 87b2f81 (feat: delete add funds info section)
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
