@@ -10,12 +10,14 @@ import {
 } from '../utils/localStorage';
 import { ImportedToken } from '../types/token';
 import { subscribeImportedTokens, notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
+import { useInvokeSnap } from './useInvokeSnap';
 
 export const useImportedTokens = () => {
   const { address, chain } = useAccount();
   const chainId = chain?.id;
   const [importedTokens, setImportedTokensState] = useState<ImportedToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const invokeSnap = useInvokeSnap();
 
   const loadTokens = useCallback(() => {
     try {
@@ -47,8 +49,7 @@ export const useImportedTokens = () => {
     return unsubscribe;
   }, [loadTokens]);
 
-  // Add a new token
-  const addToken = useCallback((token: ImportedToken) => {
+  const addToken = useCallback(async (token: ImportedToken) => {
     if (!address || !chainId) return;
 
     try {
@@ -57,13 +58,27 @@ export const useImportedTokens = () => {
       const updatedTokens = getImportedTokensByAccount(address, chainId);
       setImportedTokensState(updatedTokens);
       notifyImportedTokensUpdated();
+
+      try {
+        await invokeSnap({
+          method: 'import-token',
+          params: {
+            address: token.address,
+            name: token.name,
+            symbol: token.symbol,
+            decimals: token.decimals?.toString() || '18',
+            tokenType: token.type,
+          },
+        });
+      } catch (snapError) {
+        console.warn('Failed to sync token to snap:', snapError);
+      }
     } catch (error) {
       void error;
     }
-  }, [address, chainId]);
+  }, [address, chainId, invokeSnap]);
 
-  // Remove a token
-  const removeToken = useCallback((tokenAddress: string) => {
+  const removeToken = useCallback(async (tokenAddress: string) => {
     if (!address || !chainId) return;
 
     try {
@@ -72,10 +87,21 @@ export const useImportedTokens = () => {
       const updatedTokens = getImportedTokensByAccount(address, chainId);
       setImportedTokensState(updatedTokens);
       notifyImportedTokensUpdated();
+
+      try {
+        await invokeSnap({
+          method: 'hide-token',
+          params: {
+            address: tokenAddress,
+          },
+        });
+      } catch (snapError) {
+        console.warn('Failed to sync token removal to snap:', snapError);
+      }
     } catch (error) {
       void error;
     }
-  }, [address, chainId]);
+  }, [address, chainId, invokeSnap]);
 
   const clearAllTokens = useCallback(() => {
     if (!address || !chainId) return;

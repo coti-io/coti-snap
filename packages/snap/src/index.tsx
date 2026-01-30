@@ -739,16 +739,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'check-account-permissions':
       try {
         const { targetAccount } = (request.params as { targetAccount?: string }) || {};
-        
+
         const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
-        
+
         let currentAccount: string | null;
         if (targetAccount) {
           currentAccount = targetAccount.toLowerCase();
         } else {
           currentAccount = accounts.length > 0 ? accounts[0]?.toLowerCase() || null : null;
         }
-        
+
         if (!currentAccount) {
           return {
             hasPermission: false,
@@ -757,10 +757,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             error: 'No active account found'
           };
         }
-        
+
         const hasPermission = accounts.some(account => account.toLowerCase() === currentAccount);
         const permittedAccounts = accounts;
-        
+
         return {
           hasPermission,
           currentAccount,
@@ -771,6 +771,75 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           hasPermission: false,
           currentAccount: null,
           permittedAccounts: [],
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+
+    case 'import-token':
+      try {
+        const importParams = request.params as {
+          address: string;
+          name: string;
+          symbol: string;
+          decimals: string;
+          tokenType: 'ERC20' | 'ERC721' | 'ERC1155';
+          tokenId?: string;
+        };
+
+        if (!importParams || !importParams.address || !importParams.name || !importParams.symbol || !importParams.tokenType) {
+          return { success: false, error: 'Missing required parameters' };
+        }
+
+        const { address: tokenAddress, name: tokenName, symbol: tokenSymbol, decimals: tokenDecimals, tokenType, tokenId } = importParams;
+
+        if (tokenType === 'ERC20') {
+          const isUnique = await checkIfERC20Unique(tokenAddress);
+          if (!isUnique) {
+            return { success: true, alreadyExists: true };
+          }
+        } else if (tokenId) {
+          const isUnique = await checkIfERC721Unique(tokenAddress, tokenId);
+          if (!isUnique) {
+            return { success: true, alreadyExists: true };
+          }
+        }
+
+        await importToken(
+          tokenAddress,
+          tokenName,
+          tokenSymbol,
+          tokenDecimals || '0',
+          tokenId
+        );
+
+        await recalculateBalances();
+
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+
+    case 'hide-token':
+      try {
+        const hideParams = request.params as {
+          address: string;
+          tokenId?: string;
+        };
+
+        if (!hideParams || !hideParams.address) {
+          return { success: false, error: 'Missing token address' };
+        }
+
+        await hideToken(hideParams.address);
+        await recalculateBalances();
+
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
