@@ -832,6 +832,43 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   }, [installedSnap, checkPermissionsForAccount]);
 
   useEffect(() => {
+    const handleChainChanged = async (chainIdHex: unknown): Promise<void> => {
+      if (!installedSnap || !address) {
+        return;
+      }
+
+      const chainIdNum = typeof chainIdHex === 'string'
+        ? parseInt(chainIdHex, 16)
+        : null;
+
+      if (!chainIdNum || !isSupportedChainId(chainIdNum)) {
+        console.log('[FRONTEND] chainChanged - unsupported chain:', chainIdNum);
+        return;
+      }
+
+      const newEnvironment = getEnvironmentForChain(chainIdNum);
+      console.log('[FRONTEND] chainChanged - detected chain:', chainIdNum, 'environment:', newEnvironment);
+
+      try {
+        await invokeSnap({
+          method: 'set-environment',
+          params: { environment: newEnvironment }
+        });
+        lastSyncedEnvironmentRef.current = newEnvironment;
+      } catch (error) {
+        void error;
+      }
+    };
+
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', handleChainChanged);
+      return () => {
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      };
+    }
+  }, [installedSnap, address, invokeSnap]);
+
+  useEffect(() => {
     if (address && installedSnap) {
       checkPermissionsForAccount(address);
     } else if (!address) {

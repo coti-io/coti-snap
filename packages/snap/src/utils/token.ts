@@ -12,6 +12,7 @@ import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress,
   getExpectedEnvironment,
+  setExpectedEnvironment,
 } from './snap';
 
 const ERC165_ABI = [
@@ -245,37 +246,31 @@ export const checkChainId = async (): Promise<boolean> => {
   try {
     const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
 
-    // IMPORTANT: eth_chainId in snaps does NOT sync when MetaMask changes networks
-    // So we MUST prioritize the expectedEnvironment set by the webapp
     const expectedEnv = await getExpectedEnvironment();
 
     if (expectedEnv) {
-      // Webapp has told us which environment we should be in - trust it
       setEnvironment(expectedEnv);
-      console.log('[SNAP] checkChainId - using expectedEnvironment from webapp:', expectedEnv);
       return true;
     }
 
-    // Fallback: try eth_chainId (only works on initial load before network changes)
     const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
     const currentChainId = parseInt(chainIdHex, 16).toString();
-    console.log('[SNAP] checkChainId - no expectedEnv, falling back to eth_chainId:', currentChainId);
 
     if (currentChainId === COTI_TESTNET_CHAIN_ID) {
       setEnvironment('testnet');
+      await setExpectedEnvironment('testnet');
       return true;
     }
 
     if (currentChainId === COTI_MAINNET_CHAIN_ID) {
       setEnvironment('mainnet');
+      await setExpectedEnvironment('mainnet');
       return true;
     }
 
-    // Not connected to a supported COTI network
-    console.log('[SNAP] checkChainId - not on COTI network');
     return false;
   } catch (error) {
-    console.log('[SNAP] checkChainId - error:', error);
+    void error;
     const expectedEnv = await getExpectedEnvironment();
     if (expectedEnv) {
       const { setEnvironment } = await import('../config');
@@ -307,8 +302,6 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
   const rpcUrl = expectedEnv === 'testnet'
     ? 'https://testnet.coti.io/rpc'
     : 'https://mainnet.coti.io/rpc';
-
-  console.log('[SNAP] recalculateBalances - expectedEnv:', expectedEnv, '-> using RPC:', rpcUrl);
 
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
