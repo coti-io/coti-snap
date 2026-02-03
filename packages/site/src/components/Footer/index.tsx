@@ -54,7 +54,7 @@ export function Footer() {
           Docs
         </Link>{' '}
         •
-        © 2025 COTI{' '}
+        © 2026 COTI{' '}
         •{' '}
         <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">
           Terms of Use
