@@ -9,25 +9,62 @@ import {
   Link,
   Bold,
   Section,
+  Row,
+  Address,
 } from '@metamask/snaps-sdk/jsx';
 import type { Token } from 'src/types';
 import { TokenViewSelector } from '../types';
-import { formatTokenBalance } from '../utils/token';
+import { formatTokenBalance, truncateAddress } from '../utils/token';
 import { generateTokenAvatar } from '../utils/image';
 
 import defaultToken from '../../images/default.svg';
 
 export const TokenDetails = ({ token }: { token: Token }) => {
   const renderNFTDetails = () => (
-    <Section>
-      <Box direction="vertical" alignment="center">
-        <Heading size="lg">My NFT</Heading>
-        <Image src={token.image || defaultToken} alt={`NFT ${token.name}`} />
+    <Box direction="vertical" alignment="space-between">
+      <Box direction="vertical">
+        <Box direction="horizontal">
+          <Button name="token-cancel">
+            <Icon name="arrow-left" />
+          </Button>
+        </Box>
+
+        <Section alignment="center" direction="vertical">
+          <Image src={token.image || defaultToken} alt={`NFT ${token.name}`} />
+          <Box direction="vertical" alignment="center">
+            <Heading size="md">{token.name}</Heading>
+            <Text color="muted">
+              {token.symbol}{token.tokenId ? ` · #${token.tokenId}` : ''}
+            </Text>
+          </Box>
+        </Section>
+
+        <Section direction="vertical">
+          <Row label="Contract">
+            <Address address={token.address as `0x${string}`} />
+          </Row>
+          {token.tokenId ? (
+            <Row label="Token ID">
+              <Text>
+                <Bold>{token.tokenId}</Bold>
+              </Text>
+            </Row>
+          ) : null}
+          {token.uri ? (
+            <Row label="Metadata">
+              <Link href={token.uri}>View URI</Link>
+            </Row>
+          ) : null}
+        </Section>
       </Box>
-      <Button name="token-cancel">
-        See in...
+
+      <Button
+        variant="destructive"
+        name={`confirm-hide-token-${token.address}`}
+      >
+        Hide token
       </Button>
-    </Section>
+    </Box>
   );
 
   const renderTokenDetails = () => (
@@ -110,4 +147,3 @@ export const TokenDetails = ({ token }: { token: Token }) => {
 
   return token.type === TokenViewSelector.NFT ? renderNFTDetails() : renderTokenDetails();
 };
-
