@@ -143,10 +143,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
         return tkn.address === tokenAddress;
       });
       if (token) {
-        if (token.uri) {
-          const tokenImageBase64 = await getSVGfromMetadata(token.uri);
-          token.image = tokenImageBase64;
-        }
+        // Show immediately with default placeholder image
         await snap.request({
           method: 'snap_updateInterface',
           params: {
@@ -154,6 +151,21 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             ui: <TokenDetails token={token} />,
           },
         });
+
+        // Then fetch the real image and update
+        if (token.uri) {
+          const tokenImageBase64 = await getSVGfromMetadata(token.uri);
+          if (tokenImageBase64) {
+            token.image = tokenImageBase64;
+            await snap.request({
+              method: 'snap_updateInterface',
+              params: {
+                id,
+                ui: <TokenDetails token={token} />,
+              },
+            });
+          }
+        }
       }
       return;
     }
