@@ -7,5 +7,6 @@ export { default as NFTImageIcon } from './nft-image.svg';
 export { default as PlusBlueIcon } from './plus-blue.svg';
 export { default as RefreshBlueIcon } from './refresh-blue.svg'; 
 export { default as CotiLogo } from './cotilogo.svg';
+export { default as SyncIcon } from './sync.svg';
 export { default as FromIcon } from './from.png';
 export { default as ToIcon } from './to.png';
