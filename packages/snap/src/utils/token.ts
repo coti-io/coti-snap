@@ -69,7 +69,7 @@ export const getPublicTokenURI = async (
       ['function tokenURI(uint256) view returns (string)'],
       provider,
     );
-    const uri = await contract.tokenURI(BigInt(tokenId));
+    const uri = await contract.getFunction('tokenURI')(BigInt(tokenId));
     return uri || null;
   } catch {
     return null;
