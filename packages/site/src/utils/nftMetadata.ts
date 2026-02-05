@@ -11,21 +11,30 @@ const ensureTrailingSlash = (value: string): string => {
 };
 
 const resolveDefaultGateway = (): string => {
-  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_IPFS_GATEWAY) {
-    return ensureTrailingSlash(process.env.NEXT_PUBLIC_IPFS_GATEWAY);
+  const customGateway = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
+  if (customGateway) {
+    return ensureTrailingSlash(customGateway);
   }
-  // Use Cloudflare IPFS gateway as default (better CORS support)
   return 'https://cloudflare-ipfs.com/ipfs/';
 };
 
-// Multiple public IPFS gateways to try as fallbacks
-// Ordered by reliability and CORS support
-const IPFS_GATEWAYS = [
-  'https://cloudflare-ipfs.com/ipfs/',
-  'https://ipfs.io/ipfs/',
-  'https://gateway.pinata.cloud/ipfs/',
-  'https://dweb.link/ipfs/',
-];
+const IPFS_GATEWAYS: string[] = (() => {
+  const gateways = [
+    'https://cloudflare-ipfs.com/ipfs/',
+    'https://ipfs.io/ipfs/',
+    'https://gateway.pinata.cloud/ipfs/',
+    'https://dweb.link/ipfs/',
+  ];
+
+  const customGateway = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
+  if (customGateway) {
+    const normalized = ensureTrailingSlash(customGateway);
+    if (!gateways.includes(normalized)) {
+      gateways.unshift(normalized);
+    }
+  }
+  return gateways;
+})();
 
 const IPFS_GATEWAY = resolveDefaultGateway();
 
@@ -225,10 +234,13 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
     return null;
   }
 
-  // Try each URL until one succeeds
   for (const tryUrl of urlsToTry) {
     try {
-      const response = await fetch(tryUrl, { mode: 'cors' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(tryUrl, { mode: 'cors', signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!response.ok) continue;
 
       const blob = await response.blob();
@@ -245,7 +257,61 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
       if (dataUri) return dataUri;
     } catch (error) {
       void error;
-      continue; // Try next gateway
+      continue; // Timeout or network error, try next gateway
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Fetch JSON metadata from a URL, with IPFS gateway fallback and timeout.
+ * If the URL is an IPFS gateway URL, tries multiple gateways.
+ */
+export const fetchJsonWithIpfsFallback = async (url: string, timeoutMs = 8000): Promise<Record<string, any> | null> => {
+  const urlsToTry: string[] = [];
+
+  const cid = extractCIDFromGatewayUrl(url);
+  if (cid) {
+    for (const gateway of IPFS_GATEWAYS) {
+      const gatewayUrl = `${gateway}${cid}`;
+      urlsToTry.push(gatewayUrl);
+    }
+    if (!urlsToTry.includes(url)) {
+      urlsToTry.unshift(url);
+    }
+  } else {
+    urlsToTry.push(url);
+  }
+
+  for (const tryUrl of urlsToTry) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(tryUrl, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) continue;
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return await response.json();
+      }
+
+      const text = await response.text();
+      if (text) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          continue;
+        }
+      }
+    } catch {
+      continue;
     }
   }
 

@@ -203,7 +203,7 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({ nft, open, onClose, setActi
     return () => {
       cancelled = true;
     };
-  }, [nft, tokenOps, provider, contract, tokenId, imageUrl]);
+  }, [nft, tokenOps, provider, contract, tokenId, imageUrl, aesKey]);
   
   const shortAddress = contract ? formatAddressForDisplay(contract) : '';
 

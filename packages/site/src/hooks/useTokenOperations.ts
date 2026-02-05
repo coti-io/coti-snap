@@ -9,7 +9,7 @@ import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { removeImportedToken, removeImportedTokenByAccount } from '../utils/localStorage';
 import { notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
-import { resolveTokenUri, extractImageUri, parseDataUriJson, fetchImageAsDataUri } from '../utils/nftMetadata';
+import { resolveTokenUri, extractImageUri, parseDataUriJson, fetchImageAsDataUri, fetchJsonWithIpfsFallback } from '../utils/nftMetadata';
 
 // Helper function to get function selector
 const getSelector = (functionSignature: string): string => {
@@ -131,28 +131,6 @@ const buildMetadataResult = async (uri: string | null, metadata: Record<string, 
 
   console.log('[buildMetadataResult] All sources to try:', sources);
 
-  let imageDataUri: string | null = null;
-  for (const source of sources) {
-    if (!source) continue;
-    if (source.startsWith('data:')) {
-      imageDataUri = source;
-      break;
-    }
-    // Skip data URI conversion for IPFS URLs to avoid CORS issues
-    // Just use the HTTP gateway URL directly
-    if (source.startsWith('ipfs://')) {
-      continue;
-    }
-    if (!/^https?:/i.test(source)) {
-      continue;
-    }
-    const dataUri = await getCachedImageDataUri(source);
-    if (dataUri) {
-      imageDataUri = dataUri;
-      break;
-    }
-  }
-
   let fallbackImage: string | null = null;
   for (const source of sources) {
     if (!source) continue;
@@ -163,8 +141,27 @@ const buildMetadataResult = async (uri: string | null, metadata: Record<string, 
   }
 
   if (!fallbackImage && sources.length > 0) {
-    // If no HTTP URL found, try to use any available source
     fallbackImage = sources[0] ?? null;
+  }
+
+  let imageDataUri: string | null = null;
+  for (const source of sources) {
+    if (!source) continue;
+    if (source.startsWith('data:')) {
+      imageDataUri = source;
+      break;
+    }
+    if (source.startsWith('ipfs://') || source.includes('/ipfs/')) {
+      continue;
+    }
+    if (!/^https?:/i.test(source)) {
+      continue;
+    }
+    const dataUri = await getCachedImageDataUri(source);
+    if (dataUri) {
+      imageDataUri = dataUri;
+      break;
+    }
   }
 
   const displayImage = imageDataUri ?? fallbackImage ?? null;
@@ -191,34 +188,9 @@ const fetchMetadataFromUri = async (uri: string, tokenId?: string): Promise<NFTM
   }
 
   try {
-    const response = await fetch(uri, {
-      method: 'GET',
-      cache: 'no-cache'
-    });
-
-    if (!response.ok) {
-      return buildMetadataResult(uri, null, tokenId);
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const metadata = await response.json();
-      return buildMetadataResult(uri, metadata, tokenId);
-    }
-
-    const text = await response.text();
-    if (text) {
-      try {
-        const metadata = JSON.parse(text);
-        return buildMetadataResult(uri, metadata, tokenId);
-      } catch (error) {
-        void error;
-      }
-    }
-
-    return buildMetadataResult(uri, null, tokenId);
-  } catch (error) {
-    void error;
+    const metadata = await fetchJsonWithIpfsFallback(uri);
+    return buildMetadataResult(uri, metadata, tokenId);
+  } catch {
     return buildMetadataResult(uri, null, tokenId);
   }
 };
@@ -435,16 +407,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         throw new Error('No contract deployed at this address');
       }
 
-      // Only check for the unique confidential selector
-      // mint(address,(tuple(uint256[]),bytes[])) is ONLY in confidential contracts
-      const confidentialMintSelector = ethers.id('mint(address,(tuple(uint256[]),bytes[]))').slice(0, 10);
+      const confidentialInterface = new ethers.Interface(PRIVATE_ERC721_ABI);
+      const mintFragment = confidentialInterface.getFunction('mint');
+      const confidentialMintSelector = mintFragment?.selector ?? '';
 
-      // Check if the bytecode contains the confidential mint selector
-      if (code.includes(confidentialMintSelector.slice(2))) {
-        console.log('[getNFTConfidentialStatus] Contract is CONFIDENTIAL:', tokenAddress);
+      if (confidentialMintSelector && code.includes(confidentialMintSelector.slice(2))) {
         return true;
       } else {
-        console.log('[getNFTConfidentialStatus] Contract is PUBLIC:', tokenAddress);
         return false;
       }
     } catch (error) {
@@ -454,25 +423,27 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   }, [getBrowserProvider]);
 
   const getERC721TokenURI = useCallback(async (tokenAddress: string, tokenId: string, aesKey?: string): Promise<string | null> => {
-    try {
-      const isConfidential = await getNFTConfidentialStatus(tokenAddress);
-      const abi = isConfidential ? PRIVATE_ERC721_ABI : ERC721_ABI;
-      const contract = await getContract(tokenAddress, abi);
-      const result = await (contract as any).tokenURI(tokenId);
-
-      if (isConfidential && aesKey) {
-        // For confidential NFTs, decrypt the tokenURI
+    if (aesKey) {
+      try {
+        const contract = await getContract(tokenAddress, PRIVATE_ERC721_ABI);
+        const result = await (contract as any).tokenURI(tokenId);
         const decryptedURI = decryptString(result, aesKey);
-        return decryptedURI || null;
-      } else {
-        // For standard NFTs, decode the string
-        const uri = decodePotentialString(result);
-        return uri || null;
+        const cleanURI = decryptedURI?.replace(/\0/g, '').trim();
+        if (cleanURI) return cleanURI;
+      } catch (error) {
+        void error;
       }
+    }
+
+    try {
+      const contract = await getContract(tokenAddress, ERC721_ABI);
+      const result = await (contract as any).tokenURI(tokenId);
+      const uri = decodePotentialString(result);
+      return uri || null;
     } catch (error) {
       throw new Error(`Failed to fetch token URI: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [getContract, getNFTConfidentialStatus]);
+  }, [getContract]);
 
   const getERC1155TokenURI = useCallback(async (tokenAddress: string, tokenId: string): Promise<string | null> => {
     try {
