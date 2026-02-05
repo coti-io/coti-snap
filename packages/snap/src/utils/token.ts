@@ -1,6 +1,6 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
-import { BrowserProvider, Contract, ethers, formatUnits, ZeroAddress } from 'ethers';
+import { Contract, ethers, formatUnits, ZeroAddress } from 'ethers';
 
 import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
@@ -23,13 +23,21 @@ const ERC165_ABI = [
 const ERC721_INTERFACE_ID = '0x80ac58cd';
 const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
+const getJsonRpcProvider = async () => {
+  const expectedEnv = await getExpectedEnvironment();
+  const rpcUrl = expectedEnv === 'testnet'
+    ? 'https://testnet.coti.io/rpc'
+    : 'https://mainnet.coti.io/rpc';
+  return new ethers.JsonRpcProvider(rpcUrl);
+};
+
 export const getTokenURI = async (
   address: string,
   tokenId: string,
   aesKey: string,
 ): Promise<string | null> => {
   try {
-    const provider = new BrowserProvider(ethereum);
+    const provider = await getJsonRpcProvider();
     const contract = new ethers.Contract(
       address,
       erc721ConfidentialAbi,
@@ -57,7 +65,7 @@ export const getERC20Details = async (
   name: string | null;
 } | null> => {
   try {
-    const provider = new BrowserProvider(ethereum);
+    const provider = await getJsonRpcProvider();
     const contract = new ethers.Contract(address, erc20Abi, provider);
 
     if (!contract.decimals || !contract.symbol || !contract.name) {
@@ -83,7 +91,7 @@ export const getERC721Details = async (
   name: string | null;
 } | null> => {
   try {
-    const provider = new BrowserProvider(ethereum);
+    const provider = await getJsonRpcProvider();
     const contract = new ethers.Contract(address, erc721Abi, provider);
 
     if (!contract.symbol || !contract.name) {
@@ -111,32 +119,32 @@ export const checkERC721Ownership = async (
   tokenId: string,
 ): Promise<boolean> => {
   try {
-    const provider = new BrowserProvider(ethereum);
-    
+    const provider = await getJsonRpcProvider();
+
     const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
     const userAddress = accounts.length > 0 ? accounts[0] : null;
-    
+
     if (!userAddress) {
       throw new Error('No account connected');
     }
-    
+
     let contract = new ethers.Contract(address, erc721Abi, provider);
-    
+
     try {
       if (!contract.ownerOf) {
         throw new Error('ownerOf method not available');
       }
-      
+
       const owner = await contract.ownerOf(BigInt(tokenId));
       return owner.toLowerCase() === userAddress.toLowerCase();
     } catch {
       try {
         contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
-        
+
         if (!contract.ownerOf) {
           throw new Error('ownerOf method not available in confidential contract');
         }
-        
+
         const owner = await contract.ownerOf(BigInt(tokenId));
         return owner.toLowerCase() === userAddress.toLowerCase();
       } catch {
@@ -157,7 +165,7 @@ export async function getTokenType(address: string): Promise<{
   type: TokenViewSelector;
   confidential: boolean;
 }> {
-  const provider = new BrowserProvider(ethereum);
+  const provider = await getJsonRpcProvider();
   const erc165Contract = new ethers.Contract(address, ERC165_ABI, provider);
 
   let isERC721 = false;
@@ -284,14 +292,14 @@ export const checkChainId = async (): Promise<boolean> => {
 export const checkIfERC20Unique = async (address: string): Promise<boolean> => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
-  return !tokens.some((token) => token.address === address);
+  return !tokens.some((token) => token.address.toLowerCase() === address.toLowerCase());
 };
 
 export const checkIfERC721Unique = async (address: string, tokenId: string): Promise<boolean> => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
   return !tokens.some(
-    (token) => token.address === address && token.tokenId === tokenId,
+    (token) => token.address.toLowerCase() === address.toLowerCase() && token.tokenId === tokenId,
   );
 };
 
@@ -389,8 +397,17 @@ export const importToken = async (
   decimals: string,
   tokenId?: string,
 ): Promise<void> => {
+  const normalizedAddress = address.toLowerCase();
   const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
+
+  const alreadyExists = tokenId
+    ? tokens.some((t) => t.address.toLowerCase() === normalizedAddress && t.tokenId === tokenId)
+    : tokens.some((t) => t.address.toLowerCase() === normalizedAddress);
+  if (alreadyExists) {
+    throw new Error('Token already exists');
+  }
+
   const { type, confidential } = await getTokenType(address);
   if (type === TokenViewSelector.UNKNOWN) {
     throw new Error('Invalid token type');
@@ -414,7 +431,7 @@ export const importToken = async (
 export const hideToken = async (address: string): Promise<void> => {
   const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
-  const updatedTokens = tokens.filter((token) => token.address !== address);
+  const updatedTokens = tokens.filter((token) => token.address.toLowerCase() !== address.toLowerCase());
   await setStateByChainIdAndAddress({
     ...oldState,
     tokenBalances: updatedTokens,
