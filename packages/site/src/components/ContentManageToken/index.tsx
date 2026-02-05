@@ -434,14 +434,15 @@ const handleGoToWallet = useCallback(() => {
 
   if (selectedNFT) {
     return (
-      <NFTDetails 
-        nft={selectedNFT} 
-        open={true} 
-        onClose={() => setSelectedNFT(null)} 
+      <NFTDetails
+        nft={selectedNFT}
+        open={true}
+        onClose={() => setSelectedNFT(null)}
         setActiveTab={(tab) => setSelectedNFT(null)}
         setSelectedNFT={setSelectedNFT}
         provider={browserProvider!}
         onSendClick={handleNFTSendClick}
+        aesKey={currentAESKey}
       />
     );
   }

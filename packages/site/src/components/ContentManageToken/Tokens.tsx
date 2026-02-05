@@ -271,7 +271,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
     return () => {
       cancelled = true;
     };
-  }, [provider, nftTokens, getNFTMetadata, nftImageMap]);
+  }, [provider, nftTokens, getNFTMetadata, nftImageMap, effectiveAESKey]);
 
   return (
     <>
