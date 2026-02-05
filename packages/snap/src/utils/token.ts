@@ -46,11 +46,31 @@ export const getTokenURI = async (
     const tokenURIMethod = contract.tokenURI;
     if (!tokenURIMethod) throw new Error('tokenURI method not available');
     const encryptedTokenURI = await tokenURIMethod(BigInt(tokenId));
-    const decryptedURI = decryptString(encryptedTokenURI, aesKey);
-    if (!decryptedURI.startsWith('https://')) {
+    const decryptedURI = decryptString(encryptedTokenURI, aesKey)
+      .replace(/\0/g, '')
+      .trim();
+    if (!decryptedURI) {
       return null;
     }
     return decryptedURI;
+  } catch {
+    return null;
+  }
+};
+
+export const getPublicTokenURI = async (
+  address: string,
+  tokenId: string,
+): Promise<string | null> => {
+  try {
+    const provider = await getJsonRpcProvider();
+    const contract = new ethers.Contract(
+      address,
+      ['function tokenURI(uint256) view returns (string)'],
+      provider,
+    );
+    const uri = await contract.tokenURI(BigInt(tokenId));
+    return uri || null;
   } catch {
     return null;
   }
@@ -364,7 +384,12 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
               token.address,
               token.tokenId,
               state.aesKey,
-            );
+            ) ?? tokenUri;
+          } else if (!token.confidential && token.tokenId) {
+            tokenUri = await getPublicTokenURI(
+              token.address,
+              token.tokenId,
+            ) ?? tokenUri;
           }
           return {
             ...token,
