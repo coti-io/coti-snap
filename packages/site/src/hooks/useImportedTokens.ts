@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import {
   getImportedTokensByAccount,
@@ -11,6 +11,7 @@ import {
 import { ImportedToken } from '../types/token';
 import { subscribeImportedTokens, notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
 import { useInvokeSnap } from './useInvokeSnap';
+import { parseNFTAddress } from '../utils/tokenValidation';
 
 export const useImportedTokens = () => {
   const { address, chain } = useAccount();
@@ -18,6 +19,7 @@ export const useImportedTokens = () => {
   const [importedTokens, setImportedTokensState] = useState<ImportedToken[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const invokeSnap = useInvokeSnap();
+  const hasSyncedRef = useRef(false);
 
   const loadTokens = useCallback(() => {
     try {
@@ -35,10 +37,71 @@ export const useImportedTokens = () => {
     }
   }, [address, chainId]);
 
+  const syncFromSnap = useCallback(async () => {
+    if (!address || !chainId) return;
+    if (hasSyncedRef.current) return;
+    hasSyncedRef.current = true;
+
+    try {
+      const result = await invokeSnap({ method: 'get-tokens' }) as {
+        success: boolean;
+        tokens: Array<{
+          address: string;
+          name: string;
+          symbol: string;
+          decimals: string | null;
+          type: string;
+          tokenId?: string;
+        }>;
+      } | null;
+
+      if (!result?.success || !result.tokens?.length) return;
+
+      const localTokens = getImportedTokensByAccount(address, chainId);
+      let hasNewTokens = false;
+
+      for (const snapToken of result.tokens) {
+        const isNFT = snapToken.type === 'ERC721' || snapToken.type === 'ERC1155';
+        const localAddress = isNFT && snapToken.tokenId
+          ? `${snapToken.address}-${snapToken.tokenId}`
+          : snapToken.address;
+
+        const alreadyLocal = localTokens.some(
+          (t) => t.address.toLowerCase() === localAddress.toLowerCase()
+        );
+
+        if (!alreadyLocal) {
+          const tokenToAdd: ImportedToken = {
+            address: localAddress,
+            name: snapToken.name,
+            symbol: snapToken.symbol,
+            ...(snapToken.decimals ? { decimals: parseInt(snapToken.decimals, 10) } : {}),
+            type: (snapToken.type as ImportedToken['type']) || 'ERC20',
+          };
+          addImportedTokenByAccount(address, tokenToAdd, chainId);
+          hasNewTokens = true;
+        }
+      }
+
+      if (hasNewTokens) {
+        const updatedTokens = getImportedTokensByAccount(address, chainId);
+        setImportedTokensState(updatedTokens);
+        notifyImportedTokensUpdated();
+      }
+    } catch (err) {
+      console.warn('[syncFromSnap] Failed to sync tokens from snap:', err);
+    }
+  }, [address, chainId, invokeSnap]);
+
+  useEffect(() => {
+    hasSyncedRef.current = false;
+  }, [address, chainId]);
+
   useEffect(() => {
     setIsLoading(true);
     loadTokens();
-  }, [loadTokens]);
+    syncFromSnap();
+  }, [loadTokens, syncFromSnap]);
 
   useEffect(() => {
     const unsubscribe = subscribeImportedTokens(() => {
@@ -60,14 +123,25 @@ export const useImportedTokens = () => {
       notifyImportedTokensUpdated();
 
       try {
+        const isNFT = token.type === 'ERC721' || token.type === 'ERC1155';
+        let snapAddress = token.address;
+        let snapTokenId: string | undefined;
+
+        if (isNFT) {
+          const parsed = parseNFTAddress(token.address);
+          snapAddress = parsed.contractAddress;
+          snapTokenId = parsed.tokenId || undefined;
+        }
+
         await invokeSnap({
           method: 'import-token',
           params: {
-            address: token.address,
+            address: snapAddress,
             name: token.name,
             symbol: token.symbol,
-            decimals: token.decimals?.toString() || '18',
+            decimals: isNFT ? '0' : (token.decimals?.toString() || '18'),
             tokenType: token.type,
+            ...(snapTokenId ? { tokenId: snapTokenId } : {}),
           },
         });
       } catch (snapError) {
@@ -89,10 +163,12 @@ export const useImportedTokens = () => {
       notifyImportedTokensUpdated();
 
       try {
+        const parsed = parseNFTAddress(tokenAddress);
         await invokeSnap({
           method: 'hide-token',
           params: {
-            address: tokenAddress,
+            address: parsed.contractAddress,
+            ...(parsed.tokenId ? { tokenId: parsed.tokenId } : {}),
           },
         });
       } catch (snapError) {

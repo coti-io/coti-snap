@@ -809,7 +809,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           tokenName,
           tokenSymbol,
           tokenDecimals || '0',
-          tokenId
+          tokenId,
+          tokenType
         );
 
         await recalculateBalances();
@@ -833,13 +834,37 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           return { success: false, error: 'Missing token address' };
         }
 
-        await hideToken(hideParams.address);
+        await hideToken(hideParams.address, hideParams.tokenId);
         await recalculateBalances();
 
         return { success: true };
       } catch (error) {
         return {
           success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+
+    case 'get-tokens':
+      try {
+        const getTokensParams = request.params as { chainId?: string } | undefined;
+        const tokenState = await getStateByChainIdAndAddress(getTokensParams?.chainId);
+        const allTokens = tokenState.tokenBalances || [];
+        return {
+          success: true,
+          tokens: allTokens.map((t) => ({
+            address: t.address,
+            name: t.name,
+            symbol: t.symbol,
+            decimals: t.decimals,
+            type: t.type === TokenViewSelector.NFT ? 'ERC721' : 'ERC20',
+            tokenId: t.tokenId ?? undefined,
+          })),
+        };
+      } catch (error) {
+        return {
+          success: false,
+          tokens: [],
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }

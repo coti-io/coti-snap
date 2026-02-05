@@ -396,10 +396,11 @@ export const importToken = async (
   symbol: string,
   decimals: string,
   tokenId?: string,
+  knownTokenType?: 'ERC20' | 'ERC721' | 'ERC1155',
 ): Promise<void> => {
   const normalizedAddress = address.toLowerCase();
   const oldState = await getStateByChainIdAndAddress();
-  const tokens = oldState.tokenBalances;
+  const tokens = oldState.tokenBalances || [];
 
   const alreadyExists = tokenId
     ? tokens.some((t) => t.address.toLowerCase() === normalizedAddress && t.tokenId === tokenId)
@@ -408,10 +409,20 @@ export const importToken = async (
     throw new Error('Token already exists');
   }
 
-  const { type, confidential } = await getTokenType(address);
-  if (type === TokenViewSelector.UNKNOWN) {
-    throw new Error('Invalid token type');
+  let type: TokenViewSelector;
+  let confidential = false;
+
+  if (knownTokenType) {
+    type = knownTokenType === 'ERC20' ? TokenViewSelector.ERC20 : TokenViewSelector.NFT;
+  } else {
+    const detected = await getTokenType(address);
+    if (detected.type === TokenViewSelector.UNKNOWN) {
+      throw new Error('Invalid token type');
+    }
+    type = detected.type;
+    confidential = detected.confidential;
   }
+
   if (type === TokenViewSelector.NFT && !tokenId) {
     throw new Error('Token ID required for NFT');
   }
@@ -428,10 +439,15 @@ export const importToken = async (
   await setStateByChainIdAndAddress({ ...oldState, tokenBalances: tokens });
 };
 
-export const hideToken = async (address: string): Promise<void> => {
+export const hideToken = async (address: string, tokenId?: string): Promise<void> => {
   const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
-  const updatedTokens = tokens.filter((token) => token.address.toLowerCase() !== address.toLowerCase());
+  const updatedTokens = tokens.filter((token) => {
+    if (tokenId) {
+      return !(token.address.toLowerCase() === address.toLowerCase() && token.tokenId === tokenId);
+    }
+    return token.address.toLowerCase() !== address.toLowerCase();
+  });
   await setStateByChainIdAndAddress({
     ...oldState,
     tokenBalances: updatedTokens,

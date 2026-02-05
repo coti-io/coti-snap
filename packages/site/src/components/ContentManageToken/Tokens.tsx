@@ -33,6 +33,7 @@ import {
 } from './components';
 import NFTDetails from './NFTDetails';
 import TokenDetails from './TokenDetails';
+import { SyncSnapModal } from './SyncSnapModal';
 import { useTokenOperations } from '../../hooks/useTokenOperations';
 
 interface TokensProps {
@@ -50,6 +51,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
   const [sort, setSort] = useState<SortType>('decline');
   const [showImportTokenModal, setShowImportTokenModal] = useState(false);
   const [showImportNFTModal, setShowImportNFTModal] = useState(false);
+  const [showSyncSnapModal, setShowSyncSnapModal] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState<ImportedToken | null>(null);
   const [selectedToken, setSelectedToken] = useState<ImportedToken | null>(null);
   const { userAESKey, userHasAESKey, getAESKey } = useSnap();
@@ -63,7 +65,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
 
   useEffect(() => {
     setIsDecrypted(!!effectiveAESKey);
-  }, [effectiveAESKey, userAESKey, aesKey, isDecrypted]);
+  }, [effectiveAESKey]);
 
   const { regularTokens, nftTokens } = useMemo(() => {
       const cotiToken: ImportedToken = {
@@ -139,6 +141,11 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
     refreshTokensList();
     menuDropdown.close();
   }, [refreshTokensList, menuDropdown]);
+
+  const handleSyncToSnap = useCallback(() => {
+    setShowSyncSnapModal(true);
+    menuDropdown.close();
+  }, [menuDropdown]);
 
   const handleToggleDecryption = useCallback(() => {
     setIsDecrypted(prev => !prev);
@@ -310,6 +317,7 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
               <MenuOptions
                 onImportTokens={activeTab === 'tokens' ? handleImportTokensClick : handleOpenImportNFTModal}
                 onRefreshTokens={handleRefreshTokens}
+                onSyncToSnap={handleSyncToSnap}
                 dropdownRef={menuDropdown.ref}
                 importLabel={activeTab === 'tokens' ? 'Import tokens' : 'Import NFT'}
               />
@@ -364,11 +372,15 @@ export const Tokens: React.FC<TokensProps> = React.memo(({ balance, provider, ae
         provider={provider}
         onImport={handleTokenImport}
       />
-      <ImportNFTModal 
-        open={showImportNFTModal} 
-        onClose={handleCloseImportNFTModal} 
-        provider={provider} 
+      <ImportNFTModal
+        open={showImportNFTModal}
+        onClose={handleCloseImportNFTModal}
+        provider={provider}
         onImport={refreshTokens}
+      />
+      <SyncSnapModal
+        open={showSyncSnapModal}
+        onClose={() => setShowSyncSnapModal(false)}
       />
       {!onSelectNFT && (
         <NFTDetails
