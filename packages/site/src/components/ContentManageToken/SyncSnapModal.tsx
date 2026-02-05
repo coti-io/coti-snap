@@ -126,6 +126,11 @@ const SpinnerImg = styled.img`
   animation: ${spin} 1s linear infinite;
 `;
 
+const SpinningSvg = styled.span`
+  display: flex;
+  animation: ${spin} 1s linear infinite;
+`;
+
 const ProgressBar = styled.div`
   width: 100%;
   height: 4px;
@@ -189,7 +194,7 @@ const StatusDot = styled.div.withConfig({
 const getStatusIndicator = (status: SyncStatus) => {
   switch (status) {
     case 'syncing':
-      return <SpinnerImg src={SpinnerIcon} alt="" />;
+      return <SpinningSvg><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#e5e7eb" strokeWidth="1.5" fill="none"/><path d="M9 1a8 8 0 0 1 8 8" stroke="#1E29F6" strokeWidth="1.5" strokeLinecap="round"/></svg></SpinningSvg>;
     case 'success':
       return <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="#10b981"/><path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
     case 'skipped':
