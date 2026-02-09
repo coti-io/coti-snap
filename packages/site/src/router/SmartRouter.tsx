@@ -20,6 +20,7 @@ const Container = styled.div`
   height: 100%;
   max-height: 100vh;
   max-height: calc(100vh - 120px);
+  padding-bottom: 120px;
   gap: 24px;
   box-sizing: border-box;
   border-radius: 14px;
@@ -27,6 +28,7 @@ const Container = styled.div`
   ${({ theme }) => theme.mediaQueries.small} {
     width: 100%;
     padding: 1.6rem;
+    padding-bottom: calc(120px + 1.6rem);
     margin: 0;
     max-width: 100vw;
     box-sizing: border-box;
