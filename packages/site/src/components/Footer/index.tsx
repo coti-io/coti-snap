@@ -15,7 +15,7 @@ const FooterContainer = styled.footer`
   height: 120px; /* Fixed height to prevent layout shift */
   box-sizing: border-box;
   contain: layout style;
-  z-index: -1;
+  z-index: 1;
 `;
 
 const Title = styled.h3`
@@ -38,6 +38,8 @@ const VersionInfo = styled.span`
 const Link = styled.a`
   color: ${({ theme }) => theme.colors.text?.muted};
   text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 
   &:hover {
     color: ${({ theme }) => theme.colors.text?.default};
