@@ -64,7 +64,7 @@ export const ContentInstallAESKeyManager = () => {
       ? getNetworkConfig(chain.id).isTestnet
       : false;
 
-  const snapVersion = isTestnetNetwork ? undefined : import.meta.env.VITE_SNAP_VERSION;
+  const snapVersion = isTestnetNetwork ? undefined : process.env.VITE_SNAP_VERSION;
   const requestSnap = useRequestSnap(undefined, snapVersion);
   const { getSnap, isInstallingSnap } = useMetaMask();
   const [isPending, startTransition] = useTransition();
