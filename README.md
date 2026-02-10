@@ -17,6 +17,7 @@ Visit [docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap](h
 ## Development
 
 ### Metamask Flask
+
 To interact with COTI Snap, you will need to install [MetaMask Flask](https://metamask.io/flask/), a canary distribution for developers that provides access to upcoming features.
 
 > [!IMPORTANT]  
@@ -25,6 +26,7 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 ## 📋 Quick Setup
 
 ### For Development (Testnet)
+
 ```bash
 # In packages/site/.env.local
 VITE_NODE_ENV=local
@@ -33,6 +35,7 @@ VITE_SNAP_VERSION=*
 ```
 
 ### For Production (Mainnet)
+
 ```bash
 # In packages/site/.env.local
 VITE_NODE_ENV=production
@@ -44,12 +47,12 @@ VITE_SNAP_VERSION=latest
 
 1. Clone the COTI-snap repository and set up the development environment:
 
-    ```shell
-    yarn install
-    yarn start
-    ```
+   ```shell
+   yarn install
+   yarn start
+   ```
 
-    This will start the companion dapp on http://localhost:8000
+   This will start the companion dapp on http://localhost:8000
 
 2. To install the COTI snap and onboard your account, follow the prompts on the companion dapp GUI.
 

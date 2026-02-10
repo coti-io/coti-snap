@@ -12,6 +12,7 @@ export const TOKEN_VALIDATION_ERRORS = {
 
 /**
  * Validates if a string is a valid Ethereum address
+ *
  * @param address
  */
 export const validateTokenAddress = (address: string): string => {
@@ -30,6 +31,7 @@ export const validateTokenAddress = (address: string): string => {
 
 /**
  * Validates token ID for NFTs
+ *
  * @param tokenId
  */
 export const validateTokenId = (tokenId: string): string => {
@@ -91,6 +93,7 @@ export const validateTokenForm = (
 
 /**
  * Creates a composite address for NFTs (address-tokenId)
+ *
  * @param contractAddress
  * @param tokenId
  */
@@ -103,6 +106,7 @@ export const createNFTCompositeAddress = (
 
 /**
  * Parses a composite NFT address back to its components
+ *
  * @param compositeAddress
  */
 export const parseNFTAddress = (
@@ -124,6 +128,7 @@ export const parseNFTAddress = (
 
 /**
  * Formats an address for display (truncated version)
+ *
  * @param address
  * @param startLength
  * @param endLength

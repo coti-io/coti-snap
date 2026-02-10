@@ -1,4 +1,3 @@
-
 # Contributing to COTI Snap
 
 Thank you for your interest in contributing to the COTI Snap project! We welcome contributions from the community and appreciate your efforts to improve our project.
@@ -36,25 +35,29 @@ We welcome code contributions! To get started, follow these steps:
 
 1. **Fork the repository**: Click the **"Fork"** button at the top right of the repository page to create your own copy of the project.
 
-2. **Clone your fork**: 
+2. **Clone your fork**:
+
    ```sh
    git clone https://github.com/your-username/coti-snap.git
    cd coti-snap
    ```
 
-3. **Create a branch**: 
+3. **Create a branch**:
+
    ```sh
    git checkout -b feature/my-new-feature
    ```
 
 4. **Make your changes**: Develop your feature or bug fix.
 
-5. **Commit your changes**: 
+5. **Commit your changes**:
+
    ```sh
    git commit -m 'Add some feature'
    ```
 
-6. **Push to your fork**: 
+6. **Push to your fork**:
+
    ```sh
    git push origin feature/my-new-feature
    ```
@@ -66,12 +69,14 @@ We welcome code contributions! To get started, follow these steps:
 ### Development Workflow
 
 1. Ensure that you have the latest version of the main branch:
+
    ```sh
    git checkout main
    git pull origin main
    ```
 
 2. Create a new branch for your work:
+
    ```sh
    git checkout -b feature/your-feature-name
    ```

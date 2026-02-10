@@ -275,6 +275,7 @@ export class TokenOperationError extends Error {
 /**
  * Custom hook for interacting with ERC20, ERC721, and ERC1155 tokens.
  * Provides functions for transferring tokens, checking balances, and retrieving contract details.
+ *
  * @param provider - The ethers provider to interact with the blockchain.
  * @returns An object containing loading state, error state, and functions for token operations.
  */

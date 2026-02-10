@@ -30,6 +30,7 @@ const getOnboardingData = (): OnboardingData => {
 
 /**
  * Save onboarding data to localStorage
+ *
  * @param data
  */
 const saveOnboardingData = (data: OnboardingData): void => {
@@ -42,6 +43,7 @@ const saveOnboardingData = (data: OnboardingData): void => {
 
 /**
  * Check if an address has completed onboarding
+ *
  * @param address
  * @param chainId
  */
@@ -78,6 +80,7 @@ export const hasCompletedOnboarding = (
 
 /**
  * Mark an address as having completed onboarding
+ *
  * @param address
  * @param chainId
  */
@@ -99,6 +102,7 @@ export const setOnboardingCompleted = (
 
 /**
  * Clear onboarding status for an address (useful for testing or reset)
+ *
  * @param address
  * @param chainId
  */

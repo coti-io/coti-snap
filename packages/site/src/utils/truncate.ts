@@ -1,5 +1,6 @@
 /**
  * Truncate a string to the first and last five characters with ellipsis in between if it exceeds 10 characters.
+ *
  * @param str - The string to be truncated.
  * @returns The truncated string.
  */

@@ -7,6 +7,7 @@ import type { GetSnapsResponse } from '../types';
 
 /**
  * A Hook to retrieve useful data from MetaMask.
+ *
  * @returns The informations.
  */
 export const useMetaMask = () => {
