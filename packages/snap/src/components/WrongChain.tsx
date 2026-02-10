@@ -1,9 +1,10 @@
 import { Box, Heading, Text } from '@metamask/snaps-sdk/jsx';
+
 import { getCurrentNetworkConfig } from '../config';
 
 export const WrongChain = () => {
   const networkConfig = getCurrentNetworkConfig();
-  const networkName = networkConfig.networkName;
+  const { networkName } = networkConfig;
 
   return (
     <Box direction="vertical" alignment="center">

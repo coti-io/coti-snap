@@ -1,4 +1,4 @@
-import { ImportedToken } from '../types/token';
+import type { ImportedToken } from '../types/token';
 
 export type SortType = 'az' | 'decline';
 
@@ -16,7 +16,7 @@ export type SortType = 'az' | 'decline';
 export const sortTokens = (
   tokens: ImportedToken[],
   sortType: SortType,
-  balances?: Record<string, string>
+  balances?: Record<string, string>,
 ): ImportedToken[] => {
   const sortedTokens = [...tokens];
 
@@ -25,8 +25,8 @@ export const sortTokens = (
   }
 
   if (sortType === 'decline') {
-    const cotiToken = sortedTokens.find(token => token.symbol === 'COTI');
-    const otherTokens = sortedTokens.filter(token => token.symbol !== 'COTI');
+    const cotiToken = sortedTokens.find((token) => token.symbol === 'COTI');
+    const otherTokens = sortedTokens.filter((token) => token.symbol !== 'COTI');
 
     const sortedOthers = otherTokens.sort((a, b) => {
       const balanceA = parseFloat(balances?.[a.symbol] ?? '0');

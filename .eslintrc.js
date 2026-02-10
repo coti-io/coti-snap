@@ -6,6 +6,9 @@ module.exports = {
   },
 
   extends: ['@metamask/eslint-config'],
+  rules: {
+    'jsdoc/tag-lines': 'off',
+  },
 
   overrides: [
     {
@@ -26,16 +29,16 @@ module.exports = {
           'error',
           { allow: ['describe', 'expect', 'it'] },
         ],
+        '@typescript-eslint/naming-convention': [
+          'error',
+          {
+            selector: 'objectLiteralProperty',
+            format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+            leadingUnderscore: 'allowDouble',
+            trailingUnderscore: 'allowDouble',
+          },
+        ],
       },
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          selector: 'objectLiteralProperty',
-          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
-          leadingUnderscore: 'allowDouble',
-          trailingUnderscore: 'allowDouble',
-        },
-      ],
     },
   ],
 

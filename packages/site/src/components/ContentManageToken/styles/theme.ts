@@ -25,19 +25,19 @@ export const colors = {
     secondary: '#6b7280',
     tertiary: '#8a8f98',
     muted: '#bfc2c6',
-    light: '#9ca3af'
+    light: '#9ca3af',
   },
   background: {
     primary: '#fff',
     secondary: '#f7f7f7',
     tertiary: '#f3f5fa',
     success: '#ecfdf5',
-    hover: '#f8fafc'
+    hover: '#f8fafc',
   },
   border: {
     primary: '#e5e7eb',
-    secondary: '#d0d0d0'
-  }
+    secondary: '#d0d0d0',
+  },
 } as const;
 
 export const spacing = {
@@ -48,7 +48,7 @@ export const spacing = {
   xl: '20px',
   xxl: '24px',
   xxxl: '32px',
-  xxxxl: '40px'
+  xxxxl: '40px',
 } as const;
 
 export const typography = {
@@ -63,14 +63,14 @@ export const typography = {
     xxxl: '2rem',
     xxxxl: '2.1rem',
     xxxxxl: '2.4rem',
-    huge: '3.4rem'
+    huge: '3.4rem',
   },
   weights: {
     normal: 400,
     medium: 500,
     semibold: 600,
-    bold: 700
-  }
+    bold: 700,
+  },
 } as const;
 
 export const borderRadius = {
@@ -81,20 +81,20 @@ export const borderRadius = {
   xxl: '24px',
   xxxl: '32px',
   xxxxl: '24px',
-  full: '50%'
+  full: '50%',
 } as const;
 
 export const shadows = {
   sm: '0 1px 4px rgba(0,0,0,0.04)',
   md: '0 2px 8px rgba(0, 0, 0, 0.1)',
   lg: '0 4px 32px 0 rgba(0,0,0,0.12)',
-  dropdown: '0 2px 12px rgba(0,0,0,0.10)'
+  dropdown: '0 2px 12px rgba(0,0,0,0.10)',
 } as const;
 
 export const transitions = {
   fast: '0.15s ease',
   normal: '0.2s ease',
-  slow: '0.32s cubic-bezier(0.4, 0.8, 0.4, 1)'
+  slow: '0.32s cubic-bezier(0.4, 0.8, 0.4, 1)',
 } as const;
 
 export const buttonBase = `

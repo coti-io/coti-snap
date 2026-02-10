@@ -1,8 +1,8 @@
 const ONBOARDING_KEY = 'snap_onboarding_completed';
 
-interface OnboardingData {
+type OnboardingData = {
   [key: string]: boolean;
-}
+};
 
 const buildStorageKey = (
   address: string,
@@ -30,6 +30,7 @@ const getOnboardingData = (): OnboardingData => {
 
 /**
  * Save onboarding data to localStorage
+ * @param data
  */
 const saveOnboardingData = (data: OnboardingData): void => {
   try {
@@ -41,6 +42,8 @@ const saveOnboardingData = (data: OnboardingData): void => {
 
 /**
  * Check if an address has completed onboarding
+ * @param address
+ * @param chainId
  */
 export const hasCompletedOnboarding = (
   address: string,
@@ -75,6 +78,8 @@ export const hasCompletedOnboarding = (
 
 /**
  * Mark an address as having completed onboarding
+ * @param address
+ * @param chainId
  */
 export const setOnboardingCompleted = (
   address: string,
@@ -94,6 +99,8 @@ export const setOnboardingCompleted = (
 
 /**
  * Clear onboarding status for an address (useful for testing or reset)
+ * @param address
+ * @param chainId
  */
 export const clearOnboardingCompleted = (
   address: string,

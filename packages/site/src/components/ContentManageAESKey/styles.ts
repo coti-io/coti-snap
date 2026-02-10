@@ -1,18 +1,18 @@
 import type { SetAESKeyError } from 'src/hooks/SnapContext';
 import styled, { css } from 'styled-components';
 
-interface EditableInputContainerProps {
+type EditableInputContainerProps = {
   $isEditable: boolean;
   $isError: SetAESKeyError;
-}
+};
 
-interface EditableInputProps {
+type EditableInputProps = {
   $isEditable: boolean;
-}
+};
 
-interface IconContainerProps {
+type IconContainerProps = {
   $isCopied?: boolean;
-}
+};
 
 const commonInputStyles = css`
   border: none;
@@ -32,7 +32,7 @@ const commonButtonStyles = css`
   padding: 0;
   width: 24px;
   height: 24px;
-  
+
   &:hover {
     border: none;
   }
@@ -57,7 +57,7 @@ export const ContentContainer = styled.div`
   width: auto;
   overflow-y: auto;
   max-height: 470px;
-  
+
   ${({ theme }) => theme.mediaQueries.small} {
     flex-direction: column;
     gap: 16px;
@@ -76,7 +76,7 @@ export const ContentButtons = styled.div`
   display: flex;
   gap: 8px;
   width: 100%;
-  
+
   ${({ theme }) => theme.mediaQueries.small} {
     flex-direction: column-reverse;
   }
@@ -104,13 +104,12 @@ export const ContentBoldText = styled.p`
   text-align: center;
 `;
 
-
 export const Link = styled.a`
-  color: #0066CC !important;
+  color: #0066cc !important;
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s ease-in-out;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -129,7 +128,7 @@ export const AESKeyContainer = styled.div`
 export const AESInput = styled.input`
   ${commonInputStyles}
   cursor: none;
-  
+
   &:read-only {
     pointer-events: none;
   }
@@ -158,7 +157,7 @@ export const EditableInput = styled.input<EditableInputProps>`
   ${commonInputStyles}
   cursor: ${(props) => (props.$isEditable ? 'text' : 'default')};
   padding: 6px 6px;
-  
+
   &:read-only {
     pointer-events: none;
   }
@@ -170,7 +169,9 @@ export const IconContainer = styled.button<IconContainerProps>`
   svg {
     ${commonIconStyles}
     fill: ${(props) =>
-    props.$isCopied ? props.theme.colors.primary?.default : props.theme.colors.text?.muted || '#8c8c8c'};
+      props.$isCopied
+        ? props.theme.colors.primary?.default
+        : props.theme.colors.text?.muted || '#8c8c8c'};
 
     &:hover {
       fill: ${(props) => props.theme.colors.primary?.default};
@@ -190,4 +191,3 @@ export const Edit = styled.button`
     }
   }
 `;
-

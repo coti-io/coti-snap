@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+
 import LoaderIcon from '../assets/icons/loader.png';
 import { useSnap } from '../hooks/SnapContext';
 
@@ -34,10 +35,10 @@ const ContentTitle = styled.p`
   color: #000000 !important;
 `;
 
-interface LoadingWithProgressAltProps {
+type LoadingWithProgressAltProps = {
   title: string;
   actionText: string;
-}
+};
 
 export const LoadingWithProgressAlt: React.FC<LoadingWithProgressAltProps> = ({
   title,
@@ -46,7 +47,7 @@ export const LoadingWithProgressAlt: React.FC<LoadingWithProgressAltProps> = ({
   return (
     <>
       <ContentTitle>{title}</ContentTitle>
-      
+
       <div
         style={{
           display: 'flex',
@@ -55,12 +56,8 @@ export const LoadingWithProgressAlt: React.FC<LoadingWithProgressAltProps> = ({
           alignItems: 'center',
         }}
       >
-        <SpinnerImage
-          src={LoaderIcon}
-          alt="Loading"
-        />
+        <SpinnerImage src={LoaderIcon} alt="Loading" />
         <ContentText>{actionText}</ContentText>
-
       </div>
     </>
   );

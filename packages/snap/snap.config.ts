@@ -22,7 +22,7 @@ const config: SnapConfig = {
       new webpack.DefinePlugin({
         SNAP_ENV: JSON.stringify(process.env.SNAP_ENV ?? 'local'),
         DEV: JSON.stringify(process.env.NODE_ENV === 'development'),
-      })
+      }),
     );
     return webpackConfig;
   },

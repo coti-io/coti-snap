@@ -10,8 +10,13 @@ const FETCH_TIMEOUT_MS = 8000;
 /**
  * Converts an ipfs:// URI to an HTTP gateway URL.
  * If the URI is already HTTP(S), returns it unchanged.
+ * @param uri
+ * @param gateway
  */
-const resolveIpfsUrl = (uri: string, gateway: string = IPFS_GATEWAYS[0]!): string => {
+const resolveIpfsUrl = (
+  uri: string,
+  gateway: string = IPFS_GATEWAYS[0]!,
+): string => {
   if (uri.startsWith('ipfs://')) {
     const cid = uri.slice('ipfs://'.length);
     return `${gateway}${cid}`;
@@ -21,8 +26,13 @@ const resolveIpfsUrl = (uri: string, gateway: string = IPFS_GATEWAYS[0]!): strin
 
 /**
  * Fetch with a timeout using AbortController.
+ * @param url
+ * @param timeoutMs
  */
-const fetchWithTimeout = async (url: string, timeoutMs: number = FETCH_TIMEOUT_MS): Promise<Response> => {
+const fetchWithTimeout = async (
+  url: string,
+  timeoutMs: number = FETCH_TIMEOUT_MS,
+): Promise<Response> => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -36,6 +46,7 @@ const fetchWithTimeout = async (url: string, timeoutMs: number = FETCH_TIMEOUT_M
 /**
  * Tries to fetch a URL, falling back through IPFS gateways if the URI is ipfs://.
  * For non-IPFS URLs, just fetches directly with timeout.
+ * @param uri
  */
 const fetchWithGatewayFallback = async (uri: string): Promise<Response> => {
   if (!uri.startsWith('ipfs://')) {
@@ -67,7 +78,8 @@ export const getSVGfromMetadata = async (
     const metadataResponse = await fetchWithGatewayFallback(url);
     const responseJson = await metadataResponse.json();
 
-    const imageUri: string | undefined = responseJson.image || responseJson.image_url;
+    const imageUri: string | undefined =
+      responseJson.image || responseJson.image_url;
     if (!imageUri) {
       throw new Error('No image found in metadata');
     }

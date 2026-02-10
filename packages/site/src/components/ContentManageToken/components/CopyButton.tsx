@@ -1,9 +1,10 @@
 import React from 'react';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
-import CopyIcon from '../../../assets/copy.svg';
-import CopySuccessIcon from '../../../assets/copy-success.svg';
 
-interface CopyButtonProps {
+import CopySuccessIcon from '../../../assets/copy-success.svg';
+import CopyIcon from '../../../assets/copy.svg';
+import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
+
+type CopyButtonProps = {
   text: string;
   children?: React.ReactNode;
   className?: string;
@@ -11,7 +12,7 @@ interface CopyButtonProps {
   successDuration?: number;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
-}
+};
 
 export const CopyButton: React.FC<CopyButtonProps> = ({
   text,
@@ -20,12 +21,12 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
   ariaLabel,
   successDuration = 1200,
   onSuccess,
-  onError
+  onError,
 }) => {
   const { copied, copyToClipboard } = useCopyToClipboard({
     successDuration,
     onSuccess,
-    onError
+    onError,
   });
 
   const handleCopy = () => {
@@ -36,7 +37,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
     <button
       onClick={handleCopy}
       className={className}
-      aria-label={ariaLabel || (copied ? "Copied" : "Copy")}
+      aria-label={ariaLabel || (copied ? 'Copied' : 'Copy')}
       type="button"
     >
       {children || (copied ? <CopySuccessIcon /> : <CopyIcon />)}

@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-interface UseOptimizedDropdownOptions {
+type UseOptimizedDropdownOptions = {
   closeOnOutsideClick?: boolean;
   closeDelay?: number;
-}
+};
 
-export const useOptimizedDropdown = (options: UseOptimizedDropdownOptions = {}) => {
+export const useOptimizedDropdown = (
+  options: UseOptimizedDropdownOptions = {},
+) => {
   const { closeOnOutsideClick = true, closeDelay = 0 } = options;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,17 +41,20 @@ export const useOptimizedDropdown = (options: UseOptimizedDropdownOptions = {}) 
     }
   }, [isOpen, open, close]);
 
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (
-      closeOnOutsideClick &&
-      dropdownRef.current &&
-      !dropdownRef.current.contains(event.target as Node) &&
-      buttonRef.current &&
-      !buttonRef.current.contains(event.target as Node)
-    ) {
-      close();
-    }
-  }, [closeOnOutsideClick, close]);
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (
+        closeOnOutsideClick &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        close();
+      }
+    },
+    [closeOnOutsideClick, close],
+  );
 
   useEffect(() => {
     if (closeOnOutsideClick) {

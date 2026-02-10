@@ -1,28 +1,28 @@
-export interface BaseBalanceProps {
+export type BaseBalanceProps = {
   balance: string;
   currency?: string;
   className?: string;
   showCurrency?: boolean;
   decimals?: number;
   isDecrypted?: boolean;
-}
+};
 
-export interface BalanceProps extends BaseBalanceProps {
+export type BalanceProps = {
   onToggleDecryption?: () => void;
-}
+} & BaseBalanceProps;
 
-export interface BalanceDisplayProps {
+export type BalanceDisplayProps = {
   balance: string;
   currency?: string | undefined;
   className?: string | undefined;
   showCurrency?: boolean;
   decimals?: number;
   isDecrypted?: boolean;
-}
+};
 
 export type BalanceVariant = 'primary' | 'secondary' | 'token';
 
-export interface StyledBalanceProps {
+export type StyledBalanceProps = {
   variant?: BalanceVariant;
   encrypted?: boolean;
-}
+};

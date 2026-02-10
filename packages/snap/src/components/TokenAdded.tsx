@@ -1,8 +1,8 @@
 import { Box, Button, Icon, Image, Text } from '@metamask/snaps-sdk/jsx';
 
 import { TokenViewSelector, type Token } from '../types';
-import { formatTokenBalance } from '../utils/token';
 import { generateTokenAvatar } from '../utils/image';
+import { formatTokenBalance } from '../utils/token';
 
 export const TokenAdded = ({ token }: { token: Token }) => {
   return token.type === TokenViewSelector.NFT ? (
@@ -31,7 +31,10 @@ export const TokenAdded = ({ token }: { token: Token }) => {
       <Box alignment="center" direction="horizontal">
         <Box direction="vertical" alignment="center">
           <Text>
-            {token.balance ? formatTokenBalance(token.balance, token.decimals) : '(encrypted)'} {token.symbol}
+            {token.balance
+              ? formatTokenBalance(token.balance, token.decimals)
+              : '(encrypted)'}{' '}
+            {token.symbol}
           </Text>
         </Box>
         <Box direction="vertical" alignment="center">

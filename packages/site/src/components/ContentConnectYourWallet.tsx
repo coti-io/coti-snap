@@ -1,4 +1,9 @@
-import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from './styles';
+import {
+  ContentBorderWrapper,
+  ContentContainer,
+  ContentText,
+  ContentTitle,
+} from './styles';
 
 export const ContentConnectYourWallet = () => {
   return (

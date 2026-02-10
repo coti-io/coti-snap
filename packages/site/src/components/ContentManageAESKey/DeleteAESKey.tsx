@@ -1,14 +1,14 @@
 import React from 'react';
 
+import { ContentBoldText, ContentButtons } from './styles';
 import { useSnap } from '../../hooks/SnapContext';
 import { ButtonCancelWhite, ButtonDeleteRed } from '../Button';
 import { Loading } from '../Loading';
 import { ContentText, ContentTitle } from '../styles';
-import { ContentBoldText, ContentButtons } from './styles';
 
-interface DeleteAESKeyProps {
+type DeleteAESKeyProps = {
   readonly handleShowDelete: () => void;
-}
+};
 
 export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
   handleShowDelete,
@@ -45,15 +45,15 @@ export const DeleteAESKey: React.FC<DeleteAESKeyProps> = ({
         network.
       </ContentText>
       <ContentButtons>
-        <ButtonCancelWhite 
-          text="Cancel" 
-          fullWidth 
+        <ButtonCancelWhite
+          text="Cancel"
+          fullWidth
           onClick={handleShowDelete}
           aria-label="Cancel deletion"
         />
-        <ButtonDeleteRed 
-          text="Delete" 
-          fullWidth 
+        <ButtonDeleteRed
+          text="Delete"
+          fullWidth
           onClick={handleDeleteClick}
           aria-label="Confirm deletion of AES key"
         />

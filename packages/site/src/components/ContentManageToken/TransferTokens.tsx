@@ -1,9 +1,22 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect, memo, useTransition } from 'react';
 import { BrowserProvider } from '@coti-io/coti-ethers';
-import { ContentTitle } from '../styles';
-import { useZNSResolver } from '../../hooks/useZNSResolver';
-import { IconButton, SendButton, TransferContainer } from './styles';
-import {
+import { parseUnits, formatUnits } from 'ethers';
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  useEffect,
+  memo,
+  useTransition,
+} from 'react';
+
+import { Alert } from './Alert';
+import { useImportedTokens } from '../../hooks/useImportedTokens';
+import { useSnap } from '../../hooks/SnapContext';
+import { JazziconComponent } from '../common';
+import { TokenId } from './components/TokenId';
+import { ErrorText } from './components/ErrorText';
+import { IconButton, SendButton, TransferContainer ,
   HeaderBar,
   TokenInfo,
   TokenName,
@@ -11,7 +24,6 @@ import {
   TokenLogoBig,
   SendAmount
 } from './styles';
-import { Alert } from './Alert';
 import {
   SectionTitle,
   AccountBox,
@@ -48,34 +60,34 @@ import {
   TokenListValue,
   NoNFTsWrapper,
   NoNFTsText,
-  LearnMoreLink
+  LearnMoreLink,
 } from './styles/transfer';
-import { useTokenOperations } from '../../hooks/useTokenOperations';
-import { useMetaMaskContext } from '../../hooks/MetamaskContext';
-import { normalizeAddress } from '../../utils/normalizeAddress';
-import { truncateString } from '../../utils';
-import { useImportedTokens } from '../../hooks/useImportedTokens';
-import { useSnap } from '../../hooks/SnapContext';
-import { JazziconComponent } from '../common';
-import { TokenId } from './components/TokenId';
-import { ErrorText } from './components/ErrorText';
 import ArrowBack from '../../assets/arrow-back.svg';
-import XIcon from '../../assets/x.svg';
-import SearchIcon from '../../assets/icons/search.svg';
 import { CotiLogo } from '../../assets/icons';
-import { formatTokenSymbol, formatBalance, formatTokenBalance } from '../../utils/formatters';
-import { parseUnits, formatUnits } from 'ethers';
+import SearchIcon from '../../assets/icons/search.svg';
+import XIcon from '../../assets/x.svg';
+import { useMetaMaskContext } from '../../hooks/MetamaskContext';
+import { useTokenOperations } from '../../hooks/useTokenOperations';
+import { useZNSResolver } from '../../hooks/useZNSResolver';
+import { truncateString } from '../../utils';
+import {
+  formatTokenSymbol,
+  formatBalance,
+  formatTokenBalance,
+} from '../../utils/formatters';
+import { normalizeAddress } from '../../utils/normalizeAddress';
+import { ContentTitle } from '../styles';
 
-interface TransferTokensProps {
+type TransferTokensProps = {
   onBack: () => void;
   address: string;
   balance: string;
   aesKey?: string | null | undefined;
   initialToken?: any;
   onTransferSuccess?: (txHash: string) => void;
-}
+};
 
-interface Token {
+type Token = {
   symbol: string;
   name: string;
   amount: string;
@@ -85,7 +97,7 @@ interface Token {
   tokenId?: string;
   type?: 'ERC20' | 'ERC721' | 'ERC1155';
   decimals?: number;
-}
+};
 
 type AddressStatus = 'idle' | 'loading' | 'error';
 type TokenTab = 'tokens' | 'nfts';
@@ -97,13 +109,15 @@ const validateAddress = (address: string): boolean => {
   if (address.toLowerCase().endsWith('.coti')) {
     return true;
   }
-  
+
   const normalized = normalizeAddress(address);
-  return !!normalized;
+  return Boolean(normalized);
 };
 
 const parseAmount = (amount: string): number => {
-  if (!amount || amount === '') return 0;
+  if (!amount || amount === '') {
+    return 0;
+  }
   const parsed = parseFloat(amount);
   return isNaN(parsed) ? 0 : parsed;
 };
@@ -165,13 +179,15 @@ const TokenBalanceDisplay: React.FC<{
   useEffect(() => {
     if (token.amount === '0' && !loading) {
       setLoading(true);
-      getTokenBalance(token).then(result => {
-        setBalance(result);
-        setLoading(false);
-      }).catch(() => {
-        setBalance('0');
-        setLoading(false);
-      });
+      getTokenBalance(token)
+        .then((result) => {
+          setBalance(result);
+          setLoading(false);
+        })
+        .catch(() => {
+          setBalance('0');
+          setLoading(false);
+        });
     } else {
       setBalance(token.amount);
     }
@@ -183,13 +199,18 @@ const TokenBalanceDisplay: React.FC<{
 
   const formattedBalance = (() => {
     if (balance && balance !== '0') {
-      const decimals = token.symbol === 'COTI' ? 18 : (token.decimals || 18);
+      const decimals = token.symbol === 'COTI' ? 18 : token.decimals || 18;
       return formatTokenBalance(balance, decimals);
     }
     return formatBalance(balance);
   })();
 
-  return <TokenListValue>{formattedBalance} {token.address ? formatTokenSymbol(token.symbol) : token.symbol}</TokenListValue>;
+  return (
+    <TokenListValue>
+      {formattedBalance}{' '}
+      {token.address ? formatTokenSymbol(token.symbol) : token.symbol}
+    </TokenListValue>
+  );
 });
 
 TokenBalanceDisplay.displayName = 'TokenBalanceDisplay';
@@ -202,695 +223,1039 @@ const TokenModal: React.FC<{
   onTokenSelect: (token: Token) => void;
   selectedToken: Token | null;
   getTokenBalance: (token: Token) => Promise<string>;
-}> = React.memo(({ isOpen, onClose, tokens, nfts, onTokenSelect, selectedToken, getTokenBalance }) => {
-  const [tokenTab, setTokenTab] = useState<TokenTab>('tokens');
-  const [search, setSearch] = useState('');
-  const [searchActive, setSearchActive] = useState(false);
+}> = React.memo(
+  ({
+    isOpen,
+    onClose,
+    tokens,
+    nfts,
+    onTokenSelect,
+    selectedToken,
+    getTokenBalance,
+  }) => {
+    const [tokenTab, setTokenTab] = useState<TokenTab>('tokens');
+    const [search, setSearch] = useState('');
+    const [searchActive, setSearchActive] = useState(false);
 
-  const handleTabChange = useCallback((tab: TokenTab) => {
-    setTokenTab(tab);
-  }, []);
+    const handleTabChange = useCallback((tab: TokenTab) => {
+      setTokenTab(tab);
+    }, []);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  }, []);
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+      },
+      [],
+    );
 
-  const handleSearchFocus = useCallback(() => {
-    setSearchActive(true);
-  }, []);
+    const handleSearchFocus = useCallback(() => {
+      setSearchActive(true);
+    }, []);
 
-  const handleSearchBlur = useCallback(() => {
-    setSearchActive(false);
-  }, []);
+    const handleSearchBlur = useCallback(() => {
+      setSearchActive(false);
+    }, []);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
-
-  const handleTokenSelect = useCallback((token: Token) => {
-    onTokenSelect(token);
-    onClose();
-  }, [onTokenSelect, onClose]);
-
-  const filteredItems = useMemo(() => {
-    const currentItems = tokenTab === 'tokens' ? tokens : nfts;
-
-    if (!search || search.trim() === '') {
-      return currentItems;
-    }
-
-    const searchTerm = search.toLowerCase().trim();
-
-    return currentItems.filter(item => {
-      const nameMatch = item.name.toLowerCase().includes(searchTerm);
-      const symbolMatch = item.symbol.toLowerCase().includes(searchTerm);
-
-      let addressMatch = false;
-      if (item.address) {
-        if (searchTerm.startsWith('0x')) {
-          addressMatch = item.address.toLowerCase().startsWith(searchTerm);
-        } else {
-          addressMatch = item.address.toLowerCase().includes(searchTerm);
+    const handleBackdropClick = useCallback(
+      (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) {
+          onClose();
         }
+      },
+      [onClose],
+    );
+
+    const handleTokenSelect = useCallback(
+      (token: Token) => {
+        onTokenSelect(token);
+        onClose();
+      },
+      [onTokenSelect, onClose],
+    );
+
+    const filteredItems = useMemo(() => {
+      const currentItems = tokenTab === 'tokens' ? tokens : nfts;
+
+      if (!search || search.trim() === '') {
+        return currentItems;
       }
 
-      let tokenIdMatch = false;
-      if (tokenTab === 'nfts' && item.tokenId) {
-        tokenIdMatch = item.tokenId.toLowerCase().includes(searchTerm);
-      }
+      const searchTerm = search.toLowerCase().trim();
 
-      return nameMatch || symbolMatch || addressMatch || tokenIdMatch;
-    });
-  }, [tokens, nfts, tokenTab, search]);
+      return currentItems.filter((item) => {
+        const nameMatch = item.name.toLowerCase().includes(searchTerm);
+        const symbolMatch = item.symbol.toLowerCase().includes(searchTerm);
 
-  if (!isOpen) return null;
+        let addressMatch = false;
+        if (item.address) {
+          if (searchTerm.startsWith('0x')) {
+            addressMatch = item.address.toLowerCase().startsWith(searchTerm);
+          } else {
+            addressMatch = item.address.toLowerCase().includes(searchTerm);
+          }
+        }
 
-  return (
-    <TokenModalBackdrop onClick={handleBackdropClick}>
-      <TokenModalContainer onClick={e => e.stopPropagation()}>
-        <TokenModalHeader>
-          Select asset to send
-          <TokenModalClose onClick={onClose} aria-label="Close">×</TokenModalClose>
-        </TokenModalHeader>
+        let tokenIdMatch = false;
+        if (tokenTab === 'nfts' && item.tokenId) {
+          tokenIdMatch = item.tokenId.toLowerCase().includes(searchTerm);
+        }
 
-        <TokenTabs>
-          <TokenTab
-            active={tokenTab === 'tokens'}
-            onClick={() => handleTabChange('tokens')}
-            type="button"
+        return nameMatch || symbolMatch || addressMatch || tokenIdMatch;
+      });
+    }, [tokens, nfts, tokenTab, search]);
+
+    if (!isOpen) {
+      return null;
+    }
+
+    return (
+      <TokenModalBackdrop onClick={handleBackdropClick}>
+        <TokenModalContainer onClick={(e) => e.stopPropagation()}>
+          <TokenModalHeader>
+            Select asset to send
+            <TokenModalClose onClick={onClose} aria-label="Close">
+              ×
+            </TokenModalClose>
+          </TokenModalHeader>
+
+          <TokenTabs>
+            <TokenTab
+              active={tokenTab === 'tokens'}
+              onClick={() => handleTabChange('tokens')}
+              type="button"
+            >
+              Tokens
+            </TokenTab>
+            <TokenTab
+              active={tokenTab === 'nfts'}
+              onClick={() => handleTabChange('nfts')}
+              type="button"
+            >
+              NFTs
+            </TokenTab>
+          </TokenTabs>
+
+          <TokenSearchBox
+            className={
+              searchActive || (search && search.length > 0) ? 'active' : ''
+            }
           >
-            Tokens
-          </TokenTab>
-          <TokenTab
-            active={tokenTab === 'nfts'}
-            onClick={() => handleTabChange('nfts')}
-            type="button"
-          >
-            NFTs
-          </TokenTab>
-        </TokenTabs>
+            <SearchIcon />
+            <TokenSearchInput
+              placeholder={
+                tokenTab === 'tokens'
+                  ? 'Search tokens by name or address'
+                  : 'Search NFTs by name, address or token ID'
+              }
+              value={search}
+              onChange={handleSearchChange}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+            />
+          </TokenSearchBox>
 
-        <TokenSearchBox className={searchActive || (search && search.length > 0) ? 'active' : ''}>
-          <SearchIcon />
-          <TokenSearchInput
-            placeholder={tokenTab === 'tokens' ? "Search tokens by name or address" : "Search NFTs by name, address or token ID"}
-            value={search}
-            onChange={handleSearchChange}
-            onFocus={handleSearchFocus}
-            onBlur={handleSearchBlur}
-          />
-        </TokenSearchBox>
+          <TokenList>
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, idx) => {
+                const isSelected =
+                  tokenTab === 'nfts'
+                    ? selectedToken?.address === item.address &&
+                      selectedToken?.tokenId === item.tokenId
+                    : selectedToken?.symbol === item.symbol ||
+                      (idx === 0 && !selectedToken && !search);
 
-        <TokenList>
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item, idx) => {
-              const isSelected = tokenTab === 'nfts'
-                ? (selectedToken?.address === item.address && selectedToken?.tokenId === item.tokenId)
-                : (selectedToken?.symbol === item.symbol || (idx === 0 && !selectedToken && !search));
+                const displayName =
+                  tokenTab === 'nfts'
+                    ? item.name &&
+                      !item.name.includes('ERC721') &&
+                      !item.name.includes('ERC1155')
+                      ? item.name
+                      : `${item.symbol} #${item.tokenId}`
+                    : item.name;
+                const displaySymbol =
+                  tokenTab === 'nfts' && item.tokenId
+                    ? item.symbol === 'ERC721' || item.symbol === 'ERC1155'
+                      ? `${item.type} NFT`
+                      : item.symbol
+                    : item.address
+                      ? formatTokenSymbol(item.symbol)
+                      : item.symbol;
 
-              const displayName = tokenTab === 'nfts' 
-                ? (item.name && !item.name.includes('ERC721') && !item.name.includes('ERC1155') 
-                   ? item.name 
-                   : `${item.symbol} #${item.tokenId}`)
-                : item.name;
-              const displaySymbol = tokenTab === 'nfts' && item.tokenId
-                ? (item.symbol === 'ERC721' || item.symbol === 'ERC1155' 
-                   ? `${item.type} NFT` 
-                   : item.symbol)
-                : (item.address ? formatTokenSymbol(item.symbol) : item.symbol);
-
-              return (
-                <TokenListItem
-                  key={tokenTab === 'nfts' ? item.address : item.symbol}
-                  selected={isSelected}
-                  type="button"
-                  onClick={() => handleTokenSelect(item)}
-                >
-                  {isSelected && <TokenListItemBar />}
-                  <TokenLogos>
-                    <TokenLogoBig>
-                      {item.symbol === 'COTI' ? (
-                        <CotiLogo />
+                return (
+                  <TokenListItem
+                    key={tokenTab === 'nfts' ? item.address : item.symbol}
+                    selected={isSelected}
+                    type="button"
+                    onClick={() => handleTokenSelect(item)}
+                  >
+                    {isSelected && <TokenListItemBar />}
+                    <TokenLogos>
+                      <TokenLogoBig>
+                        {item.symbol === 'COTI' ? (
+                          <CotiLogo />
+                        ) : (
+                          item.symbol[0] || 'N'
+                        )}
+                      </TokenLogoBig>
+                    </TokenLogos>
+                    <TokenListInfo>
+                      <TokenListName>{displayName}</TokenListName>
+                      <TokenListSymbol>{displaySymbol}</TokenListSymbol>
+                    </TokenListInfo>
+                    <TokenListAmount>
+                      {tokenTab === 'tokens' ? (
+                        <TokenBalanceDisplay
+                          token={item}
+                          getTokenBalance={getTokenBalance}
+                        />
                       ) : (
-                        item.symbol[0] || 'N'
+                        <TokenListValue>1 NFT</TokenListValue>
                       )}
-                    </TokenLogoBig>
-                  </TokenLogos>
-                  <TokenListInfo>
-                    <TokenListName>{displayName}</TokenListName>
-                    <TokenListSymbol>{displaySymbol}</TokenListSymbol>
-                  </TokenListInfo>
-                  <TokenListAmount>
-                    {tokenTab === 'tokens' ? (
-                      <TokenBalanceDisplay token={item} getTokenBalance={getTokenBalance} />
-                    ) : (
-                      <TokenListValue>1 NFT</TokenListValue>
-                    )}
-                  </TokenListAmount>
-                </TokenListItem>
-              );
-            })
-          ) : (
-            <NoNFTsWrapper>
-              <NoNFTsText>
-                {tokenTab === 'tokens' ? 'No tokens found' : 'No NFTs imported yet'}
-              </NoNFTsText>
-              {tokenTab === 'nfts' && (
-                <LearnMoreLink
-                  href="https://support.metamask.io/manage-crypto/nfts/nft-tokens-in-your-metamask-wallet"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Learn more
-                </LearnMoreLink>
-              )}
-            </NoNFTsWrapper>
-          )}
-        </TokenList>
-      </TokenModalContainer>
-    </TokenModalBackdrop>
-  );
-});
+                    </TokenListAmount>
+                  </TokenListItem>
+                );
+              })
+            ) : (
+              <NoNFTsWrapper>
+                <NoNFTsText>
+                  {tokenTab === 'tokens'
+                    ? 'No tokens found'
+                    : 'No NFTs imported yet'}
+                </NoNFTsText>
+                {tokenTab === 'nfts' && (
+                  <LearnMoreLink
+                    href="https://support.metamask.io/manage-crypto/nfts/nft-tokens-in-your-metamask-wallet"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Learn more
+                  </LearnMoreLink>
+                )}
+              </NoNFTsWrapper>
+            )}
+          </TokenList>
+        </TokenModalContainer>
+      </TokenModalBackdrop>
+    );
+  },
+);
 
 TokenModal.displayName = 'TokenModal';
 
-export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
-  onBack,
-  address,
-  balance,
-  aesKey,
-  initialToken,
-  onTransferSuccess
-}) => {
-  const [, startTransition] = useTransition();
-  const [addressInput, setAddressInput] = useState('');
-  const [amount, setAmount] = useState('');
-  const [showTokenModal, setShowTokenModal] = useState(false);
-  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  
-  const { 
-    address: resolvedAddress, 
-    isResolving: isResolvingZNS, 
-    error: znsError, 
-    isZNSDomain,
-    resolveAddress: resolveZNSAddress,
-    clearResolver 
-  } = useZNSResolver();
+export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
+  ({ onBack, address, balance, aesKey, initialToken, onTransferSuccess }) => {
+    const [, startTransition] = useTransition();
+    const [addressInput, setAddressInput] = useState('');
+    const [amount, setAmount] = useState('');
+    const [showTokenModal, setShowTokenModal] = useState(false);
+    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
-  useEffect(() => {
-    if (initialToken && !selectedToken) {
-      let contractAddress = initialToken.contractAddress;
-      let tokenId = initialToken.tokenId;
+    const {
+      address: resolvedAddress,
+      isResolving: isResolvingZNS,
+      error: znsError,
+      isZNSDomain,
+      resolveAddress: resolveZNSAddress,
+      clearResolver,
+    } = useZNSResolver();
 
-      if (initialToken.address && initialToken.address.includes('-')) {
-        const [parsedContract, parsedTokenId] = initialToken.address.split('-');
-        contractAddress = contractAddress || parsedContract;
-        tokenId = tokenId || parsedTokenId;
+    useEffect(() => {
+      if (initialToken && !selectedToken) {
+        let { contractAddress } = initialToken;
+        let { tokenId } = initialToken;
+
+        if (initialToken.address?.includes('-')) {
+          const [parsedContract, parsedTokenId] =
+            initialToken.address.split('-');
+          contractAddress = contractAddress || parsedContract;
+          tokenId = tokenId || parsedTokenId;
+        }
+
+        const formattedToken: Token = {
+          symbol: initialToken.symbol,
+          name: initialToken.name,
+          amount: '0',
+          usd: 0,
+          address: initialToken.address,
+          contractAddress,
+          tokenId,
+          type: initialToken.type as 'ERC20' | 'ERC721' | 'ERC1155',
+          decimals: initialToken.decimals ?? 18,
+        };
+        setSelectedToken(formattedToken);
+      }
+    }, [initialToken, selectedToken]);
+    const [currentBalance, setCurrentBalance] = useState<string>(balance);
+    const [loadingBalance, setLoadingBalance] = useState(false);
+    const [loadedTokenAddress, setLoadedTokenAddress] = useState<string>('');
+    const [tokenBalances, setTokenBalances] = useState<Record<string, string>>(
+      {},
+    );
+    const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
+    const { getERC20TokensList, importedTokens, removeToken } =
+      useImportedTokens();
+    const { getAESKey, userHasAESKey } = useSnap();
+
+    const accountBoxRef = useRef<HTMLDivElement>(null);
+
+    const { provider } = useMetaMaskContext();
+    const addressValidation = useAddressValidation();
+
+    const browserProvider = useMemo(() => {
+      if (!provider) {
+        return null;
+      }
+      return new BrowserProvider(provider as any);
+    }, [provider]);
+
+    const tokenOps = browserProvider
+      ? useTokenOperations(browserProvider)
+      : null;
+
+    const { tokens, nfts } = useMemo(() => {
+      const erc20Tokens = getERC20TokensList();
+      const cotiTokenKey = 'COTI-';
+      const cotiToken: Token = {
+        symbol: 'COTI',
+        name: 'COTI',
+        amount: tokenBalances[cotiTokenKey] || balance || '0',
+        usd: 0,
+        address: '',
+        decimals: 18,
+      };
+
+      const importedTokensFormatted: Token[] = erc20Tokens.map((token) => {
+        const tokenKey = `${token.symbol}-${token.address}`;
+        return {
+          symbol: token.symbol,
+          name: token.name,
+          amount: tokenBalances[tokenKey] || '0',
+          usd: 0,
+          address: token.address,
+          decimals: token.decimals ?? 18,
+        };
+      });
+
+      const allTokens = [cotiToken, ...importedTokensFormatted];
+
+      const nftImportedTokens = importedTokens.filter(
+        (t) =>
+          (t.type === 'ERC721' || t.type === 'ERC1155') &&
+          t.address.includes('-'),
+      );
+
+      let nftTokens: Token[] = nftImportedTokens.map((nft) => {
+        const addressParts = nft.address.split('-');
+        const contractAddress = addressParts[0] || '';
+        const tokenId = addressParts[1] || '';
+
+        const processedNFT = {
+          symbol: nft.symbol,
+          name: nft.name,
+          amount: nft.type === 'ERC1155' ? '1' : '1',
+          usd: 0,
+          address: nft.address,
+          contractAddress,
+          tokenId,
+          type: nft.type as 'ERC721' | 'ERC1155',
+          decimals: nft.decimals ?? 18,
+        };
+
+        return processedNFT;
+      });
+
+      if (selectedToken?.tokenId) {
+        const selectedNFT = nftTokens.find(
+          (nft) => nft.address === selectedToken.address,
+        );
+        if (selectedNFT) {
+          const otherNFTs = nftTokens.filter(
+            (nft) => nft.address !== selectedToken.address,
+          );
+          nftTokens = [selectedNFT, ...otherNFTs];
+        }
       }
 
-      const formattedToken: Token = {
-        symbol: initialToken.symbol,
-        name: initialToken.name,
+      let finalTokens = allTokens;
+      if (selectedToken && !selectedToken.tokenId) {
+        const otherTokens = allTokens.filter(
+          (t) => t.symbol !== selectedToken.symbol,
+        );
+        finalTokens = [selectedToken, ...otherTokens];
+      }
+
+      return {
+        tokens: finalTokens,
+        nfts: nftTokens,
+      };
+    }, [
+      getERC20TokensList,
+      importedTokens,
+      selectedToken,
+      tokenBalances,
+      balance,
+    ]);
+
+    const currentToken = selectedToken ||
+      tokens[0] || {
+        symbol: 'COTI',
+        name: 'COTI',
         amount: '0',
         usd: 0,
-        address: initialToken.address,
-        contractAddress: contractAddress,
-        tokenId: tokenId,
-        type: initialToken.type as 'ERC20' | 'ERC721' | 'ERC1155',
-        decimals: initialToken.decimals ?? 18
+        decimals: 18,
       };
-      setSelectedToken(formattedToken);
-    }
-  }, [initialToken, selectedToken]);
-  const [currentBalance, setCurrentBalance] = useState<string>(balance);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [loadedTokenAddress, setLoadedTokenAddress] = useState<string>('');
-  const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
-  const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
-  const { getERC20TokensList, importedTokens, removeToken } = useImportedTokens();
-  const { getAESKey, userHasAESKey } = useSnap();
 
-  const accountBoxRef = useRef<HTMLDivElement>(null);
+    const balanceNum = useMemo(() => {
+      if (!currentBalance || currentBalance === '0') {
+        return 0;
+      }
+      if (!currentToken) {
+        return parseAmount(currentBalance);
+      }
 
-  const { provider } = useMetaMaskContext();
-  const addressValidation = useAddressValidation();
+      const decimals =
+        currentToken.symbol === 'COTI' ? 18 : currentToken.decimals || 18;
+      const formattedBalance = formatTokenBalance(currentBalance, decimals);
+      return parseAmount(formattedBalance);
+    }, [currentBalance, currentToken]);
 
-  const browserProvider = useMemo(() => {
-    if (!provider) return null;
-    return new BrowserProvider(provider as any);
-  }, [provider]);
-
-  const tokenOps = browserProvider ? useTokenOperations(browserProvider) : null;
-
-  const { tokens, nfts } = useMemo(() => {
-    const erc20Tokens = getERC20TokensList();
-    const cotiTokenKey = 'COTI-';
-    const cotiToken: Token = {
-      symbol: 'COTI',
-      name: 'COTI',
-      amount: tokenBalances[cotiTokenKey] || balance || '0',
-      usd: 0,
-      address: '',
-      decimals: 18
-    };
-
-    const importedTokensFormatted: Token[] = erc20Tokens.map(token => {
-      const tokenKey = `${token.symbol}-${token.address}`;
-      return {
-        symbol: token.symbol,
-        name: token.name,
-        amount: tokenBalances[tokenKey] || '0',
-        usd: 0,
-        address: token.address,
-        decimals: token.decimals ?? 18
-      };
-    });
-
-    const allTokens = [cotiToken, ...importedTokensFormatted];
-
-    const nftImportedTokens = importedTokens.filter(t =>
-      (t.type === 'ERC721' || t.type === 'ERC1155') && t.address.includes('-')
+    const amountNum = useMemo(() => parseAmount(amount), [amount]);
+    const insufficientFunds = useMemo(
+      () => amountNum > balanceNum,
+      [amountNum, balanceNum],
     );
 
-    let nftTokens: Token[] = nftImportedTokens.map((nft) => {
-      const addressParts = nft.address.split('-');
-      const contractAddress = addressParts[0] || '';
-      const tokenId = addressParts[1] || '';
-
-      const processedNFT = {
-        symbol: nft.symbol,
-        name: nft.name,
-        amount: nft.type === 'ERC1155' ? '1' : '1',
-        usd: 0,
-        address: nft.address,
-        contractAddress: contractAddress,
-        tokenId: tokenId,
-        type: nft.type as 'ERC721' | 'ERC1155',
-        decimals: nft.decimals ?? 18
-      };
-
-      return processedNFT;
-    });
-
-    if (selectedToken && selectedToken.tokenId) {
-      const selectedNFT = nftTokens.find(nft => nft.address === selectedToken.address);
-      if (selectedNFT) {
-        const otherNFTs = nftTokens.filter(nft => nft.address !== selectedToken.address);
-        nftTokens = [selectedNFT, ...otherNFTs];
+    const formattedMaxBalance = useMemo(() => {
+      if (!currentBalance || currentBalance === '0') {
+        return '0';
       }
-    }
-
-    let finalTokens = allTokens;
-    if (selectedToken && !selectedToken.tokenId) {
-      const otherTokens = allTokens.filter(t => t.symbol !== selectedToken.symbol);
-      finalTokens = [selectedToken, ...otherTokens];
-    }
-
-    return {
-      tokens: finalTokens,
-      nfts: nftTokens
-    };
-  }, [getERC20TokensList, importedTokens, selectedToken, tokenBalances, balance]);
-
-  const currentToken = selectedToken || tokens[0] || { symbol: 'COTI', name: 'COTI', amount: '0', usd: 0, decimals: 18 };
-
-  const balanceNum = useMemo(() => {
-    if (!currentBalance || currentBalance === '0') return 0;
-    if (!currentToken) return parseAmount(currentBalance);
-
-    const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
-    const formattedBalance = formatTokenBalance(currentBalance, decimals);
-    return parseAmount(formattedBalance);
-  }, [currentBalance, currentToken]);
-
-  const amountNum = useMemo(() => parseAmount(amount), [amount]);
-  const insufficientFunds = useMemo(() => amountNum > balanceNum, [amountNum, balanceNum]);
-
-  const formattedMaxBalance = useMemo(() => {
-    if (!currentBalance || currentBalance === '0') return '0';
-    if (!currentToken) return formatBalance(currentBalance);
-
-    const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
-    return formatTokenBalance(currentBalance, decimals);
-  }, [currentBalance, currentToken]);
-
-  const isAmountValid = useMemo(() => {
-    if (currentToken?.tokenId && currentToken?.type === 'ERC721') {
-      return true;
-    }
-    if (!amount || amount === '') return false;
-    if (amount.endsWith('.')) return false;
-    return !isNaN(amountNum) && amountNum > 0 && amountNum <= balanceNum;
-  }, [amount, amountNum, balanceNum, currentToken?.tokenId, currentToken?.type]);
-
-  const canContinue = useMemo(() => {
-    const addressIsValid = isZNSDomain(addressInput) 
-      ? (resolvedAddress !== null && !znsError)
-      : addressValidation.isValid;
-    
-    return addressIsValid && isAmountValid && txStatus !== 'loading' && !isResolvingZNS;
-  }, [addressValidation.isValid, isAmountValid, txStatus, isZNSDomain, addressInput, resolvedAddress, znsError, isResolvingZNS]);
-
-  const handleAddressChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newAddress = e.target.value;
-    setAddressInput(newAddress);
-    
-    clearResolver();
-    
-    if (isZNSDomain(newAddress)) {
-      const resolvedAddress = await resolveZNSAddress(newAddress);
-      if (resolvedAddress) {
-        addressValidation.validate(resolvedAddress);
-      } else {
-        addressValidation.validate(newAddress);
+      if (!currentToken) {
+        return formatBalance(currentBalance);
       }
-    } else {
-      addressValidation.validate(newAddress);
-    }
 
-    if (!aesKey && newAddress.length > 0 && userHasAESKey) {
-      await getAESKey();
-    }
-  }, [addressValidation, aesKey, userHasAESKey, getAESKey, clearResolver, isZNSDomain, resolveZNSAddress]);
+      const decimals =
+        currentToken.symbol === 'COTI' ? 18 : currentToken.decimals || 18;
+      return formatTokenBalance(currentBalance, decimals);
+    }, [currentBalance, currentToken]);
 
-  const handleAddressBlur = useCallback(() => {
-    if (!addressInput) return;
-    addressValidation.validate(addressInput);
-  }, [addressInput, addressValidation]);
+    const isAmountValid = useMemo(() => {
+      if (currentToken?.tokenId && currentToken?.type === 'ERC721') {
+        return true;
+      }
+      if (!amount || amount === '') {
+        return false;
+      }
+      if (amount.endsWith('.')) {
+        return false;
+      }
+      return !isNaN(amountNum) && amountNum > 0 && amountNum <= balanceNum;
+    }, [
+      amount,
+      amountNum,
+      balanceNum,
+      currentToken?.tokenId,
+      currentToken?.type,
+    ]);
 
-  const handleClearAddress = useCallback(() => {
-    setAddressInput('');
-    addressValidation.reset();
-  }, [addressValidation]);
+    const canContinue = useMemo(() => {
+      const addressIsValid = isZNSDomain(addressInput)
+        ? resolvedAddress !== null && !znsError
+        : addressValidation.isValid;
 
-  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-    }
-  }, []);
+      return (
+        addressIsValid &&
+        isAmountValid &&
+        txStatus !== 'loading' &&
+        !isResolvingZNS
+      );
+    }, [
+      addressValidation.isValid,
+      isAmountValid,
+      txStatus,
+      isZNSDomain,
+      addressInput,
+      resolvedAddress,
+      znsError,
+      isResolvingZNS,
+    ]);
 
-  const handleSetMaxAmount = useCallback(async () => {
-    if (!currentBalance || currentBalance === '0') {
-      startTransition(() => {
-        setAmount('0');
-      });
-      return;
-    }
+    const handleAddressChange = useCallback(
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newAddress = e.target.value;
+        setAddressInput(newAddress);
 
-    if (currentToken && (currentToken.symbol === 'COTI' || !currentToken.address)) {
-      if (!browserProvider) {
+        clearResolver();
+
+        if (isZNSDomain(newAddress)) {
+          const resolvedAddress = await resolveZNSAddress(newAddress);
+          if (resolvedAddress) {
+            addressValidation.validate(resolvedAddress);
+          } else {
+            addressValidation.validate(newAddress);
+          }
+        } else {
+          addressValidation.validate(newAddress);
+        }
+
+        if (!aesKey && newAddress.length > 0 && userHasAESKey) {
+          await getAESKey();
+        }
+      },
+      [
+        addressValidation,
+        aesKey,
+        userHasAESKey,
+        getAESKey,
+        clearResolver,
+        isZNSDomain,
+        resolveZNSAddress,
+      ],
+    );
+
+    const handleAddressBlur = useCallback(() => {
+      if (!addressInput) {
+        return;
+      }
+      addressValidation.validate(addressInput);
+    }, [addressInput, addressValidation]);
+
+    const handleClearAddress = useCallback(() => {
+      setAddressInput('');
+      addressValidation.reset();
+    }, [addressValidation]);
+
+    const handleAmountChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+          setAmount(value);
+        }
+      },
+      [],
+    );
+
+    const handleSetMaxAmount = useCallback(async () => {
+      if (!currentBalance || currentBalance === '0') {
         startTransition(() => {
-          setAmount(currentBalance);
+          setAmount('0');
         });
         return;
       }
 
-      try {
-        const feeData = await browserProvider.getFeeData();
-        const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n;
-        const gasLimit = 21000n;
-        const estimatedFeeWei = gasPrice > 0n ? gasPrice * gasLimit : 0n;
-        const balanceWei = parseUnits(currentBalance, 18);
-
-        if (estimatedFeeWei === 0n) {
+      if (
+        currentToken &&
+        (currentToken.symbol === 'COTI' || !currentToken.address)
+      ) {
+        if (!browserProvider) {
           startTransition(() => {
             setAmount(currentBalance);
           });
           return;
         }
 
-        if (balanceWei <= estimatedFeeWei) {
+        try {
+          const feeData = await browserProvider.getFeeData();
+          const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n;
+          const gasLimit = 21000n;
+          const estimatedFeeWei = gasPrice > 0n ? gasPrice * gasLimit : 0n;
+          const balanceWei = parseUnits(currentBalance, 18);
+
+          if (estimatedFeeWei === 0n) {
+            startTransition(() => {
+              setAmount(currentBalance);
+            });
+            return;
+          }
+
+          if (balanceWei <= estimatedFeeWei) {
+            startTransition(() => {
+              setAmount('0');
+            });
+            return;
+          }
+
+          const maxSendableWei = balanceWei - estimatedFeeWei;
+          const maxSendable = formatUnits(maxSendableWei, 18);
+          const normalizedAmount = maxSendable.replace(/\.?0+$/, '') || '0';
+
           startTransition(() => {
-            setAmount('0');
+            setAmount(normalizedAmount);
+          });
+          return;
+        } catch (error) {
+          startTransition(() => {
+            setAmount(currentBalance);
           });
           return;
         }
-
-        const maxSendableWei = balanceWei - estimatedFeeWei;
-        const maxSendable = formatUnits(maxSendableWei, 18);
-        const normalizedAmount = maxSendable.replace(/\.?0+$/, '') || '0';
-
-        startTransition(() => {
-          setAmount(normalizedAmount);
-        });
-        return;
-      } catch (error) {
-        startTransition(() => {
-          setAmount(currentBalance);
-        });
-        return;
-      }
-    }
-
-    startTransition(() => {
-      const formattedBalance = currentToken ? (() => {
-        const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
-        return formatTokenBalance(currentBalance, decimals);
-      })() : formatBalance(currentBalance);
-
-      setAmount(formattedBalance);
-    });
-  }, [browserProvider, currentBalance, currentToken, startTransition]);
-
-  const handleClearAmount = useCallback(() => {
-    startTransition(() => {
-      setAmount('');
-    });
-  }, [startTransition]);
-
-  const handleOpenTokenModal = useCallback(() => {
-    setShowTokenModal(true);
-  }, []);
-
-  const handleCloseTokenModal = useCallback(() => {
-    setShowTokenModal(false);
-  }, []);
-
-  // Function to get balance for a specific token (for modal display)
-  const getTokenBalance = useCallback(async (token: Token): Promise<string> => {
-    if (!browserProvider || !tokenOps) return '0';
-
-    const tokenKey = `${token.symbol}-${token.address || ''}`;
-
-    if (tokenBalances[tokenKey]) {
-      return tokenBalances[tokenKey];
-    }
-
-    try {
-      let tokenBalance: string;
-
-      if (token.symbol === 'COTI' || !token.address) {
-        tokenBalance = balance;
-      } else {
-        const result = await tokenOps.decryptERC20Balance(token.address, aesKey || '');
-        tokenBalance = result.toString();
       }
 
-      setTokenBalances(prev => ({
-        ...prev,
-        [tokenKey]: tokenBalance
-      }));
+      startTransition(() => {
+        const formattedBalance = currentToken
+          ? (() => {
+              const decimals =
+                currentToken.symbol === 'COTI'
+                  ? 18
+                  : currentToken.decimals || 18;
+              return formatTokenBalance(currentBalance, decimals);
+            })()
+          : formatBalance(currentBalance);
 
-      return tokenBalance;
-    } catch (error) {
-      return '0';
-    }
-  }, [browserProvider, tokenOps, balance, aesKey, tokenBalances]);
+        setAmount(formattedBalance);
+      });
+    }, [browserProvider, currentBalance, currentToken, startTransition]);
 
-  const fetchTokenBalance = useCallback(async (token: Token) => {
-    if (!browserProvider || !tokenOps) return;
+    const handleClearAmount = useCallback(() => {
+      startTransition(() => {
+        setAmount('');
+      });
+    }, [startTransition]);
 
-    // Check cache first before showing loading state
-    const tokenKey = `${token.symbol}-${token.address || ''}`;
-    if (tokenBalances[tokenKey]) {
-      setCurrentBalance(tokenBalances[tokenKey]);
-      return;
-    }
+    const handleOpenTokenModal = useCallback(() => {
+      setShowTokenModal(true);
+    }, []);
 
-    // For COTI, use the balance prop directly (no loading needed)
-    if (token.symbol === 'COTI' || !token.address) {
-      setCurrentBalance(balance);
-      return;
-    }
+    const handleCloseTokenModal = useCallback(() => {
+      setShowTokenModal(false);
+    }, []);
 
-    // Only show loading for tokens that need async fetching
-    setLoadingBalance(true);
-    try {
-      if (token.type === 'ERC1155' && token.contractAddress && token.tokenId) {
-        // For ERC1155 tokens, use getERC1155Balance
-        const signer = await browserProvider.getSigner();
-        const userAddress = await signer.getAddress();
-        const tokenBalance = await tokenOps.getERC1155Balance(token.contractAddress, userAddress, token.tokenId);
-        setCurrentBalance(tokenBalance);
-        setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance }));
-      } else {
-        // For ERC20 tokens, use decryptERC20Balance
-        const tokenBalance = await tokenOps.decryptERC20Balance(token.address, aesKey || '');
-        setCurrentBalance(tokenBalance.toString());
-        setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance.toString() }));
-      }
-    } catch (error) {
-      setCurrentBalance('0');
-    } finally {
-      setLoadingBalance(false);
-    }
-  }, [browserProvider, tokenOps, balance, aesKey, tokenBalances]);
+    // Function to get balance for a specific token (for modal display)
+    const getTokenBalance = useCallback(
+      async (token: Token): Promise<string> => {
+        if (!browserProvider || !tokenOps) {
+          return '0';
+        }
 
-  const handleTokenSelect = useCallback((token: Token) => {
-    setSelectedToken(token);
-    setAmount('');
-    setLoadedTokenAddress('');
-    fetchTokenBalance(token);
-  }, [fetchTokenBalance]);
+        const tokenKey = `${token.symbol}-${token.address || ''}`;
 
-  useEffect(() => {
-    const tokenKey = `${currentToken?.symbol || 'COTI'}-${currentToken?.address || ''}`;
+        if (tokenBalances[tokenKey]) {
+          return tokenBalances[tokenKey];
+        }
 
-    if (currentToken && browserProvider && tokenOps && loadedTokenAddress !== tokenKey) {
-      // Check cache first
-      if (tokenBalances[tokenKey]) {
-        setCurrentBalance(tokenBalances[tokenKey]);
-        setLoadedTokenAddress(tokenKey);
-        return;
-      }
+        try {
+          let tokenBalance: string;
 
-      // For COTI, use balance prop directly (no async needed)
-      if (currentToken.symbol === 'COTI' || !currentToken.address) {
-        setCurrentBalance(balance);
-        setLoadedTokenAddress(tokenKey);
-        return;
-      }
+          if (token.symbol === 'COTI' || !token.address) {
+            tokenBalance = balance;
+          } else {
+            const result = await tokenOps.decryptERC20Balance(
+              token.address,
+              aesKey || '',
+            );
+            tokenBalance = result.toString();
+          }
 
-      // Only show loading for tokens that need async fetching
-      const loadBalance = async () => {
+          setTokenBalances((prev) => ({
+            ...prev,
+            [tokenKey]: tokenBalance,
+          }));
+
+          return tokenBalance;
+        } catch (error) {
+          return '0';
+        }
+      },
+      [browserProvider, tokenOps, balance, aesKey, tokenBalances],
+    );
+
+    const fetchTokenBalance = useCallback(
+      async (token: Token) => {
+        if (!browserProvider || !tokenOps) {
+          return;
+        }
+
+        // Check cache first before showing loading state
+        const tokenKey = `${token.symbol}-${token.address || ''}`;
+        if (tokenBalances[tokenKey]) {
+          setCurrentBalance(tokenBalances[tokenKey]);
+          return;
+        }
+
+        // For COTI, use the balance prop directly (no loading needed)
+        if (token.symbol === 'COTI' || !token.address) {
+          setCurrentBalance(balance);
+          return;
+        }
+
+        // Only show loading for tokens that need async fetching
         setLoadingBalance(true);
         try {
-          if (currentToken.type === 'ERC1155' && currentToken.contractAddress && currentToken.tokenId) {
+          if (
+            token.type === 'ERC1155' &&
+            token.contractAddress &&
+            token.tokenId
+          ) {
             // For ERC1155 tokens, use getERC1155Balance
             const signer = await browserProvider.getSigner();
             const userAddress = await signer.getAddress();
-            const tokenBalance = await tokenOps.getERC1155Balance(currentToken.contractAddress, userAddress, currentToken.tokenId);
+            const tokenBalance = await tokenOps.getERC1155Balance(
+              token.contractAddress,
+              userAddress,
+              token.tokenId,
+            );
             setCurrentBalance(tokenBalance);
-            setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance }));
-          } else if (currentToken.address) {
+            setTokenBalances((prev) => ({ ...prev, [tokenKey]: tokenBalance }));
+          } else {
             // For ERC20 tokens, use decryptERC20Balance
-            const tokenBalance = await tokenOps.decryptERC20Balance(currentToken.address, aesKey || '');
+            const tokenBalance = await tokenOps.decryptERC20Balance(
+              token.address,
+              aesKey || '',
+            );
             setCurrentBalance(tokenBalance.toString());
-            setTokenBalances(prev => ({ ...prev, [tokenKey]: tokenBalance.toString() }));
+            setTokenBalances((prev) => ({
+              ...prev,
+              [tokenKey]: tokenBalance.toString(),
+            }));
           }
-          setLoadedTokenAddress(tokenKey);
         } catch (error) {
           setCurrentBalance('0');
-          setLoadedTokenAddress(tokenKey);
         } finally {
           setLoadingBalance(false);
         }
-      };
+      },
+      [browserProvider, tokenOps, balance, aesKey, tokenBalances],
+    );
 
-      loadBalance();
-    }
-  }, [currentToken?.symbol, currentToken?.address, currentToken?.type, currentToken?.contractAddress, currentToken?.tokenId, browserProvider, tokenOps, balance, aesKey, loadedTokenAddress, tokenBalances]);
+    const handleTokenSelect = useCallback(
+      (token: Token) => {
+        setSelectedToken(token);
+        setAmount('');
+        setLoadedTokenAddress('');
+        fetchTokenBalance(token);
+      },
+      [fetchTokenBalance],
+    );
 
-  const handleContinue = useCallback(async () => {
-    if (!provider || !canContinue || !tokenOps) return;
+    useEffect(() => {
+      const tokenKey = `${currentToken?.symbol || 'COTI'}-${currentToken?.address || ''}`;
 
-    setTxStatus('loading');
-
-    try {
-      let txHash: string | null = null;
-      const targetAddress = resolvedAddress || addressInput;
-
-      if (currentToken.symbol === 'COTI' || !currentToken.address) {
-        txHash = await tokenOps.transferCOTI({
-          to: targetAddress,
-          amount: amount
-        });
-      } else if (currentToken.tokenId && currentToken.type === 'ERC721') {
-        txHash = await tokenOps.transferERC721({
-          tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
-          to: targetAddress,
-          tokenId: currentToken.tokenId
-        });
-      } else if (currentToken.tokenId && currentToken.type === 'ERC1155') {
-        if (!amount || amount === '0') {
-          throw new Error('Please enter a valid amount for ERC1155 transfer');
+      if (
+        currentToken &&
+        browserProvider &&
+        tokenOps &&
+        loadedTokenAddress !== tokenKey
+      ) {
+        // Check cache first
+        if (tokenBalances[tokenKey]) {
+          setCurrentBalance(tokenBalances[tokenKey]);
+          setLoadedTokenAddress(tokenKey);
+          return;
         }
-        txHash = await tokenOps.transferERC1155({
-          tokenAddress: currentToken.contractAddress || currentToken.address?.split('-')[0] || '',
-          to: targetAddress,
-          tokenId: currentToken.tokenId,
-          amount: amount
-        });
-      } else {
-        const decimals = currentToken.decimals ?? 18;
-        const amountInWei = parseUnits(amount, decimals);
 
-        txHash = await tokenOps.transferERC20({
-          tokenAddress: currentToken.address,
-          to: targetAddress,
-          amount: amountInWei.toString(),
-          aesKey: aesKey || ''
-        });
+        // For COTI, use balance prop directly (no async needed)
+        if (currentToken.symbol === 'COTI' || !currentToken.address) {
+          setCurrentBalance(balance);
+          setLoadedTokenAddress(tokenKey);
+          return;
+        }
+
+        // Only show loading for tokens that need async fetching
+        const loadBalance = async () => {
+          setLoadingBalance(true);
+          try {
+            if (
+              currentToken.type === 'ERC1155' &&
+              currentToken.contractAddress &&
+              currentToken.tokenId
+            ) {
+              // For ERC1155 tokens, use getERC1155Balance
+              const signer = await browserProvider.getSigner();
+              const userAddress = await signer.getAddress();
+              const tokenBalance = await tokenOps.getERC1155Balance(
+                currentToken.contractAddress,
+                userAddress,
+                currentToken.tokenId,
+              );
+              setCurrentBalance(tokenBalance);
+              setTokenBalances((prev) => ({
+                ...prev,
+                [tokenKey]: tokenBalance,
+              }));
+            } else if (currentToken.address) {
+              // For ERC20 tokens, use decryptERC20Balance
+              const tokenBalance = await tokenOps.decryptERC20Balance(
+                currentToken.address,
+                aesKey || '',
+              );
+              setCurrentBalance(tokenBalance.toString());
+              setTokenBalances((prev) => ({
+                ...prev,
+                [tokenKey]: tokenBalance.toString(),
+              }));
+            }
+            setLoadedTokenAddress(tokenKey);
+          } catch (error) {
+            setCurrentBalance('0');
+            setLoadedTokenAddress(tokenKey);
+          } finally {
+            setLoadingBalance(false);
+          }
+        };
+
+        loadBalance();
+      }
+    }, [
+      currentToken?.symbol,
+      currentToken?.address,
+      currentToken?.type,
+      currentToken?.contractAddress,
+      currentToken?.tokenId,
+      browserProvider,
+      tokenOps,
+      balance,
+      aesKey,
+      loadedTokenAddress,
+      tokenBalances,
+    ]);
+
+    const handleContinue = useCallback(async () => {
+      if (!provider || !canContinue || !tokenOps) {
+        return;
       }
 
-      if (txHash) {
-        setTxStatus('success');
+      setTxStatus('loading');
 
-        if (currentToken.type === 'ERC721' && currentToken.address) {
-          removeToken(currentToken.address);
+      try {
+        let txHash: string | null = null;
+        const targetAddress = resolvedAddress || addressInput;
+
+        if (currentToken.symbol === 'COTI' || !currentToken.address) {
+          txHash = await tokenOps.transferCOTI({
+            to: targetAddress,
+            amount,
+          });
+        } else if (currentToken.tokenId && currentToken.type === 'ERC721') {
+          txHash = await tokenOps.transferERC721({
+            tokenAddress:
+              currentToken.contractAddress ||
+              currentToken.address?.split('-')[0] ||
+              '',
+            to: targetAddress,
+            tokenId: currentToken.tokenId,
+          });
+        } else if (currentToken.tokenId && currentToken.type === 'ERC1155') {
+          if (!amount || amount === '0') {
+            throw new Error('Please enter a valid amount for ERC1155 transfer');
+          }
+          txHash = await tokenOps.transferERC1155({
+            tokenAddress:
+              currentToken.contractAddress ||
+              currentToken.address?.split('-')[0] ||
+              '',
+            to: targetAddress,
+            tokenId: currentToken.tokenId,
+            amount,
+          });
         } else {
-          await fetchTokenBalance(currentToken);
+          const decimals = currentToken.decimals ?? 18;
+          const amountInWei = parseUnits(amount, decimals);
+
+          txHash = await tokenOps.transferERC20({
+            tokenAddress: currentToken.address,
+            to: targetAddress,
+            amount: amountInWei.toString(),
+            aesKey: aesKey || '',
+          });
         }
 
-        if (onTransferSuccess) {
-          onTransferSuccess(txHash);
+        if (txHash) {
+          setTxStatus('success');
+
+          if (currentToken.type === 'ERC721' && currentToken.address) {
+            removeToken(currentToken.address);
+          } else {
+            await fetchTokenBalance(currentToken);
+          }
+
+          if (onTransferSuccess) {
+            onTransferSuccess(txHash);
+          } else {
+            onBack();
+          }
         } else {
-          onBack();
+          setTxStatus('error');
         }
-      } else {
+      } catch (error: any) {
         setTxStatus('error');
       }
-    } catch (error: any) {
-      setTxStatus('error');
-    }
-  }, [provider, canContinue, tokenOps, addressInput, resolvedAddress, amount, currentToken, fetchTokenBalance, onBack, onTransferSuccess, removeToken]);
+    }, [
+      provider,
+      canContinue,
+      tokenOps,
+      addressInput,
+      resolvedAddress,
+      amount,
+      currentToken,
+      fetchTokenBalance,
+      onBack,
+      onTransferSuccess,
+      removeToken,
+    ]);
 
-  const handleCancel = useCallback(() => {
-    startTransition(() => {
-      onBack();
-    });
-  }, [onBack, startTransition]);
+    const handleCancel = useCallback(() => {
+      startTransition(() => {
+        onBack();
+      });
+    }, [onBack, startTransition]);
 
-  return (
-    <TransferContainer>
-      <HeaderBar>
-        <HeaderBarSlotLeft>
-          <IconButton onClick={onBack} type="button" aria-label="Go back">
-            <ArrowBack />
-          </IconButton>
-        </HeaderBarSlotLeft>
-        <HeaderBarSlotTitle>
-          <ContentTitle>Send</ContentTitle>
-        </HeaderBarSlotTitle>
-        <HeaderBarSlotRight />
-      </HeaderBar>
+    return (
+      <TransferContainer>
+        <HeaderBar>
+          <HeaderBarSlotLeft>
+            <IconButton onClick={onBack} type="button" aria-label="Go back">
+              <ArrowBack />
+            </IconButton>
+          </HeaderBarSlotLeft>
+          <HeaderBarSlotTitle>
+            <ContentTitle>Send</ContentTitle>
+          </HeaderBarSlotTitle>
+          <HeaderBarSlotRight />
+        </HeaderBar>
 
-      <SectionTitle>From</SectionTitle>
-      <AccountBox>
-        <JazziconComponent address={address} type="from" />
-        <AccountDetails>
-          <AccountAddress>{address}</AccountAddress>
-        </AccountDetails>
-      </AccountBox>
+        <SectionTitle>From</SectionTitle>
+        <AccountBox>
+          <JazziconComponent address={address} type="from" />
+          <AccountDetails>
+            <AccountAddress>{address}</AccountAddress>
+          </AccountDetails>
+        </AccountBox>
 
-      {addressValidation.isValid && (
-        <>
-          <AccountBox ref={accountBoxRef}>
+        {addressValidation.isValid && (
+          <>
+            <AccountBox ref={accountBoxRef}>
+              <TokenRowFlex>
+                <TokenInfo onClick={handleOpenTokenModal}>
+                  <TokenLogos>
+                    <TokenLogoBig>
+                      {currentToken.symbol === 'COTI' ? (
+                        <CotiLogo />
+                      ) : (
+                        currentToken.symbol[0]
+                      )}
+                    </TokenLogoBig>
+                  </TokenLogos>
+                  <TokenName>
+                    {currentToken.tokenId && currentToken.type === 'ERC1155'
+                      ? 'NFT'
+                      : currentToken.symbol}
+                    {currentToken.tokenId && (
+                      <TokenId tokenId={currentToken.tokenId} />
+                    )}
+                  </TokenName>
+                  <ArrowDownStyled />
+                </TokenInfo>
+                <SendAmount>
+                  {currentToken.tokenId && currentToken.type === 'ERC721' ? (
+                    '1 NFT'
+                  ) : (
+                    <>
+                      <AmountInput
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="0"
+                        value={amount}
+                        onChange={handleAmountChange}
+                      />
+                      {currentToken.tokenId && currentToken.type === 'ERC1155'
+                        ? 'NFT'
+                        : currentToken.address
+                          ? formatTokenSymbol(currentToken.symbol)
+                          : currentToken.symbol}
+                    </>
+                  )}
+                </SendAmount>
+              </TokenRowFlex>
+            </AccountBox>
+
+            <BalanceRow>
+              <BalanceSubTransfer error={insufficientFunds}>
+                {currentToken?.tokenId && currentToken?.type === 'ERC721' ? (
+                  `Balance: 1 NFT`
+                ) : (
+                  <>
+                    {loadingBalance
+                      ? 'Loading balance...'
+                      : (() => {
+                          const formattedBalance =
+                            currentBalance &&
+                            currentBalance !== '0' &&
+                            currentToken
+                              ? (() => {
+                                  const decimals =
+                                    currentToken.symbol === 'COTI'
+                                      ? 18
+                                      : currentToken.decimals || 18;
+                                  return formatTokenBalance(
+                                    currentBalance,
+                                    decimals,
+                                  );
+                                })()
+                              : formatBalance(currentBalance);
+
+                          return `Balance: ${formattedBalance}${currentToken?.tokenId && currentToken?.type === 'ERC1155' ? ` Tokens` : currentToken?.address ? ` ${formatTokenSymbol(currentToken.symbol)}` : ` ${currentToken?.symbol || ''}`}`;
+                        })()}
+                    {insufficientFunds && (
+                      <ErrorText> Insufficient funds</ErrorText>
+                    )}
+                  </>
+                )}
+              </BalanceSubTransfer>
+              {!(currentToken?.tokenId && currentToken?.type === 'ERC721') &&
+                (amount === formattedMaxBalance &&
+                amount !== '' &&
+                amount !== '0' ? (
+                  <MaxButton onClick={handleClearAmount} type="button">
+                    Clear
+                  </MaxButton>
+                ) : (
+                  <MaxButton onClick={handleSetMaxAmount} type="button">
+                    Max
+                  </MaxButton>
+                ))}
+            </BalanceRow>
+          </>
+        )}
+
+        <SectionTitle>To</SectionTitle>
+        {!addressValidation.isValid && (
+          <InputBox>
+            <AddressInput
+              placeholder="Enter public address (0x) or .coti domain name"
+              value={addressInput}
+              onChange={handleAddressChange}
+              onBlur={handleAddressBlur}
+            />
+          </InputBox>
+        )}
+
+        {addressValidation.isValid && (
+          <AccountBox>
+            <JazziconComponent
+              address={resolvedAddress || addressInput}
+              type="to"
+            />
+            <AccountDetails>
+              <AccountAddress>
+                {isZNSDomain(addressInput) && resolvedAddress
+                  ? truncateString(resolvedAddress)
+                  : truncateString(addressInput)}
+              </AccountAddress>
+            </AccountDetails>
+            <ClearIconButton
+              onClick={handleClearAddress}
+              aria-label="Clear address"
+              type="button"
+            >
+              <XIcon />
+            </ClearIconButton>
+          </AccountBox>
+        )}
+
+        {addressValidation.isValid && (
+          <AccountBox>
             <TokenRowFlex>
-              <TokenInfo onClick={handleOpenTokenModal}>
+              <TokenInfo>
                 <TokenLogos>
                   <TokenLogoBig>
                     {currentToken.symbol === 'COTI' ? (
@@ -901,178 +1266,86 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(({
                   </TokenLogoBig>
                 </TokenLogos>
                 <TokenName>
-                  {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : currentToken.symbol}
+                  {currentToken.tokenId && currentToken.type === 'ERC1155'
+                    ? 'NFT'
+                    : currentToken.address
+                      ? formatTokenSymbol(currentToken.symbol)
+                      : currentToken.symbol}
                   {currentToken.tokenId && (
                     <TokenId tokenId={currentToken.tokenId} />
                   )}
                 </TokenName>
-                <ArrowDownStyled />
               </TokenInfo>
               <SendAmount>
-                {currentToken.tokenId && currentToken.type === 'ERC721' ? (
-                  '1 NFT'
-                ) : (
-                  <>
-                    <AmountInput
-                      type="number"
-                      min="0"
-                      step="any"
-                      placeholder="0"
-                      value={amount}
-                      onChange={handleAmountChange}
-                    />
-                    {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : (currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol)}
-                  </>
-                )}
+                {currentToken?.tokenId && currentToken?.type === 'ERC721'
+                  ? '1 NFT'
+                  : currentToken?.tokenId && currentToken?.type === 'ERC1155'
+                    ? `${amount || '0'} NFT`
+                    : `${amount || '0'} ${currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol}`}
               </SendAmount>
             </TokenRowFlex>
           </AccountBox>
+        )}
 
-          <BalanceRow>
-            <BalanceSubTransfer error={insufficientFunds}>
-              {currentToken?.tokenId && currentToken?.type === 'ERC721' ? (
-                `Balance: 1 NFT`
-              ) : (
-                <>
-                  {loadingBalance ? 'Loading balance...' : (() => {
-                    const formattedBalance = currentBalance && currentBalance !== '0' && currentToken ? (() => {
-                      const decimals = currentToken.symbol === 'COTI' ? 18 : (currentToken.decimals || 18);
-                      return formatTokenBalance(currentBalance, decimals);
-                    })() : formatBalance(currentBalance);
+        {(addressValidation.status === 'loading' || isResolvingZNS) &&
+          addressInput &&
+          !resolvedAddress && (
+            <Alert type="loading">
+              {isResolvingZNS ? 'Resolving .coti domain...' : 'Loading...'}
+            </Alert>
+          )}
 
-                    return `Balance: ${formattedBalance}${currentToken?.tokenId && currentToken?.type === 'ERC1155' ? ` Tokens` : (currentToken?.address ? ` ${formatTokenSymbol(currentToken.symbol)}` : ` ${currentToken?.symbol || ''}`)}`;
-                  })()}
-                  {insufficientFunds && (
-                    <ErrorText>
-                      {' '}Insufficient funds
-                    </ErrorText>
-                  )}
-                </>
-              )}
-            </BalanceSubTransfer>
-            {!(currentToken?.tokenId && currentToken?.type === 'ERC721') && (
-              amount === formattedMaxBalance && amount !== '' && amount !== '0' ? (
-                <MaxButton onClick={handleClearAmount} type="button">
-                  Clear
-                </MaxButton>
-              ) : (
-                <MaxButton onClick={handleSetMaxAmount} type="button">
-                  Max
-                </MaxButton>
-              )
-            )}
-          </BalanceRow>
-        </>
-      )}
+        {addressValidation.status === 'error' &&
+          addressInput &&
+          !isZNSDomain(addressInput) && (
+            <Alert type="error">Invalid address format</Alert>
+          )}
 
-      <SectionTitle>To</SectionTitle>
-      {!addressValidation.isValid && (
-        <InputBox>
-          <AddressInput
-            placeholder="Enter public address (0x) or .coti domain name"
-            value={addressInput}
-            onChange={handleAddressChange}
-            onBlur={handleAddressBlur}
-          />
-        </InputBox>
-      )}
+        {znsError && isZNSDomain(addressInput) && (
+          <Alert type="error">{znsError}</Alert>
+        )}
 
-      {addressValidation.isValid && (
-        <AccountBox>
-          <JazziconComponent address={resolvedAddress || addressInput} type="to" />
-          <AccountDetails>
-            <AccountAddress>{isZNSDomain(addressInput) && resolvedAddress ? truncateString(resolvedAddress) : truncateString(addressInput)}</AccountAddress>
-          </AccountDetails>
-          <ClearIconButton
-            onClick={handleClearAddress}
-            aria-label="Clear address"
+        {resolvedAddress &&
+          isZNSDomain(addressInput) &&
+          addressInput &&
+          !addressValidation.isValid && (
+            <Alert type="success">
+              Domain resolved to: {truncateString(resolvedAddress)}
+            </Alert>
+          )}
+
+        <BottomActions>
+          <SendButton
+            onClick={handleCancel}
             type="button"
+            backgroundColor="#fff"
+            textColor="#1E29F6"
           >
-            <XIcon />
-          </ClearIconButton>
-        </AccountBox>
-      )}
+            Cancel
+          </SendButton>
+          <SendButton
+            disabled={!canContinue}
+            onClick={handleContinue}
+            type="button"
+            backgroundColor="#1E29F6"
+            textColor="#fff"
+          >
+            {txStatus === 'loading' ? 'Sending...' : 'Send'}
+          </SendButton>
+        </BottomActions>
 
-      {addressValidation.isValid && (
-        <AccountBox>
-          <TokenRowFlex>
-            <TokenInfo>
-              <TokenLogos>
-                <TokenLogoBig>
-                  {currentToken.symbol === 'COTI' ? (
-                    <CotiLogo />
-                  ) : (
-                    currentToken.symbol[0]
-                  )}
-                </TokenLogoBig>
-              </TokenLogos>
-              <TokenName>
-                {currentToken.tokenId && currentToken.type === 'ERC1155' ? 'NFT' : (currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol)}
-                {currentToken.tokenId && (
-                  <TokenId tokenId={currentToken.tokenId} />
-                )}
-              </TokenName>
-            </TokenInfo>
-            <SendAmount>
-              {currentToken?.tokenId && currentToken?.type === 'ERC721' ? (
-                '1 NFT'
-              ) : currentToken?.tokenId && currentToken?.type === 'ERC1155' ? (
-                `${amount || '0'} NFT`
-              ) : (
-                `${amount || '0'} ${currentToken.address ? formatTokenSymbol(currentToken.symbol) : currentToken.symbol}`
-              )}
-            </SendAmount>
-          </TokenRowFlex>
-        </AccountBox>
-      )}
-
-      {(addressValidation.status === 'loading' || isResolvingZNS) && addressInput && !resolvedAddress && (
-        <Alert type="loading">{isResolvingZNS ? 'Resolving .coti domain...' : 'Loading...'}</Alert>
-      )}
-
-      {addressValidation.status === 'error' && addressInput && !isZNSDomain(addressInput) && (
-        <Alert type="error">Invalid address format</Alert>
-      )}
-      
-      {znsError && isZNSDomain(addressInput) && (
-        <Alert type="error">{znsError}</Alert>
-      )}
-      
-      {resolvedAddress && isZNSDomain(addressInput) && addressInput && !addressValidation.isValid && (
-        <Alert type="success">Domain resolved to: {truncateString(resolvedAddress)}</Alert>
-      )}
-
-      <BottomActions>
-        <SendButton
-          onClick={handleCancel}
-          type="button"
-          backgroundColor="#fff"
-          textColor="#1E29F6"
-        >
-          Cancel
-        </SendButton>
-        <SendButton
-          disabled={!canContinue}
-          onClick={handleContinue}
-          type="button"
-          backgroundColor="#1E29F6"
-          textColor="#fff"
-        >
-          {txStatus === 'loading' ? 'Sending...' : 'Send'}
-        </SendButton>
-      </BottomActions>
-
-      <TokenModal
-        isOpen={showTokenModal}
-        onClose={handleCloseTokenModal}
-        tokens={tokens}
-        nfts={nfts}
-        onTokenSelect={handleTokenSelect}
-        selectedToken={selectedToken}
-        getTokenBalance={getTokenBalance}
-      />
-    </TransferContainer>
-  );
-});
+        <TokenModal
+          isOpen={showTokenModal}
+          onClose={handleCloseTokenModal}
+          tokens={tokens}
+          nfts={nfts}
+          onTokenSelect={handleTokenSelect}
+          selectedToken={selectedToken}
+          getTokenBalance={getTokenBalance}
+        />
+      </TransferContainer>
+    );
+  },
+);
 
 TransferTokens.displayName = 'TransferTokens';

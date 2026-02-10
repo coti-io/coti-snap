@@ -1,9 +1,10 @@
 import React, { useState, useCallback, memo, useTransition } from 'react';
 import styled from 'styled-components';
+
 import { SendButton } from './styles';
-import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
-import CopyIcon from '../../assets/copy.svg';
 import CopySuccessIcon from '../../assets/copy-success.svg';
+import CopyIcon from '../../assets/copy.svg';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 
 const Container = styled.div`
   display: flex;
@@ -40,7 +41,7 @@ const AESKeyContainer = styled.div`
   word-break: break-all;
   display: flex;
   padding: 4px 16px;
-  background-color:rgb(241, 241, 241);
+  background-color: rgb(241, 241, 241);
   justify-content: space-between;
   align-items: center;
 `;
@@ -64,21 +65,25 @@ const CopyIconWrapper = styled.div`
   border-radius: 4px;
   transition: background-color 0.2s;
   color: #333;
-  
+
   &:hover {
     background-color: #e0e0e0;
   }
-  
+
   svg {
     width: 16px;
     height: 16px;
     color: #000000 !important;
-    
+
     * {
       color: #000000 !important;
     }
-    
-    path, circle, rect, polygon, ellipse {
+
+    path,
+    circle,
+    rect,
+    polygon,
+    ellipse {
       stroke: #000000 !important;
     }
   }
@@ -91,121 +96,118 @@ const ButtonContainer = styled.div`
 `;
 
 const RevealButton = styled(SendButton)`
-  background-color: #1E29F6;
-  color: #FFFFFF;
-  border: 2px solid #1E29F6;
-  
+  background-color: #1e29f6;
+  color: #ffffff;
+  border: 2px solid #1e29f6;
+
   &:hover {
     background-color: #f5f5f5;
-    color: #FFFFFF;
+    color: #ffffff;
   }
-  
+
   &:active {
     background-color: #e3f2fd;
-    color: #1E29F6;
+    color: #1e29f6;
   }
 `;
 
 const LaunchButton = styled(SendButton)`
   background-color: white;
-  color: #1E29F6;
-  border: 2px solid #1E29F6;
-  
+  color: #1e29f6;
+  border: 2px solid #1e29f6;
+
   &:hover {
     background-color: #f5f5f5;
-    color: #FFFFFF;
+    color: #ffffff;
   }
-  
+
   &:active {
     background-color: #e3f2fd;
-    color: #1E29F6;
+    color: #1e29f6;
   }
 `;
 
 const DeleteButton = styled(SendButton)`
   background-color: #dc3545;
-  color: #FFFFFF;
+  color: #ffffff;
   border: 2px solid #dc3545;
   transition: none;
-  
+
   &:hover:not(:disabled) {
     background-color: #c82333;
     border-color: #bd2130;
   }
-  
+
   &:active {
     background-color: #bd2130;
     border-color: #b21e2f;
   }
 `;
 
-
-interface DisplayAESKeyProps {
+type DisplayAESKeyProps = {
   aesKey: string;
   onLaunchDApp?: () => void;
   onNavigateToTokens?: () => void;
   onDeleteAESKey: () => void;
-}
+};
 
-export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(({
-  aesKey,
-  onLaunchDApp,
-  onNavigateToTokens,
-  onDeleteAESKey
-}) => {
-  const [isRevealed, setIsRevealed] = useState(false);
-  const [, startTransition] = useTransition();
-  const { copied, copyToClipboard } = useCopyToClipboard({ successDuration: 1500 });
-
-  const handleReveal = useCallback(() => {
-    startTransition(() => {
-      setIsRevealed(!isRevealed);
+export const DisplayAESKey: React.FC<DisplayAESKeyProps> = memo(
+  ({ aesKey, onLaunchDApp, onNavigateToTokens, onDeleteAESKey }) => {
+    const [isRevealed, setIsRevealed] = useState(false);
+    const [, startTransition] = useTransition();
+    const { copied, copyToClipboard } = useCopyToClipboard({
+      successDuration: 1500,
     });
-  }, [isRevealed]);
 
-  const handleCopy = useCallback(() => {
-    startTransition(() => {
-      copyToClipboard(aesKey);
-    });
-  }, [copyToClipboard, aesKey]);
+    const handleReveal = useCallback(() => {
+      startTransition(() => {
+        setIsRevealed(!isRevealed);
+      });
+    }, [isRevealed]);
 
-  const handleDelete = useCallback(() => {
-    startTransition(() => {
-      onDeleteAESKey();
-    });
-  }, [onDeleteAESKey]);
+    const handleCopy = useCallback(() => {
+      startTransition(() => {
+        copyToClipboard(aesKey);
+      });
+    }, [copyToClipboard, aesKey]);
 
-  const displayKey = isRevealed ? aesKey : '•'.repeat(aesKey.length);
+    const handleDelete = useCallback(() => {
+      startTransition(() => {
+        onDeleteAESKey();
+      });
+    }, [onDeleteAESKey]);
 
-  return (
-    <Container>
-      <Title>Key Management</Title>
-      <Description>
-        Your AES Key has been successfully retrieved. You can now reveal it or proceed to launch the dApp.
-      </Description>
-      <AESKeyContainerMax>
-        <AESKeyContainer>
-          <AESKeyText>{displayKey}</AESKeyText>
-          {isRevealed && (
-            <CopyIconWrapper onClick={handleCopy}>
-              {copied ? <CopySuccessIcon /> : <CopyIcon />}
-            </CopyIconWrapper>
-          )}
-        </AESKeyContainer>
-      </AESKeyContainerMax>
-      <ButtonContainer>
-        <RevealButton onClick={handleReveal}>
-          {isRevealed ? 'Hide' : 'Reveal'}
-        </RevealButton>
-        <DeleteButton onClick={handleDelete}>
-          Delete AES Key
-        </DeleteButton>
-        <LaunchButton onClick={onNavigateToTokens || onLaunchDApp}>
-          {onNavigateToTokens ? 'View Tokens' : 'Launch dApp'}
-        </LaunchButton>
-      </ButtonContainer>
-    </Container>
-  );
-});
+    const displayKey = isRevealed ? aesKey : '•'.repeat(aesKey.length);
+
+    return (
+      <Container>
+        <Title>Key Management</Title>
+        <Description>
+          Your AES Key has been successfully retrieved. You can now reveal it or
+          proceed to launch the dApp.
+        </Description>
+        <AESKeyContainerMax>
+          <AESKeyContainer>
+            <AESKeyText>{displayKey}</AESKeyText>
+            {isRevealed && (
+              <CopyIconWrapper onClick={handleCopy}>
+                {copied ? <CopySuccessIcon /> : <CopyIcon />}
+              </CopyIconWrapper>
+            )}
+          </AESKeyContainer>
+        </AESKeyContainerMax>
+        <ButtonContainer>
+          <RevealButton onClick={handleReveal}>
+            {isRevealed ? 'Hide' : 'Reveal'}
+          </RevealButton>
+          <DeleteButton onClick={handleDelete}>Delete AES Key</DeleteButton>
+          <LaunchButton onClick={onNavigateToTokens || onLaunchDApp}>
+            {onNavigateToTokens ? 'View Tokens' : 'Launch dApp'}
+          </LaunchButton>
+        </ButtonContainer>
+      </Container>
+    );
+  },
+);
 
 DisplayAESKey.displayName = 'DisplayAESKey';

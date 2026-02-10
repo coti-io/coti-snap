@@ -1,9 +1,4 @@
-import {
-  Box,
-  Heading,
-  Link,
-  Section,
-} from '@metamask/snaps-sdk/jsx';
+import { Box, Heading, Link, Section } from '@metamask/snaps-sdk/jsx';
 
 import { COMPANION_DAPP_LINK } from '../config';
 

@@ -1,14 +1,22 @@
 import styled from 'styled-components';
+
+import {
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  transitions,
+  slideUpFadeIn,
+} from './theme';
 import ArrowDown from '../../../assets/arrow-down.svg';
-import { colors, spacing, typography, borderRadius, transitions, slideUpFadeIn } from './theme';
 
 export const SectionTitle = styled.div`
   font-size: 12px;
   font-weight: ${typography.weights.bold};
   margin-top: ${spacing.xxl};
   margin-bottom: ${spacing.sm};
-  color: #04133D99 !important;
-  
+  color: #04133d99 !important;
+
   @media (max-width: 600px) {
     font-size: 11px;
     margin-top: ${spacing.lg};
@@ -17,22 +25,22 @@ export const SectionTitle = styled.div`
 `;
 
 export const AccountBox = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'error'
+  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'error',
 })<{ active?: boolean; error?: boolean }>`
   display: flex;
   align-items: center;
-  background: #F4F5FC !important;
+  background: #f4f5fc !important;
   border-radius: ${borderRadius.lg};
   padding: 8px 18px;
   gap: 14px;
   margin-bottom: ${spacing.sm};
   cursor: pointer;
   transition: background ${transitions.normal};
-  
+
   &:hover {
     background: ${colors.background.hover};
   }
-  
+
   @media (max-width: 600px) {
     padding: 6px 14px;
     gap: 10px;
@@ -49,7 +57,7 @@ export const AccountIcon = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 2.2rem;
-  
+
   @media (max-width: 600px) {
     width: 30px;
     height: 30px;
@@ -67,7 +75,7 @@ export const AccountAddress = styled.div`
   color: #000000 !important;
   font-weight: ${typography.weights.normal};
   margin-top: ${spacing.sm};
-  
+
   @media (max-width: 600px) {
     font-size: ${typography.sizes.sm};
     margin-top: ${spacing.xs};
@@ -85,11 +93,11 @@ export const InputBox = styled.div`
   max-width: 420px;
   margin-bottom: ${spacing.sm};
   transition: border ${transitions.normal};
-  
+
   &:focus-within {
     border: 1.5px solid ${colors.primary};
   }
-  
+
   @media (max-width: 600px) {
     padding: 14px ${spacing.md};
     gap: ${spacing.xs};
@@ -103,7 +111,7 @@ export const AddressInput = styled.input`
   flex: 1;
   background: transparent;
   color: #000000 !important;
-  
+
   @media (max-width: 600px) {
     font-size: ${typography.sizes.sm};
   }
@@ -115,24 +123,24 @@ export const AmountInput = styled.input`
   background: transparent;
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.normal};
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   width: auto;
   max-width: 120px;
   text-align: right;
   padding: 0 4px;
   appearance: textfield;
-  
+
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  
+
   &:focus {
     outline: none;
     box-shadow: none;
   }
-  
+
   @media (max-width: 600px) {
     max-width: 80px;
     font-size: 14px;
@@ -143,7 +151,7 @@ export const BottomActions = styled.div`
   display: flex;
   justify-content: space-between;
   gap: ${spacing.lg};
-  
+
   @media (max-width: 600px) {
     flex-direction: column-reverse;
     gap: 0px;
@@ -160,8 +168,10 @@ export const CancelButton = styled.button`
   border-radius: ${borderRadius.xxxl};
   padding: 18px 0;
   cursor: pointer;
-  transition: background ${transitions.normal}, color ${transitions.normal};
-  
+  transition:
+    background ${transitions.normal},
+    color ${transitions.normal};
+
   &:hover {
     background: ${colors.background.tertiary};
   }
@@ -177,12 +187,14 @@ export const ContinueButton = styled.button`
   border-radius: ${borderRadius.xxxl};
   padding: 18px 0;
   cursor: pointer;
-  transition: background ${transitions.normal}, opacity ${transitions.normal};
-  
+  transition:
+    background ${transitions.normal},
+    opacity ${transitions.normal};
+
   &:hover {
     background: ${colors.primaryHover};
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -205,7 +217,7 @@ export const HeaderBarSlotTitle = styled.div`
   text-align: center;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.xxxxl};
-  
+
   @media (max-width: 600px) {
     font-size: ${typography.sizes.xxl};
   }
@@ -225,14 +237,15 @@ export const BalanceRow = styled.div`
 `;
 
 export const BalanceSubTransfer = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'error'
+  shouldForwardProp: (prop) => prop !== 'error',
 })<{ error?: boolean }>`
   font-size: ${typography.sizes.base};
-  color: ${({ error }) => (error ? `${colors.error} !important` : "#04133D99 !important")};
+  color: ${({ error }) =>
+    error ? `${colors.error} !important` : '#04133D99 !important'};
   font-weight: ${typography.weights.normal};
   flex: 1;
   margin-bottom: ${spacing.md};
-  
+
   @media (max-width: 600px) {
     font-size: ${typography.sizes.sm};
     margin-bottom: ${spacing.xs};
@@ -242,16 +255,16 @@ export const BalanceSubTransfer = styled.div.withConfig({
 export const MaxButton = styled.button`
   background: none;
   border: none;
-  color: #04133D99 !important;
+  color: #04133d99 !important;
   font-size: ${typography.sizes.base};
   font-weight: ${typography.weights.bold};
   cursor: pointer;
   transition: opacity ${transitions.normal};
-  
+
   &:hover {
     opacity: 0.8;
   }
-  
+
   @media (max-width: 600px) {
     font-size: ${typography.sizes.sm};
   }
@@ -268,8 +281,8 @@ export const ArrowDownStyled = styled(ArrowDown)`
   margin-left: ${spacing.sm};
   width: 22px;
   height: 22px;
-  color: #1F2D67 !important;
-  
+  color: #1f2d67 !important;
+
   @media (max-width: 600px) {
     width: 18px;
     height: 18px;
@@ -290,11 +303,11 @@ export const ClearIconButton = styled.button`
   justify-content: center;
   border-radius: 35%;
   transition: background ${transitions.fast};
-  
+
   &:hover {
     background: ${colors.background.tertiary};
   }
-  
+
   @media (max-width: 600px) {
     width: 18px;
     height: 18px;
@@ -315,12 +328,12 @@ export const CloseButton = styled.button`
   margin-left: auto;
   transition: background ${transitions.fast};
   padding: 0;
-  
+
   &:hover {
     background: ${colors.background.tertiary};
     border-radius: 35%;
   }
-  
+
   svg {
     width: 22px;
     height: 22px;
@@ -344,7 +357,7 @@ export const TokenModalBackdrop = styled.div`
 export const TokenModalContainer = styled.div`
   background: ${colors.background.primary};
   border-radius: ${borderRadius.xxl};
-  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.12);
+  box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.12);
   width: 420px;
   max-width: 98vw;
   max-height: 60vh;
@@ -373,7 +386,7 @@ export const TokenModalClose = styled.button`
   font-size: 2.2rem;
   color: ${colors.text.primary};
   cursor: pointer;
-  
+
   &:hover {
     background: ${colors.background.tertiary};
     border-radius: ${borderRadius.sm};
@@ -388,7 +401,7 @@ export const TokenTabs = styled.div`
 `;
 
 export const TokenTab = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active'
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   flex: 1;
   background: none;
@@ -396,10 +409,13 @@ export const TokenTab = styled.button.withConfig({
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.semibold};
   color: ${({ active }) => (active ? '#222' : colors.text.muted)};
-  border-bottom: 2px solid ${({ active }) => (active ? '#1E29F6' : colors.border.primary)};
+  border-bottom: 2px solid
+    ${({ active }) => (active ? '#1E29F6' : colors.border.primary)};
   padding: ${spacing.md} 0 10px 0;
   cursor: pointer;
-  transition: color ${transitions.normal}, border-bottom ${transitions.normal};
+  transition:
+    color ${transitions.normal},
+    border-bottom ${transitions.normal};
 `;
 
 export const TokenSearchBox = styled.div`
@@ -411,7 +427,7 @@ export const TokenSearchBox = styled.div`
   padding: 0 18px;
   margin: 14px ${spacing.xxxl} 18px ${spacing.xxxl};
   transition: border ${transitions.normal};
-  
+
   &:hover,
   &.active {
     border: 2px solid ${colors.primary};
@@ -427,7 +443,7 @@ export const TokenSearchInput = styled.input`
   font-size: ${typography.sizes.md};
   margin-left: ${spacing.md};
   padding: ${spacing.md} 0;
-  
+
   &::placeholder {
     color: ${colors.text.muted};
     opacity: 1;
@@ -452,7 +468,7 @@ export const TokenListItemBar = styled.div`
 `;
 
 export const TokenListItem = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'selected'
+  shouldForwardProp: (prop) => prop !== 'selected',
 })<{ selected?: boolean }>`
   display: flex;
   align-items: center;
@@ -515,12 +531,12 @@ export const NoNFTsText = styled.div`
 `;
 
 export const LearnMoreLink = styled.a`
-  color:rgb(8, 4, 239) !important;
+  color: rgb(8, 4, 239) !important;
   font-size: ${typography.sizes.xxl};
   font-weight: ${typography.weights.semibold};
   text-decoration: none;
   cursor: pointer;
-  
+
   &:hover {
     text-decoration: underline;
   }

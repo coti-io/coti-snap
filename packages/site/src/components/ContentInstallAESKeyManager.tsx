@@ -1,10 +1,16 @@
 import { useCallback, useTransition } from 'react';
 import styled, { keyframes } from 'styled-components';
+
+import { ButtonAction } from './Button';
+import {
+  ContentBorderWrapper,
+  ContentContainer,
+  ContentTextInstall,
+  ContentTitle,
+} from './styles';
 import Metamask from '../assets/metamask_fox.svg';
 import SpinnerIcon from '../assets/spinner.png';
 import { useRequestSnap, useMetaMask } from '../hooks';
-import { ButtonAction } from './Button';
-import { ContentBorderWrapper, ContentContainer, ContentTextInstall, ContentTitle } from './styles';
 
 const spin = keyframes`
   from {
@@ -25,7 +31,7 @@ const InfoBox = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: #1E29F6;
+  background: #1e29f6;
   border-radius: 12px;
   padding: 16px;
 `;
@@ -65,11 +71,11 @@ export const ContentInstallAESKeyManager = () => {
       startTransition(() => {
         // This will make the navigation and subsequent re-renders non-blocking
       });
-      
+
       await requestSnap();
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       await getSnap();
     } catch (error) {
       void error;
@@ -81,7 +87,9 @@ export const ContentInstallAESKeyManager = () => {
       <ContentContainer>
         <ContentTitle>Install</ContentTitle>
         <ContentTextInstall>
-          Click on the Install with MetaMask button to continue with the Snap installation. Using the snap you can onboard your AES key and access COTI's privacy-centric experience across different dApps.
+          Click on the Install with MetaMask button to continue with the Snap
+          installation. Using the snap you can onboard your AES key and access
+          COTI's privacy-centric experience across different dApps.
         </ContentTextInstall>
 
         <InfoBox>
@@ -89,17 +97,27 @@ export const ContentInstallAESKeyManager = () => {
           <InfoContent>
             <InfoTitle>Multiple accounts?</InfoTitle>
             <InfoText>
-              When MetaMask prompts you to connect, select all the accounts you want to use with the Snap. To add more accounts later, you'll need to reinstall the Snap.
+              When MetaMask prompts you to connect, select all the accounts you
+              want to use with the Snap. To add more accounts later, you'll need
+              to reinstall the Snap.
             </InfoText>
           </InfoContent>
         </InfoBox>
 
         <ButtonAction
-          text={isInstallingSnap || isPending ? "Installing" : "Install with MetaMask"}
+          text={
+            isInstallingSnap || isPending
+              ? 'Installing'
+              : 'Install with MetaMask'
+          }
           primary
           onClick={handleInstallSnap}
           disabled={isInstallingSnap || isPending}
-          iconLeft={isInstallingSnap || isPending ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
+          iconLeft={
+            isInstallingSnap || isPending ? (
+              <SpinnerImage src={SpinnerIcon} alt="Loading" />
+            ) : undefined
+          }
           iconRight={<Metamask />}
         />
       </ContentContainer>

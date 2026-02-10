@@ -25,19 +25,19 @@ const colors = {
     secondary: '#6b7280',
     tertiary: '#8a8f98',
     muted: '#bfc2c6',
-    light: '#9ca3af'
+    light: '#9ca3af',
   },
   background: {
     primary: '#fff',
     secondary: '#f7f7f7',
     tertiary: '#f3f5fa',
     success: '#ecfdf5',
-    hover: '#f8fafc'
+    hover: '#f8fafc',
   },
   border: {
     primary: '#e5e7eb',
-    secondary: '#d0d0d0'
-  }
+    secondary: '#d0d0d0',
+  },
 } as const;
 
 const spacing = {
@@ -48,7 +48,7 @@ const spacing = {
   xl: '20px',
   xxl: '24px',
   xxxl: '32px',
-  xxxxl: '40px'
+  xxxxl: '40px',
 } as const;
 
 const typography = {
@@ -63,14 +63,14 @@ const typography = {
     xxxl: '2rem',
     xxxxl: '2.1rem',
     xxxxxl: '2.4rem',
-    huge: '3.4rem'
+    huge: '3.4rem',
   },
   weights: {
     normal: 400,
     medium: 500,
     semibold: 600,
-    bold: 700
-  }
+    bold: 700,
+  },
 } as const;
 
 const borderRadius = {
@@ -81,20 +81,20 @@ const borderRadius = {
   xxl: '24px',
   xxxl: '32px',
   xxxxl: '24px',
-  full: '50%'
+  full: '50%',
 } as const;
 
 const shadows = {
   sm: '0 1px 4px rgba(0,0,0,0.04)',
   md: '0 2px 8px rgba(0, 0, 0, 0.1)',
   lg: '0 4px 32px 0 rgba(0,0,0,0.12)',
-  dropdown: '0 2px 12px rgba(0,0,0,0.10)'
+  dropdown: '0 2px 12px rgba(0,0,0,0.10)',
 } as const;
 
 const transitions = {
   fast: '0.15s ease',
   normal: '0.2s ease',
-  slow: '0.32s cubic-bezier(0.4, 0.8, 0.4, 1)'
+  slow: '0.32s cubic-bezier(0.4, 0.8, 0.4, 1)',
 } as const;
 
 const buttonBase = `
@@ -179,11 +179,11 @@ export const QuickAccessButton = styled.button`
   font-weight: ${typography.weights.semibold};
   font-size: ${typography.sizes.xs};
   ${buttonBase}
-  
+
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
   }
-  
+
   svg {
     width: ${spacing.xl};
     height: ${spacing.xl};
@@ -202,7 +202,6 @@ export const QuickAccessLabel = styled.span`
   font-weight: 450;
 `;
 
-
 export const BalanceEye = styled.button`
   background: none;
   padding: 0;
@@ -210,7 +209,7 @@ export const BalanceEye = styled.button`
   display: flex;
   align-items: center;
   ${buttonBase}
-  
+
   svg {
     width: 22px;
     height: 22px;
@@ -239,7 +238,7 @@ export const BalancePortfolioLink = styled.a`
   font-size: ${typography.sizes.xxl};
   line-height: 1;
   vertical-align: middle;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -249,7 +248,7 @@ export const BalancePortfolioIcon = styled.span`
   display: flex;
   align-items: center;
   height: ${typography.sizes.xxl};
-  
+
   svg {
     width: ${typography.sizes.xxl};
     height: ${typography.sizes.xxl};
@@ -276,18 +275,22 @@ export const TabsWrapper = styled.div`
 `;
 
 export const Tab = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active'
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   background: none;
   border: none;
   outline: none;
   font-size: ${typography.sizes.xl};
-  font-weight: ${({ active }) => (active ? typography.weights.normal : typography.weights.normal)};
-  color: ${({ active }) => (active ? colors.text.primary : "#071550")};
-  border-bottom: 2px solid ${({ active }) => (active ? "#1E29F6" : colors.border.primary)};
+  font-weight: ${({ active }) =>
+    active ? typography.weights.normal : typography.weights.normal};
+  color: ${({ active }) => (active ? colors.text.primary : '#071550')};
+  border-bottom: 2px solid
+    ${({ active }) => (active ? '#1E29F6' : colors.border.primary)};
   padding: 0 ${spacing.xl} ${spacing.lg} ${spacing.xl};
   cursor: pointer;
-  transition: color ${transitions.normal}, border-bottom ${transitions.normal};
+  transition:
+    color ${transitions.normal},
+    border-bottom ${transitions.normal};
   flex: 1;
   text-align: center;
 `;
@@ -299,7 +302,7 @@ export const CenteredTabsWrapper = styled.div`
   margin-top: ${spacing.lg};
   width: 100%;
   height: 300px;
-  
+
   @media (max-width: 600px) {
     height: 350px;
   }
@@ -310,7 +313,7 @@ export const TabContentContainer = styled.div`
   height: 250px;
   overflow-y: auto;
   overflow-x: hidden;
-  
+
   @media (max-width: 600px) {
     height: 250px;
   }
@@ -325,8 +328,17 @@ export const HeaderBar = styled.div`
 `;
 
 export const NetworkBadge = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'badgeColor' && prop !== 'textColor' && prop !== 'borderColor' && prop !== 'isTestnet'
-})<{ badgeColor?: string; textColor?: string; borderColor?: string; isTestnet?: boolean }>`
+  shouldForwardProp: (prop) =>
+    prop !== 'badgeColor' &&
+    prop !== 'textColor' &&
+    prop !== 'borderColor' &&
+    prop !== 'isTestnet',
+})<{
+  badgeColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  isTestnet?: boolean;
+}>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,7 +356,7 @@ export const NetworkBadge = styled.div.withConfig({
   user-select: none;
 
   &:hover {
-    background-color:rgb(245, 245, 245);
+    background-color: rgb(245, 245, 245);
   }
 
   &:active {
@@ -360,9 +372,10 @@ export const HeaderActions = styled.div`
 `;
 
 export const IconButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'selected'
+  shouldForwardProp: (prop) => prop !== 'selected',
 })<{ selected?: boolean }>`
-  background: ${({ selected }) => (selected ? colors.background.tertiary : 'none')};
+  background: ${({ selected }) =>
+    selected ? colors.background.tertiary : 'none'};
   border: none;
   padding: ${spacing.xs};
   cursor: pointer;
@@ -372,7 +385,7 @@ export const IconButton = styled.button.withConfig({
   color: #000000 !important;
   border-radius: ${spacing.sm};
   transition: background ${transitions.fast};
-  
+
   &:hover {
     background: ${colors.background.tertiary};
   }
@@ -407,11 +420,11 @@ export const MenuItem = styled.button`
   padding: ${spacing.md};
   cursor: pointer;
   transition: background ${transitions.fast};
-  
+
   &:hover {
     background: ${colors.background.secondary};
   }
-  
+
   svg {
     color: #000000 !important;
     stroke: #000000 !important;
@@ -434,12 +447,13 @@ export const SortDropdown = styled.div`
 `;
 
 export const SortOption = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'selected'
+  shouldForwardProp: (prop) => prop !== 'selected',
 })<{ selected?: boolean }>`
   display: flex;
   align-items: center;
   width: 100%;
-  background: ${({ selected }) => (selected ? '#eef1ff' : colors.background.primary)};
+  background: ${({ selected }) =>
+    selected ? '#eef1ff' : colors.background.primary};
   border: none;
   outline: none;
   font-size: ${typography.sizes.lg};
@@ -450,11 +464,12 @@ export const SortOption = styled.button.withConfig({
   transition: background ${transitions.fast};
   position: relative;
   gap: ${spacing.lg};
-  
+
   &:hover {
-    background: ${({ selected }) => (selected ? '#eef1ff' : colors.background.secondary)};
+    background: ${({ selected }) =>
+      selected ? '#eef1ff' : colors.background.secondary};
   }
-  
+
   &::before {
     content: '';
     display: ${({ selected }) => (selected ? 'block' : 'none')};
@@ -474,7 +489,7 @@ export const TokenRow = styled.div`
   justify-content: space-between;
   min-height: 80px;
   cursor: pointer;
-  
+
   &:hover {
     background: ${colors.background.secondary};
   }
@@ -484,7 +499,7 @@ export const TokenInfo = styled.div`
   display: flex;
   align-items: center;
   gap: ${spacing.xs};
-  
+
   &:hover {
     cursor: pointer;
   }
@@ -496,7 +511,7 @@ export const TokenLogos = styled.div`
   height: 40px;
   display: flex;
   align-items: center;
-  
+
   @media (max-width: 600px) {
     width: 32px;
     height: 32px;
@@ -513,12 +528,12 @@ export const TokenLogoBig = styled.div`
   font-size: ${typography.sizes.xl};
   color: #000000 !important;
   font-weight: ${typography.weights.medium};
-  background:#f9f9f9 !important;
+  background: #f9f9f9 !important;
   position: absolute;
   left: 0;
   top: 0;
   z-index: 1;
-  
+
   @media (max-width: 600px) {
     width: 32px;
     height: 32px;
@@ -549,7 +564,7 @@ export const TokenName = styled.span`
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.bold};
   color: #000000 !important;
-  
+
   @media (max-width: 600px) {
     font-size: 14px;
   }
@@ -573,7 +588,7 @@ export const TokenUsd = styled.span`
 export const TokenAmount = styled.span`
   font-size: 16px;
   font-weight: ${typography.weights.bold};
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   letter-spacing: 0.01em;
   word-break: break-word;
   text-align: right;
@@ -640,7 +655,7 @@ export const TransferContainer = styled.div`
   box-shadow: none;
   padding: 0 ${spacing.lg};
   background: none;
-  
+
   @media (max-width: 600px) {
     padding: 0 ${spacing.md};
   }
@@ -653,7 +668,7 @@ export const TransferContainerMain = styled.div`
   width: 100%;
   max-width: 100%;
   height: auto;
-  
+
   @media (max-width: 600px) {
     padding: 0 ${spacing.sm};
   }
@@ -665,8 +680,8 @@ export const SendAmount = styled.div`
   gap: ${spacing.xs};
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.normal};
-  color: #1F2D67 !important;
-  
+  color: #1f2d67 !important;
+
   @media (max-width: 600px) {
     font-size: 14px;
     gap: 2px;
@@ -674,13 +689,14 @@ export const SendAmount = styled.div`
 `;
 
 export const AccountBox = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active'
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active?: boolean }>`
   display: flex;
   align-items: center;
   background: ${colors.background.primary};
   border-radius: ${spacing.lg};
-  border: 1.5px solid ${({ active }) => (active ? colors.primary : colors.border.primary)};
+  border: 1.5px solid
+    ${({ active }) => (active ? colors.primary : colors.border.primary)};
   padding: ${spacing.md} ${spacing.xxl};
   gap: ${spacing.md};
   width: 100%;
@@ -712,7 +728,7 @@ export const AccountName = styled.div`
 export const AccountAddress = styled.div`
   font-size: ${typography.sizes.md};
   font-weight: ${typography.weights.normal};
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   max-width: 120px;
   text-align: right;
   padding: 0 4px;
@@ -776,8 +792,10 @@ export const CancelButton = styled.button`
   border-radius: ${borderRadius.xxl};
   padding: ${spacing.lg} 0;
   cursor: pointer;
-  transition: background ${transitions.normal}, color ${transitions.normal};
-  
+  transition:
+    background ${transitions.normal},
+    color ${transitions.normal};
+
   &:hover {
     background: ${colors.background.tertiary};
   }
@@ -794,7 +812,7 @@ export const ContinueButton = styled.button`
   padding: ${spacing.lg} 0;
   cursor: pointer;
   transition: background ${transitions.normal};
-  
+
   &:hover {
     background: ${colors.primaryHover};
   }
@@ -845,7 +863,7 @@ export const ModalClose = styled.button`
   color: ${colors.text.primary};
   cursor: pointer;
   transition: background-color ${transitions.fast};
-  
+
   &:hover {
     background: ${colors.background.tertiary};
     border-radius: ${borderRadius.sm};
@@ -879,30 +897,38 @@ export const ModalActions = styled.div`
 `;
 
 export const ModalActionButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'primary' && prop !== 'disabled'
+  shouldForwardProp: (prop) => prop !== 'primary' && prop !== 'disabled',
 })<{ primary?: boolean; disabled?: boolean }>`
   flex: 1;
   background: ${({ primary, disabled }) => {
-    if (disabled) return colors.background.tertiary;
+    if (disabled) {
+      return colors.background.tertiary;
+    }
     return primary ? colors.secondary : 'none';
   }};
-  border: 2px solid ${({ disabled }) => disabled ? colors.background.tertiary : colors.secondary};
+  border: 2px solid
+    ${({ disabled }) =>
+      disabled ? colors.background.tertiary : colors.secondary};
   color: ${({ primary, disabled }) => {
-    if (disabled) return colors.text.light;
+    if (disabled) {
+      return colors.text.light;
+    }
     return primary ? colors.background.primary : colors.secondary;
   }};
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.semibold};
   border-radius: ${borderRadius.xxxl};
   padding: ${spacing.xxl} 0;
-  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   transition: all ${transitions.normal};
-  
+
   &:hover:not(:disabled) {
-    background: ${({ primary }) => (primary ? colors.secondaryHover : colors.background.hover)};
-    color: ${({ primary }) => (primary ? colors.background.primary : colors.secondaryHover)};
+    background: ${({ primary }) =>
+      primary ? colors.secondaryHover : colors.background.hover};
+    color: ${({ primary }) =>
+      primary ? colors.background.primary : colors.secondaryHover};
   }
-  
+
   &:focus {
     outline: 2px solid ${colors.primary};
     outline-offset: 2px;
@@ -914,7 +940,7 @@ export const DepositBorderWrapper = styled.div`
   border-radius: 30px;
   padding: 9px;
   width: auto;
-  
+
   @media (max-width: 600px) {
     background-color: transparent;
     border-radius: 0;
@@ -937,9 +963,9 @@ export const DepositModalContainer = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
-  
+
   @media (max-width: 600px) {
-    background: #FFFFFF;
+    background: #ffffff;
     max-width: 600px;
     border-radius: 0;
     box-shadow: none;
@@ -961,7 +987,7 @@ export const DepositCloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:hover {
     background: ${colors.background.tertiary};
     border-radius: ${spacing.sm};
@@ -1028,7 +1054,7 @@ export const DepositCopyButton = styled.button<{ $copied: boolean }>`
   gap: ${spacing.lg};
   background: ${colors.primary};
   border: none;
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 14px;
   font-weight: ${typography.weights.semibold};
   cursor: pointer;
@@ -1038,7 +1064,7 @@ export const DepositCopyButton = styled.button<{ $copied: boolean }>`
 `;
 
 export const TabButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active'
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   width: 100%;
   background: none;
@@ -1050,9 +1076,12 @@ export const TabButton = styled.button.withConfig({
   padding: ${spacing.md} 0;
   margin: ${spacing.xxl} ${spacing.xxxl} 0 ${spacing.xxxl};
   cursor: pointer;
-  transition: background ${transitions.normal}, color ${transitions.normal};
-  
-  &:hover, &:focus {
+  transition:
+    background ${transitions.normal},
+    color ${transitions.normal};
+
+  &:hover,
+  &:focus {
     background: ${colors.background.tertiary};
     color: ${colors.primary};
   }
@@ -1096,11 +1125,11 @@ export const NetworkSelect = styled.button`
   align-items: center;
   justify-content: space-between;
   transition: border-color ${transitions.fast};
-  
+
   &:hover {
     border-color: ${colors.primary};
   }
-  
+
   &:focus {
     outline: 2px solid ${colors.primary};
     outline-offset: 2px;
@@ -1108,7 +1137,7 @@ export const NetworkSelect = styled.button`
 `;
 
 export const NextButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'disabled'
+  shouldForwardProp: (prop) => prop !== 'disabled',
 })<{ disabled: boolean }>`
   width: calc(100% - 64px);
   margin: ${spacing.xxxl} ${spacing.xxxl} 0 ${spacing.xxxl};
@@ -1121,12 +1150,14 @@ export const NextButton = styled.button.withConfig({
   border: none;
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
-  transition: background ${transitions.normal}, opacity ${transitions.normal};
-  
+  transition:
+    background ${transitions.normal},
+    opacity ${transitions.normal};
+
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
   }
-  
+
   &:focus {
     outline: 2px solid ${colors.primary};
     outline-offset: 2px;
@@ -1219,7 +1250,7 @@ export const TokenSummarySymbol = styled.div`
 
 export const TokenSummaryBalance = styled.div`
   font-size: ${typography.sizes.md};
-  color: #B6B6B6 !important;
+  color: #b6b6b6 !important;
   font-weight: ${typography.weights.semibold};
   margin-top: ${spacing.sm};
   max-width: 200px;
@@ -1237,30 +1268,38 @@ export const StepActions = styled.div`
 `;
 
 export const StepButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'primary' && prop !== 'disabled'
+  shouldForwardProp: (prop) => prop !== 'primary' && prop !== 'disabled',
 })<{ primary?: boolean; disabled?: boolean }>`
   flex: 1;
   background: ${({ primary, disabled }) => {
-    if (disabled) return colors.background.tertiary;
+    if (disabled) {
+      return colors.background.tertiary;
+    }
     return primary ? colors.secondary : 'none';
   }};
-  border: 2px solid ${({ disabled }) => disabled ? colors.background.tertiary : colors.secondary};
+  border: 2px solid
+    ${({ disabled }) =>
+      disabled ? colors.background.tertiary : colors.secondary};
   color: ${({ primary, disabled }) => {
-    if (disabled) return colors.text.light;
+    if (disabled) {
+      return colors.text.light;
+    }
     return primary ? colors.background.primary : colors.secondary;
   }};
   font-size: ${typography.sizes.xl};
   font-weight: ${typography.weights.semibold};
   border-radius: ${borderRadius.xxxl};
   padding: ${spacing.xxl} 0;
-  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
   transition: all ${transitions.normal};
-  
+
   &:hover:not(:disabled) {
-    background: ${({ primary }) => (primary ? colors.secondaryHover : colors.background.hover)};
-    color: ${({ primary }) => (primary ? colors.background.primary : colors.secondaryHover)};
+    background: ${({ primary }) =>
+      primary ? colors.secondaryHover : colors.background.hover};
+    color: ${({ primary }) =>
+      primary ? colors.background.primary : colors.secondaryHover};
   }
-  
+
   &:focus {
     outline: 2px solid ${colors.primary};
     outline-offset: 2px;
@@ -1298,7 +1337,7 @@ export const NFTCornerIcon = styled.div`
   font-size: 14px;
   color: #000000 !important;
   font-weight: 500;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border: 2px solid #fff;
 `;
 
@@ -1321,7 +1360,7 @@ export const DetailsBackButton = styled.button`
   cursor: pointer;
   padding: 0;
   ${buttonBase}
-  
+
   svg {
     width: ${spacing.xxl};
     height: ${spacing.xxl};
@@ -1357,7 +1396,7 @@ export const NFTDetailsLabel = styled.span`
 `;
 
 export const NFTDetailsValue = styled.span`
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.xxl};
 `;
@@ -1368,7 +1407,7 @@ export const NFTDetailsLink = styled.a`
   font-size: ${typography.sizes.xxl};
   text-decoration: none;
   margin-right: ${spacing.sm};
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -1381,7 +1420,7 @@ export const NFTDetailsCopyButton = styled.button`
   color: ${colors.primary};
   padding: 0;
   ${buttonBase}
-  
+
   svg {
     width: ${spacing.xl};
     height: ${spacing.xl};
@@ -1397,12 +1436,13 @@ export const NFTDetailsDisclaimer = styled.div`
 `;
 
 export const SendButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'backgroundColor' && prop !== 'textColor'
+  shouldForwardProp: (prop) =>
+    prop !== 'backgroundColor' && prop !== 'textColor',
 })<{ backgroundColor?: string; textColor?: string }>`
   background: ${({ backgroundColor }) => backgroundColor || '#1E29F6'};
   color: ${({ textColor }) => textColor || '#fff'};
   border-radius: 12px;
-  border: 2px solid #1E29F6;
+  border: 2px solid #1e29f6;
   font-size: 1.5rem;
   font-weight: 600;
   padding: 20px 40px;
@@ -1415,23 +1455,26 @@ export const SendButton = styled.button.withConfig({
   margin-top: ${spacing.xl};
   margin-bottom: 0;
   width: 100%;
-  transition: background 0.2s, opacity 0.2s;
+  transition:
+    background 0.2s,
+    opacity 0.2s;
   ${buttonBaseAction}
-  
+
   &:hover:not(:disabled) {
-    background: ${({ backgroundColor }) => 
-      backgroundColor === '#fff' || backgroundColor === 'white' 
-        ? '#f8fafc' 
-        : backgroundColor ? `${backgroundColor}dd` : '#3350e6'
-    };
+    background: ${({ backgroundColor }) =>
+      backgroundColor === '#fff' || backgroundColor === 'white'
+        ? '#f8fafc'
+        : backgroundColor
+          ? `${backgroundColor}dd`
+          : '#3350e6'};
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     background: ${({ backgroundColor }) => backgroundColor || '#1E29F6'};
   }
-  
+
   @media (max-width: 600px) {
     font-size: 14px;
     padding: 16px 32px;
@@ -1471,7 +1514,7 @@ export const TokenDetailsBackButton = styled.button`
   cursor: pointer;
   padding: 0;
   ${buttonBase}
-  
+
   svg {
     width: ${spacing.xxl};
     height: ${spacing.xxl};
@@ -1534,14 +1577,14 @@ export const TokenDetailsRow = styled.div`
 `;
 
 export const TokenDetailsLabel = styled.span`
-  color: #04133D !important;
+  color: #04133d !important;
   font-weight: ${typography.weights.semibold};
   font-size: ${typography.sizes.lg};
   flex: 1;
 `;
 
 export const TokenDetailsValue = styled.span`
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   font-weight: ${typography.weights.bold};
   font-size: ${typography.sizes.lg};
   text-align: right;
@@ -1550,12 +1593,12 @@ export const TokenDetailsValue = styled.span`
 `;
 
 export const TokenDetailsLink = styled.a`
-  color: #1E29F6 !important;
+  color: #1e29f6 !important;
   font-weight: 500;
   font-size: ${typography.sizes.lg};
   text-decoration: none;
   margin-right: ${spacing.sm};
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -1568,7 +1611,7 @@ export const TokenDetailsCopyButton = styled.button`
   color: ${colors.primary};
   padding: 0;
   ${buttonBase}
-  
+
   svg {
     width: ${spacing.xl};
     height: ${spacing.xl};
@@ -1587,7 +1630,7 @@ export const TokenDetailsSendButton = styled.button`
   margin-top: 0;
   margin-bottom: 0;
   ${buttonBase}
-  
+
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
   }
@@ -1610,7 +1653,7 @@ export const TokenDetailsSecondaryButton = styled.button`
   padding: ${typography.sizes.xxl} 0;
   cursor: pointer;
   ${buttonBase}
-  
+
   &:hover:not(:disabled) {
     background: ${colors.background.hover};
   }
@@ -1621,7 +1664,7 @@ export const snapSpacing = {
   container: spacing.xxl,
   section: spacing.xl,
   item: spacing.lg,
-  small: spacing.md
+  small: spacing.md,
 } as const;
 
 export const SnapTokenDetailsContainer = {
@@ -1629,7 +1672,7 @@ export const SnapTokenDetailsContainer = {
   background: colors.background.secondary,
   minHeight: '100vh',
   maxWidth: '400px',
-  margin: '0 auto'
+  margin: '0 auto',
 };
 
 export const SnapHeader = {
@@ -1637,7 +1680,7 @@ export const SnapHeader = {
   alignItems: 'center',
   padding: snapSpacing.container,
   paddingTop: '48px',
-  gap: snapSpacing.small
+  gap: snapSpacing.small,
 };
 
 export const SnapBackButton = {
@@ -1646,39 +1689,39 @@ export const SnapBackButton = {
   cursor: 'pointer',
   padding: '0',
   display: 'flex',
-  alignItems: 'center'
+  alignItems: 'center',
 };
 
 export const SnapHeaderTitle = {
   fontSize: typography.sizes.xxxl,
   fontWeight: typography.weights.medium,
   color: colors.text.primary,
-  marginLeft: snapSpacing.small
+  marginLeft: snapSpacing.small,
 };
 
 export const SnapSection = {
   padding: `0 ${snapSpacing.container}`,
-  marginTop: snapSpacing.section
+  marginTop: snapSpacing.section,
 };
 
 export const SnapSectionTitle = {
   fontSize: typography.sizes.xxxxl,
   fontWeight: typography.weights.semibold,
   color: colors.text.primary,
-  marginBottom: snapSpacing.section
+  marginBottom: snapSpacing.section,
 };
 
 export const SnapBalanceRow = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  gap: snapSpacing.item
+  gap: snapSpacing.item,
 };
 
 export const SnapTokenInfo = {
   display: 'flex',
   alignItems: 'center',
-  gap: snapSpacing.item
+  gap: snapSpacing.item,
 };
 
 export const SnapTokenLogo = {
@@ -1688,7 +1731,7 @@ export const SnapTokenLogo = {
   borderRadius: borderRadius.lg,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
 };
 
 export const SnapTokenLogoDiamond = {
@@ -1696,64 +1739,64 @@ export const SnapTokenLogoDiamond = {
   height: '24px',
   backgroundColor: colors.background.primary,
   borderRadius: borderRadius.sm,
-  transform: 'rotate(45deg)'
+  transform: 'rotate(45deg)',
 };
 
 export const SnapTokenDetails = {
   display: 'flex',
-  flexDirection: 'column' as const
+  flexDirection: 'column' as const,
 };
 
 export const SnapTokenName = {
   fontSize: typography.sizes.xl,
   fontWeight: typography.weights.medium,
-  color: colors.text.primary
+  color: colors.text.primary,
 };
 
 export const SnapTokenSymbol = {
   fontSize: typography.sizes.base,
-  color: colors.text.secondary
+  color: colors.text.secondary,
 };
 
 export const SnapBalanceValues = {
   textAlign: 'right' as const,
   display: 'flex',
-  flexDirection: 'column' as const
+  flexDirection: 'column' as const,
 };
 
 export const SnapBalanceUSD = {
   fontSize: typography.sizes.xl,
   fontWeight: typography.weights.medium,
-  color: colors.text.primary
+  color: colors.text.primary,
 };
 
 export const SnapBalanceAmount = {
   fontSize: typography.sizes.base,
-  color: colors.text.secondary
+  color: colors.text.secondary,
 };
 
 export const SnapDetailsSection = {
   padding: `0 ${snapSpacing.container}`,
-  marginTop: '48px'
+  marginTop: '48px',
 };
 
 export const SnapDetailRow = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginBottom: snapSpacing.section
+  marginBottom: snapSpacing.section,
 };
 
 export const SnapDetailLabel = {
   fontSize: typography.sizes.lg,
   fontWeight: typography.weights.medium,
-  color: colors.text.primary
+  color: colors.text.primary,
 };
 
 export const SnapDetailValue = {
   fontSize: typography.sizes.lg,
   fontWeight: typography.weights.medium,
-  color: colors.text.primary
+  color: colors.text.primary,
 };
 
 export const SnapCopyContainer = {
@@ -1762,24 +1805,24 @@ export const SnapCopyContainer = {
   backgroundColor: '#e8f2ff',
   padding: `${snapSpacing.small} ${snapSpacing.item}`,
   borderRadius: borderRadius.xxl,
-  gap: snapSpacing.small
+  gap: snapSpacing.small,
 };
 
 export const SnapCopyText = {
   fontSize: typography.sizes.base,
   fontWeight: typography.weights.medium,
-  color: colors.primary
+  color: colors.primary,
 };
 
 export const SnapCopyIcon = {
   width: spacing.lg,
   height: spacing.lg,
-  color: colors.primary
+  color: colors.primary,
 };
 
 export const SnapButtonSection = {
   padding: `0 ${snapSpacing.container}`,
-  marginTop: '48px'
+  marginTop: '48px',
 };
 
 export const SnapButton = {
@@ -1789,14 +1832,14 @@ export const SnapButton = {
   fontSize: typography.sizes.lg,
   fontWeight: typography.weights.medium,
   cursor: 'pointer',
-  transition: transitions.normal
+  transition: transitions.normal,
 };
 
 export const SnapOutlineButton = {
   ...SnapButton,
   backgroundColor: 'transparent',
   border: `2px solid ${colors.primary}`,
-  color: colors.primary
+  color: colors.primary,
 };
 
 export const BalanceContainer = styled.div`
@@ -1856,7 +1899,7 @@ export const BalanceLogoSmall = styled.div`
   position: absolute;
   left: 0;
   bottom: -4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 `;
 
 export const BalanceTokenName = styled.div`
@@ -1979,7 +2022,7 @@ export const TokenBalanceLogoSmall = styled.div`
   text-align: center;
   right: 2px;
   bottom: 1px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border: 1.5px solid #e5e7eb;
   z-index: 2;
 `;
@@ -1993,7 +2036,8 @@ export const TokenBalanceName = styled.span`
   height: 48px;
 `;
 
-export const TokenBalanceRight = styled.div`  display: flex;
+export const TokenBalanceRight = styled.div`
+  display: flex;
   align-items: center;
   font-size: 22px;
   font-weight: 700;
@@ -2006,7 +2050,7 @@ export const TokenBalanceRight = styled.div`  display: flex;
 export const TokenBalanceAmount = styled.span`
   font-size: 16px;
   font-weight: 700;
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2017,7 +2061,7 @@ export const TokenBalanceAmount = styled.span`
 export const TokenBalanceSymbol = styled.span`
   font-size: 16px;
   font-weight: 700;
-  color: #1F2D67 !important;
+  color: #1f2d67 !important;
   margin-left: 2px;
 `;
 
@@ -2044,7 +2088,7 @@ export const TokenNameRow = styled.div`
 export const TokenNameText = styled.span`
   font-weight: 600;
   font-size: 18px;
-  color: #04133D !important;
+  color: #04133d !important;
 `;
 
 export const AddressBadge = styled.div`
@@ -2055,7 +2099,7 @@ export const AddressBadge = styled.div`
   padding: 4px 18px;
   font-size: 18px;
   font-weight: 500;
-  color: #1E29F6;
+  color: #1e29f6;
   gap: 8px;
   user-select: none;
   cursor: pointer;
@@ -2068,17 +2112,17 @@ export const AddressCopyButton = styled.button`
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #1E29F6;
-  
+  color: #1e29f6;
+
   svg {
     width: 18px;
     height: 18px;
     display: block;
   }
-  
+
   svg path,
   svg rect {
-    stroke: #1E29F6 !important;
+    stroke: #1e29f6 !important;
     fill: none !important;
   }
 `;

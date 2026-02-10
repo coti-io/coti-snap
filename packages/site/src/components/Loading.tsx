@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+
 import LoaderIcon from '../assets/icons/loader.png';
 
 const spin = keyframes`
@@ -50,10 +51,7 @@ export const Loading = ({
         alignItems: 'center',
       }}
     >
-      <SpinnerImage
-        src={LoaderIcon}
-        alt="Loading"
-      />
+      <SpinnerImage src={LoaderIcon} alt="Loading" />
       <ContentText>{actionText}</ContentText>
     </div>
   </>

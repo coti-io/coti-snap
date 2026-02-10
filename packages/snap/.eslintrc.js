@@ -1,5 +1,8 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
+  rules: {
+    'jsdoc/tag-lines': 'off',
+  },
 
   parserOptions: {
     tsconfigRootDir: __dirname,

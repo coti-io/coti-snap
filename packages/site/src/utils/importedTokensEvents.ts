@@ -10,7 +10,7 @@ export const subscribeImportedTokens = (subscriber: Subscriber) => {
 };
 
 export const notifyImportedTokensUpdated = () => {
-  subscribers.forEach(subscriber => {
+  subscribers.forEach((subscriber) => {
     try {
       subscriber();
     } catch (error) {
@@ -18,4 +18,3 @@ export const notifyImportedTokensUpdated = () => {
     }
   });
 };
-

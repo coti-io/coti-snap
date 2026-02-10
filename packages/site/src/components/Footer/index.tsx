@@ -16,7 +16,7 @@ const FooterContainer = styled.footer`
   box-sizing: border-box;
   contain: layout style;
   z-index: 1;
-  
+
   @media screen and (max-width: 768px), screen and (max-height: 700px) {
     padding: clamp(10px, 2vh, 16px) 12px;
   }
@@ -52,22 +52,44 @@ const Link = styled.a`
   }
 `;
 
+/**
+ *
+ */
 export function Footer() {
   return (
     <FooterContainer>
-      <Title>Powered by MetaMask Snaps. MetaMask® is a trademark of ConsenSys.</Title>
+      <Title>
+        Powered by MetaMask Snaps. MetaMask® is a trademark of ConsenSys.
+      </Title>
       <Description>
-        dApp <VersionInfo>{process.env.VITE_GIT_COMMIT?.slice(0, 6) || 'dev'}</VersionInfo> • Snap <VersionInfo>v{process.env.VITE_SNAP_VERSION || 'unknown'}</VersionInfo>{' '} • {' '}
-        <Link href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap" target="_blank" rel="noopener noreferrer">
+        dApp{' '}
+        <VersionInfo>
+          {process.env.VITE_GIT_COMMIT?.slice(0, 6) || 'dev'}
+        </VersionInfo>{' '}
+        • Snap{' '}
+        <VersionInfo>v{process.env.VITE_SNAP_VERSION || 'unknown'}</VersionInfo>{' '}
+        •{' '}
+        <Link
+          href="https://docs.coti.io/coti-documentation/build-on-coti/tools/coti-metamask-snap"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Docs
         </Link>{' '}
-        •
-        © 2026 COTI{' '}
-        •{' '}
-        <Link href="https://coti.io/terms" target="_blank" rel="noopener noreferrer">
+        • © 2026 COTI •{' '}
+        <Link
+          href="https://coti.io/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Terms of Use
-        </Link>{' '}•{' '}
-        <Link href="https://coti.io/privacy" target="_blank" rel="noopener noreferrer">
+        </Link>{' '}
+        •{' '}
+        <Link
+          href="https://coti.io/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Privacy Policy
         </Link>{' '}
       </Description>

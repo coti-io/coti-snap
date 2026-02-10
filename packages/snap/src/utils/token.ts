@@ -2,18 +2,18 @@ import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
 import { Contract, ethers, formatUnits, ZeroAddress } from 'ethers';
 
-import erc20Abi from '../abis/ERC20.json';
-import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
-import erc721Abi from '../abis/ERC721.json';
-import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
-import type { Tokens } from '../types';
-import { TokenViewSelector } from '../types';
 import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress,
   getExpectedEnvironment,
   setExpectedEnvironment,
 } from './snap';
+import erc20Abi from '../abis/ERC20.json';
+import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
+import erc721Abi from '../abis/ERC721.json';
+import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
+import type { Tokens } from '../types';
+import { TokenViewSelector } from '../types';
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -25,9 +25,10 @@ const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
 const getJsonRpcProvider = async () => {
   const expectedEnv = await getExpectedEnvironment();
-  const rpcUrl = expectedEnv === 'testnet'
-    ? 'https://testnet.coti.io/rpc'
-    : 'https://mainnet.coti.io/rpc';
+  const rpcUrl =
+    expectedEnv === 'testnet'
+      ? 'https://testnet.coti.io/rpc'
+      : 'https://mainnet.coti.io/rpc';
   return new ethers.JsonRpcProvider(rpcUrl);
 };
 
@@ -44,7 +45,9 @@ export const getTokenURI = async (
       provider,
     );
     const tokenURIMethod = contract.tokenURI;
-    if (!tokenURIMethod) throw new Error('tokenURI method not available');
+    if (!tokenURIMethod) {
+      throw new Error('tokenURI method not available');
+    }
     const encryptedTokenURI = await tokenURIMethod(BigInt(tokenId));
     const decryptedURI = decryptString(encryptedTokenURI, aesKey)
       .replace(/\0/g, '')
@@ -141,7 +144,9 @@ export const checkERC721Ownership = async (
   try {
     const provider = await getJsonRpcProvider();
 
-    const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+    const accounts = (await ethereum.request({
+      method: 'eth_accounts',
+    })) as string[];
     const userAddress = accounts.length > 0 ? accounts[0] : null;
 
     if (!userAddress) {
@@ -159,10 +164,16 @@ export const checkERC721Ownership = async (
       return owner.toLowerCase() === userAddress.toLowerCase();
     } catch {
       try {
-        contract = new ethers.Contract(address, erc721ConfidentialAbi, provider);
+        contract = new ethers.Contract(
+          address,
+          erc721ConfidentialAbi,
+          provider,
+        );
 
         if (!contract.ownerOf) {
-          throw new Error('ownerOf method not available in confidential contract');
+          throw new Error(
+            'ownerOf method not available in confidential contract',
+          );
         }
 
         const owner = await contract.ownerOf(BigInt(tokenId));
@@ -201,9 +212,8 @@ export async function getTokenType(address: string): Promise<{
 
     if (!isERC721) {
       try {
-        isERC1155 = await erc165Contract.supportsInterface(
-          ERC1155_INTERFACE_ID,
-        );
+        isERC1155 =
+          await erc165Contract.supportsInterface(ERC1155_INTERFACE_ID);
       } catch {
         // ERC1155 interface check failed - expected for non-ERC1155 contracts
         isERC1155 = false;
@@ -219,7 +229,9 @@ export async function getTokenType(address: string): Promise<{
         provider,
       );
       const tokenURIMethod = contract.tokenURI;
-      if (!tokenURIMethod) throw new Error('tokenURI method not available');
+      if (!tokenURIMethod) {
+        throw new Error('tokenURI method not available');
+      }
       const tokenURI = await tokenURIMethod(BigInt(0));
       if (tokenURI) {
         return { type: TokenViewSelector.NFT, confidential: true };
@@ -234,7 +246,12 @@ export async function getTokenType(address: string): Promise<{
   const erc20Contract = new ethers.Contract(address, erc20Abi, provider);
 
   try {
-    if (!erc20Contract.decimals || !erc20Contract.symbol || !erc20Contract.totalSupply || !erc20Contract.balanceOf) {
+    if (
+      !erc20Contract.decimals ||
+      !erc20Contract.symbol ||
+      !erc20Contract.totalSupply ||
+      !erc20Contract.balanceOf
+    ) {
       throw new Error('Required ERC20 methods not available');
     }
     await erc20Contract.decimals();
@@ -248,8 +265,11 @@ export async function getTokenType(address: string): Promise<{
         erc20ConfidentialAbi,
         provider,
       );
-      const accountEncryptionMethod = erc20ConfidentialContract.accountEncryptionAddress;
-      if (!accountEncryptionMethod) throw new Error('accountEncryptionAddress method not available');
+      const accountEncryptionMethod =
+        erc20ConfidentialContract.accountEncryptionAddress;
+      if (!accountEncryptionMethod) {
+        throw new Error('accountEncryptionAddress method not available');
+      }
       await accountEncryptionMethod(address);
       return { type: TokenViewSelector.ERC20, confidential: true };
     } catch {
@@ -262,7 +282,10 @@ export async function getTokenType(address: string): Promise<{
   }
 }
 
-export const decryptBalance = (balance: ctUint, aesKey: string): bigint | null => {
+export const decryptBalance = (
+  balance: ctUint,
+  aesKey: string,
+): bigint | null => {
   try {
     return decryptUint(balance, aesKey);
   } catch {
@@ -272,7 +295,8 @@ export const decryptBalance = (balance: ctUint, aesKey: string): bigint | null =
 
 export const checkChainId = async (): Promise<boolean> => {
   try {
-    const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } = await import('../config');
+    const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } =
+      await import('../config');
 
     const expectedEnv = await getExpectedEnvironment();
 
@@ -281,7 +305,9 @@ export const checkChainId = async (): Promise<boolean> => {
       return true;
     }
 
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    const chainIdHex = (await ethereum.request({
+      method: 'eth_chainId',
+    })) as string;
     const currentChainId = parseInt(chainIdHex, 16).toString();
 
     if (currentChainId === COTI_TESTNET_CHAIN_ID) {
@@ -312,24 +338,35 @@ export const checkChainId = async (): Promise<boolean> => {
 export const checkIfERC20Unique = async (address: string): Promise<boolean> => {
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
-  return !tokens.some((token) => token.address.toLowerCase() === address.toLowerCase());
-};
-
-export const checkIfERC721Unique = async (address: string, tokenId: string): Promise<boolean> => {
-  const state = await getStateByChainIdAndAddress();
-  const tokens = state.tokenBalances || [];
   return !tokens.some(
-    (token) => token.address.toLowerCase() === address.toLowerCase() && token.tokenId === tokenId,
+    (token) => token.address.toLowerCase() === address.toLowerCase(),
   );
 };
 
-export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBalances: Tokens }> => {
+export const checkIfERC721Unique = async (
+  address: string,
+  tokenId: string,
+): Promise<boolean> => {
+  const state = await getStateByChainIdAndAddress();
+  const tokens = state.tokenBalances || [];
+  return !tokens.some(
+    (token) =>
+      token.address.toLowerCase() === address.toLowerCase() &&
+      token.tokenId === tokenId,
+  );
+};
+
+export const recalculateBalances = async (): Promise<{
+  balance: bigint;
+  tokenBalances: Tokens;
+}> => {
   // IMPORTANT: BrowserProvider(ethereum) does NOT sync when MetaMask changes networks
   // So we must use JsonRpcProvider with the correct RPC URL based on expectedEnvironment
   const expectedEnv = await getExpectedEnvironment();
-  const rpcUrl = expectedEnv === 'testnet'
-    ? 'https://testnet.coti.io/rpc'
-    : 'https://mainnet.coti.io/rpc';
+  const rpcUrl =
+    expectedEnv === 'testnet'
+      ? 'https://testnet.coti.io/rpc'
+      : 'https://mainnet.coti.io/rpc';
 
   const state = await getStateByChainIdAndAddress();
   const tokens = state.tokenBalances || [];
@@ -338,7 +375,9 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
   const provider = new ethers.JsonRpcProvider(rpcUrl);
 
   try {
-    const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+    const accounts = (await ethereum.request({
+      method: 'eth_accounts',
+    })) as string[];
     const signerAddress = accounts.length > 0 ? accounts[0] : null;
 
     if (!signerAddress) {
@@ -346,7 +385,14 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
     }
 
     const balance = await provider.getBalance(signerAddress);
-    console.log('[SNAP] recalculateBalances - balance for', signerAddress, 'on', expectedEnv, ':', balance.toString());
+    console.log(
+      '[SNAP] recalculateBalances - balance for',
+      signerAddress,
+      'on',
+      expectedEnv,
+      ':',
+      balance.toString(),
+    );
 
     const tokenBalances: Tokens = await Promise.all(
       tokens.map(async (token) => {
@@ -380,16 +426,13 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
             : null;
           let tokenUri: string | null = token.uri ?? null;
           if (token.confidential && token.tokenId && state.aesKey) {
-            tokenUri = await getTokenURI(
-              token.address,
-              token.tokenId,
-              state.aesKey,
-            ) ?? tokenUri;
+            tokenUri =
+              (await getTokenURI(token.address, token.tokenId, state.aesKey)) ??
+              tokenUri;
           } else if (!token.confidential && token.tokenId) {
-            tokenUri = await getPublicTokenURI(
-              token.address,
-              token.tokenId,
-            ) ?? tokenUri;
+            tokenUri =
+              (await getPublicTokenURI(token.address, token.tokenId)) ??
+              tokenUri;
           }
           return {
             ...token,
@@ -408,9 +451,9 @@ export const recalculateBalances = async (): Promise<{ balance: bigint; tokenBal
     });
     return { balance, tokenBalances };
   } catch {
-    return { 
-      balance: BigInt(0), 
-      tokenBalances: tokens.map(token => ({ ...token, balance: null }))
+    return {
+      balance: BigInt(0),
+      tokenBalances: tokens.map((token) => ({ ...token, balance: null })),
     };
   }
 };
@@ -428,7 +471,11 @@ export const importToken = async (
   const tokens = oldState.tokenBalances || [];
 
   const alreadyExists = tokenId
-    ? tokens.some((t) => t.address.toLowerCase() === normalizedAddress && t.tokenId === tokenId)
+    ? tokens.some(
+        (t) =>
+          t.address.toLowerCase() === normalizedAddress &&
+          t.tokenId === tokenId,
+      )
     : tokens.some((t) => t.address.toLowerCase() === normalizedAddress);
   if (alreadyExists) {
     throw new Error('Token already exists');
@@ -438,7 +485,10 @@ export const importToken = async (
   let confidential = false;
 
   if (knownTokenType) {
-    type = knownTokenType === 'ERC20' ? TokenViewSelector.ERC20 : TokenViewSelector.NFT;
+    type =
+      knownTokenType === 'ERC20'
+        ? TokenViewSelector.ERC20
+        : TokenViewSelector.NFT;
   } else {
     const detected = await getTokenType(address);
     if (detected.type === TokenViewSelector.UNKNOWN) {
@@ -464,12 +514,18 @@ export const importToken = async (
   await setStateByChainIdAndAddress({ ...oldState, tokenBalances: tokens });
 };
 
-export const hideToken = async (address: string, tokenId?: string): Promise<void> => {
+export const hideToken = async (
+  address: string,
+  tokenId?: string,
+): Promise<void> => {
   const oldState = await getStateByChainIdAndAddress();
   const tokens = oldState.tokenBalances;
   const updatedTokens = tokens.filter((token) => {
     if (tokenId) {
-      return !(token.address.toLowerCase() === address.toLowerCase() && token.tokenId === tokenId);
+      return !(
+        token.address.toLowerCase() === address.toLowerCase() &&
+        token.tokenId === tokenId
+      );
     }
     return token.address.toLowerCase() !== address.toLowerCase();
   });
@@ -496,7 +552,7 @@ export const truncateAddress = (address: string, length = 6): string => {
 export const formatTokenBalance = (
   balance: string | null,
   decimals: string | null,
-  maxDecimals = 4
+  maxDecimals = 4,
 ): string => {
   if (!balance || balance === '0' || !decimals) {
     return '0';
@@ -505,11 +561,11 @@ export const formatTokenBalance = (
   try {
     const formatted = formatUnits(balance, parseInt(decimals, 10));
     const dotIndex = formatted.indexOf('.');
-    
+
     if (dotIndex === -1) {
       return formatted;
     }
-    
+
     return formatted.slice(0, dotIndex + maxDecimals + 1);
   } catch {
     return '0';

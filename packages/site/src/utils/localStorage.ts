@@ -1,5 +1,5 @@
-import { ImportedToken, TokenType } from '../types/token';
 import { IMPORTED_TOKENS_KEY, ERROR_MESSAGES } from '../constants/token';
+import type { ImportedToken, TokenType } from '../types/token';
 
 /**
  * Get a local storage key.
@@ -42,7 +42,10 @@ export const setLocalStorage = (key: string, value: string) => {
  * @param chainId - The chain ID (optional for backwards compatibility).
  * @returns The storage key for the account's imported tokens.
  */
-export const getAccountTokensKey = (address: string, chainId?: number): string => {
+export const getAccountTokensKey = (
+  address: string,
+  chainId?: number,
+): string => {
   const baseKey = `${IMPORTED_TOKENS_KEY}_${address.toLowerCase()}`;
   if (chainId) {
     return `${baseKey}_${chainId}`;
@@ -57,8 +60,13 @@ export const getAccountTokensKey = (address: string, chainId?: number): string =
  * @param chainId - The chain ID.
  * @returns Array of imported tokens or empty array if none exist.
  */
-export const getImportedTokensByAccount = (address: string, chainId?: number): ImportedToken[] => {
-  if (!address) return [];
+export const getImportedTokensByAccount = (
+  address: string,
+  chainId?: number,
+): ImportedToken[] => {
+  if (!address) {
+    return [];
+  }
 
   try {
     const accountKey = getAccountTokensKey(address, chainId);
@@ -98,8 +106,14 @@ export const getImportedTokens = (): ImportedToken[] => {
  * @param tokens - Array of imported tokens to save.
  * @param chainId - The chain ID.
  */
-export const setImportedTokensByAccount = (address: string, tokens: ImportedToken[], chainId?: number) => {
-  if (!address) return;
+export const setImportedTokensByAccount = (
+  address: string,
+  tokens: ImportedToken[],
+  chainId?: number,
+) => {
+  if (!address) {
+    return;
+  }
 
   try {
     const accountKey = getAccountTokensKey(address, chainId);
@@ -129,18 +143,28 @@ export const setImportedTokens = (tokens: ImportedToken[]) => {
  * @param token - The token to add.
  * @param chainId - The chain ID.
  */
-export const addImportedTokenByAccount = (accountAddress: string, token: ImportedToken, chainId?: number) => {
-  if (!accountAddress) return;
+export const addImportedTokenByAccount = (
+  accountAddress: string,
+  token: ImportedToken,
+  chainId?: number,
+) => {
+  if (!accountAddress) {
+    return;
+  }
 
   const existingTokens = getImportedTokensByAccount(accountAddress, chainId);
   const normalizedAddress = token.address.toLowerCase();
 
   const tokenExists = existingTokens.some(
-    existingToken => existingToken.address.toLowerCase() === normalizedAddress
+    (existingToken) =>
+      existingToken.address.toLowerCase() === normalizedAddress,
   );
 
   if (!tokenExists) {
-    const updatedTokens = [...existingTokens, { ...token, address: normalizedAddress }];
+    const updatedTokens = [
+      ...existingTokens,
+      { ...token, address: normalizedAddress },
+    ];
     setImportedTokensByAccount(accountAddress, updatedTokens, chainId);
   }
 };
@@ -156,11 +180,15 @@ export const addImportedToken = (token: ImportedToken) => {
 
   // Check if token already exists (case-insensitive)
   const tokenExists = existingTokens.some(
-    existingToken => existingToken.address.toLowerCase() === normalizedAddress
+    (existingToken) =>
+      existingToken.address.toLowerCase() === normalizedAddress,
   );
 
   if (!tokenExists) {
-    const updatedTokens = [...existingTokens, { ...token, address: normalizedAddress }];
+    const updatedTokens = [
+      ...existingTokens,
+      { ...token, address: normalizedAddress },
+    ];
     setImportedTokens(updatedTokens);
   }
 };
@@ -172,13 +200,19 @@ export const addImportedToken = (token: ImportedToken) => {
  * @param tokenAddress - The token address to remove.
  * @param chainId - The chain ID.
  */
-export const removeImportedTokenByAccount = (accountAddress: string, tokenAddress: string, chainId?: number) => {
-  if (!accountAddress) return;
+export const removeImportedTokenByAccount = (
+  accountAddress: string,
+  tokenAddress: string,
+  chainId?: number,
+) => {
+  if (!accountAddress) {
+    return;
+  }
 
   const existingTokens = getImportedTokensByAccount(accountAddress, chainId);
   const normalizedAddress = tokenAddress.toLowerCase();
   const updatedTokens = existingTokens.filter(
-    token => token.address.toLowerCase() !== normalizedAddress
+    (token) => token.address.toLowerCase() !== normalizedAddress,
   );
   setImportedTokensByAccount(accountAddress, updatedTokens, chainId);
 };
@@ -192,7 +226,7 @@ export const removeImportedToken = (address: string) => {
   const existingTokens = getImportedTokens();
   const normalizedAddress = address.toLowerCase();
   const updatedTokens = existingTokens.filter(
-    token => token.address.toLowerCase() !== normalizedAddress
+    (token) => token.address.toLowerCase() !== normalizedAddress,
   );
   setImportedTokens(updatedTokens);
 };
@@ -203,8 +237,13 @@ export const removeImportedToken = (address: string) => {
  * @param accountAddress - The account address.
  * @param chainId - The chain ID.
  */
-export const clearImportedTokensByAccount = (accountAddress: string, chainId?: number) => {
-  if (!accountAddress) return;
+export const clearImportedTokensByAccount = (
+  accountAddress: string,
+  chainId?: number,
+) => {
+  if (!accountAddress) {
+    return;
+  }
   setImportedTokensByAccount(accountAddress, [], chainId);
 };
 
@@ -216,9 +255,13 @@ export const clearImportedTokensByAccount = (accountAddress: string, chainId?: n
  * @param chainId - The chain ID.
  * @returns Array of imported tokens of the specified type.
  */
-export const getImportedTokensByTypeAndAccount = (accountAddress: string, tokenType: TokenType, chainId?: number): ImportedToken[] => {
+export const getImportedTokensByTypeAndAccount = (
+  accountAddress: string,
+  tokenType: TokenType,
+  chainId?: number,
+): ImportedToken[] => {
   const allTokens = getImportedTokensByAccount(accountAddress, chainId);
-  return allTokens.filter(token => token.type === tokenType);
+  return allTokens.filter((token) => token.type === tokenType);
 };
 
 /**
@@ -228,7 +271,10 @@ export const getImportedTokensByTypeAndAccount = (accountAddress: string, tokenT
  * @param chainId - The chain ID.
  * @returns Array of ERC20 tokens.
  */
-export const getERC20TokensByAccount = (accountAddress: string, chainId?: number): ImportedToken[] => {
+export const getERC20TokensByAccount = (
+  accountAddress: string,
+  chainId?: number,
+): ImportedToken[] => {
   return getImportedTokensByTypeAndAccount(accountAddress, 'ERC20', chainId);
 };
 
@@ -239,9 +285,14 @@ export const getERC20TokensByAccount = (accountAddress: string, chainId?: number
  * @param chainId - The chain ID.
  * @returns Array of NFT tokens (both ERC721 and ERC1155).
  */
-export const getNFTTokensByAccount = (accountAddress: string, chainId?: number): ImportedToken[] => {
+export const getNFTTokensByAccount = (
+  accountAddress: string,
+  chainId?: number,
+): ImportedToken[] => {
   const allTokens = getImportedTokensByAccount(accountAddress, chainId);
-  return allTokens.filter(token => token.type === 'ERC721' || token.type === 'ERC1155');
+  return allTokens.filter(
+    (token) => token.type === 'ERC721' || token.type === 'ERC1155',
+  );
 };
 
 /**
@@ -250,9 +301,11 @@ export const getNFTTokensByAccount = (accountAddress: string, chainId?: number):
  * @param tokenType - The type of tokens to filter by.
  * @returns Array of imported tokens of the specified type.
  */
-export const getImportedTokensByType = (tokenType: TokenType): ImportedToken[] => {
+export const getImportedTokensByType = (
+  tokenType: TokenType,
+): ImportedToken[] => {
   const allTokens = getImportedTokens();
-  return allTokens.filter(token => token.type === tokenType);
+  return allTokens.filter((token) => token.type === tokenType);
 };
 
 /**
@@ -271,5 +324,7 @@ export const getERC20Tokens = (): ImportedToken[] => {
  */
 export const getNFTTokens = (): ImportedToken[] => {
   const allTokens = getImportedTokens();
-  return allTokens.filter(token => token.type === 'ERC721' || token.type === 'ERC1155');
+  return allTokens.filter(
+    (token) => token.type === 'ERC721' || token.type === 'ERC1155',
+  );
 };

@@ -10,7 +10,12 @@ jest.mock('@coti-io/coti-sdk-typescript', () => ({
   decryptString: jest.fn(),
   decryptUint: jest.fn(),
 }));
-const { getStateByChainIdAndAddress, setStateByChainIdAndAddress, getExpectedEnvironment } = require('../utils/snap');
+const {
+  getStateByChainIdAndAddress,
+  setStateByChainIdAndAddress,
+  getExpectedEnvironment,
+} = require('../utils/snap');
+
 jest.mock('../utils/snap', () => ({
   getStateByChainIdAndAddress: jest.fn(),
   setStateByChainIdAndAddress: jest.fn(),
@@ -312,7 +317,11 @@ describe('Token Utilities', () => {
     it('should return true when NFT is unique', async () => {
       const mockState = {
         tokenBalances: [
-          { address: '0xNFTAddress', tokenId: '2', type: TokenViewSelector.NFT },
+          {
+            address: '0xNFTAddress',
+            tokenId: '2',
+            type: TokenViewSelector.NFT,
+          },
         ],
       };
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
@@ -325,7 +334,11 @@ describe('Token Utilities', () => {
     it('should return false when NFT already exists', async () => {
       const mockState = {
         tokenBalances: [
-          { address: '0xNFTAddress', tokenId: '1', type: TokenViewSelector.NFT },
+          {
+            address: '0xNFTAddress',
+            tokenId: '1',
+            type: TokenViewSelector.NFT,
+          },
         ],
       };
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
@@ -339,25 +352,25 @@ describe('Token Utilities', () => {
   describe('truncateAddress', () => {
     it('should truncate long addresses', () => {
       const address = '0x1234567890abcdef1234567890abcdef12345678';
-      
+
       const result = tokenUtils.truncateAddress(address);
-      
+
       expect(result).toBe('0x1234...345678');
     });
 
     it('should return original address if short', () => {
       const address = '0x1234';
-      
+
       const result = tokenUtils.truncateAddress(address);
-      
+
       expect(result).toBe('0x1234');
     });
 
     it('should use custom length', () => {
       const address = '0x1234567890abcdef1234567890abcdef12345678';
-      
+
       const result = tokenUtils.truncateAddress(address, 4);
-      
+
       expect(result).toBe('0x12...5678');
     });
   });
@@ -365,25 +378,25 @@ describe('Token Utilities', () => {
   describe('formatTokenBalance', () => {
     it('should return 0 for null balance', () => {
       const result = tokenUtils.formatTokenBalance(null, '18');
-      
+
       expect(result).toBe('0');
     });
 
     it('should return 0 for zero balance', () => {
       const result = tokenUtils.formatTokenBalance('0', '18');
-      
+
       expect(result).toBe('0');
     });
 
     it('should return 0 for null decimals', () => {
       const result = tokenUtils.formatTokenBalance('1000', null);
-      
+
       expect(result).toBe('0');
     });
 
     it('should handle invalid input gracefully', () => {
       const result = tokenUtils.formatTokenBalance('invalid', '18');
-      
+
       expect(result).toBe('0');
     });
   });
@@ -421,19 +434,23 @@ describe('Token Utilities', () => {
         .mockImplementationOnce(() => mockERC20Contract)
         .mockImplementationOnce(() => mockERC20ConfidentialContract);
 
-      await expect(tokenUtils.importToken('0xToken', 'Test Token', 'TT', '18')).resolves.not.toThrow();
+      await expect(
+        tokenUtils.importToken('0xToken', 'Test Token', 'TT', '18'),
+      ).resolves.not.toThrow();
 
       expect(setStateByChainIdAndAddress).toHaveBeenCalledWith({
-        tokenBalances: [{
-          address: '0xToken',
-          name: 'Test Token',
-          symbol: 'TT',
-          balance: null,
-          type: TokenViewSelector.ERC20,
-          confidential: false,
-          decimals: '18',
-          tokenId: null,
-        }],
+        tokenBalances: [
+          {
+            address: '0xToken',
+            name: 'Test Token',
+            symbol: 'TT',
+            balance: null,
+            type: TokenViewSelector.ERC20,
+            confidential: false,
+            decimals: '18',
+            tokenId: null,
+          },
+        ],
       });
     });
 
@@ -455,7 +472,9 @@ describe('Token Utilities', () => {
         .mockImplementationOnce(() => mockERC165Contract)
         .mockImplementationOnce(() => mockERC20Contract);
 
-      await expect(tokenUtils.importToken('0xToken', 'Unknown Token', 'UT', '18')).rejects.toThrow('Invalid token type');
+      await expect(
+        tokenUtils.importToken('0xToken', 'Unknown Token', 'UT', '18'),
+      ).rejects.toThrow('Invalid token type');
 
       expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
     });
@@ -478,7 +497,9 @@ describe('Token Utilities', () => {
         .mockImplementationOnce(() => mockERC165Contract)
         .mockImplementationOnce(() => mockERC721Contract);
 
-      await expect(tokenUtils.importToken('0xNFT', 'NFT Token', 'NFT', '0')).rejects.toThrow('Token ID required for NFT');
+      await expect(
+        tokenUtils.importToken('0xNFT', 'NFT Token', 'NFT', '0'),
+      ).rejects.toThrow('Token ID required for NFT');
 
       expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
     });

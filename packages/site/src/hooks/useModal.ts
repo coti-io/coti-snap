@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from 'react';
 
-interface UseModalProps {
+type UseModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onReset?: () => void;
-}
+};
 
 export const useModal = ({ isOpen, onClose, onReset }: UseModalProps) => {
   const handleClose = useCallback(() => {
@@ -14,17 +14,23 @@ export const useModal = ({ isOpen, onClose, onReset }: UseModalProps) => {
     onClose();
   }, [onReset, onClose]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  }, [handleClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        handleClose();
+      }
+    },
+    [handleClose],
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleClose();
-    }
-  }, [handleClose]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    },
+    [handleClose],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -44,6 +50,6 @@ export const useModal = ({ isOpen, onClose, onReset }: UseModalProps) => {
   return {
     handleClose,
     handleBackdropClick,
-    handleKeyDown
+    handleKeyDown,
   };
 };

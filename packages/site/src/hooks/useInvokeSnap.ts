@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { defaultSnapOrigin } from '../config';
+
 import { useRequest } from './useRequest';
+import { defaultSnapOrigin } from '../config';
 
 export type InvokeSnapParams = {
   method: string;
@@ -25,14 +26,17 @@ export const useInvokeSnap = (snapId = defaultSnapOrigin) => {
    * @param params.params - The method params.
    * @returns The Snap response.
    */
-  const invokeSnap = useCallback(async ({ method, params }: InvokeSnapParams) =>
-    request({
-      method: 'wallet_invokeSnap',
-      params: {
-        snapId,
-        request: params ? { method, params } : { method },
-      },
-    }), [request, snapId]);
+  const invokeSnap = useCallback(
+    async ({ method, params }: InvokeSnapParams) =>
+      request({
+        method: 'wallet_invokeSnap',
+        params: {
+          snapId,
+          request: params ? { method, params } : { method },
+        },
+      }),
+    [request, snapId],
+  );
 
   return invokeSnap;
 };

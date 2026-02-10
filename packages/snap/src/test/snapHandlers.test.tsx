@@ -1,12 +1,19 @@
-import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 import { UserInputEventType } from '@metamask/snaps-sdk';
+import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
+import * as snapHandlers from '..';
 import { TokenViewSelector } from '../types';
-import * as snapHandlers from '../index';
 
-const { getStateByChainIdAndAddress, setStateByChainIdAndAddress } = require('../utils/snap');
-const { checkChainId, recalculateBalances, hideToken } = require('../utils/token');
 const { getSVGfromMetadata } = require('../utils/image');
+const {
+  getStateByChainIdAndAddress,
+  setStateByChainIdAndAddress,
+} = require('../utils/snap');
+const {
+  checkChainId,
+  recalculateBalances,
+  hideToken,
+} = require('../utils/token');
 
 jest.mock('../utils/token', () => ({
   checkChainId: jest.fn(),
@@ -90,7 +97,9 @@ describe('Snap Handlers', () => {
 
       await snapHandlers.onInstall({ origin: 'test-origin' });
 
-      expect(global.ethereum.request).toHaveBeenCalledWith({ method: 'eth_requestAccounts' });
+      expect(global.ethereum.request).toHaveBeenCalledWith({
+        method: 'eth_requestAccounts',
+      });
       expect(setStateByChainIdAndAddress).toHaveBeenCalledWith({
         balance: '0',
         tokenBalances: [],
@@ -106,7 +115,9 @@ describe('Snap Handlers', () => {
 
       await snapHandlers.onInstall({ origin: 'test-origin' });
 
-      expect(global.ethereum.request).toHaveBeenCalledWith({ method: 'eth_requestAccounts' });
+      expect(global.ethereum.request).toHaveBeenCalledWith({
+        method: 'eth_requestAccounts',
+      });
       expect(setStateByChainIdAndAddress).not.toHaveBeenCalled();
     });
   });
@@ -165,7 +176,9 @@ describe('Snap Handlers', () => {
       const mockState = { aesKey: null };
 
       (checkChainId as jest.Mock).mockResolvedValue(true);
-      (recalculateBalances as jest.Mock).mockRejectedValue(new Error('Test error'));
+      (recalculateBalances as jest.Mock).mockRejectedValue(
+        new Error('Test error'),
+      );
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
 
       const result = await snapHandlers.onHomePage();
@@ -176,10 +189,11 @@ describe('Snap Handlers', () => {
   });
 
   describe('onUserInput', () => {
-    const mockEvent = (name: string) => ({
-      type: UserInputEventType.ButtonClickEvent,
-      name,
-    } as any);
+    const mockEvent = (name: string) =>
+      ({
+        type: UserInputEventType.ButtonClickEvent,
+        name,
+      }) as any;
 
     it('should handle token details button click', async () => {
       const mockToken = { address: '0xToken1', name: 'Test Token', uri: null };
@@ -209,7 +223,7 @@ describe('Snap Handlers', () => {
       const mockToken = {
         address: '0xToken1',
         name: 'Test Token',
-        uri: 'https://example.com/metadata'
+        uri: 'https://example.com/metadata',
       };
       const mockState = { tokenBalances: [mockToken] };
 
@@ -223,7 +237,9 @@ describe('Snap Handlers', () => {
         context: null,
       });
 
-      expect(getSVGfromMetadata).toHaveBeenCalledWith('https://example.com/metadata');
+      expect(getSVGfromMetadata).toHaveBeenCalledWith(
+        'https://example.com/metadata',
+      );
       expect(global.snap.request).toHaveBeenCalled();
     });
 

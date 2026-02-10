@@ -1,7 +1,6 @@
 import type { DefaultTheme } from 'styled-components';
 import { createGlobalStyle } from 'styled-components';
 
-
 const breakpoints = ['600px', '768px', '992px'];
 
 /**

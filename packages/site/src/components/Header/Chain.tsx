@@ -1,10 +1,15 @@
 import { useCallback, memo } from 'react';
-import { useSwitchChain, useAccount } from 'wagmi';
 import styled from 'styled-components';
-import { getSupportedNetworks, getNetworkConfig, isSupportedChainId } from '../../config/networks';
-import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
+import { useSwitchChain, useAccount } from 'wagmi';
+
 import { ConnectedDetails, Dropdown } from './styles';
 import DownArrowIcon from '../../assets/icons/down-arrow.svg';
+import {
+  getSupportedNetworks,
+  getNetworkConfig,
+  isSupportedChainId,
+} from '../../config/networks';
+import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 
 const ChainWrapper = styled.div<{ $compact?: boolean }>`
   position: relative;
@@ -18,9 +23,13 @@ const ChainWrapper = styled.div<{ $compact?: boolean }>`
   align-items: ${(props) => (props.$compact ? 'stretch' : 'center')};
 `;
 
-const ChainButton = styled(ConnectedDetails)<{ $isOpen?: boolean; $compact?: boolean }>`
+const ChainButton = styled(ConnectedDetails)<{
+  $isOpen?: boolean;
+  $compact?: boolean;
+}>`
   gap: ${(props) => (props.$compact ? '6px' : '8px')};
-  font-size: ${(props) => (props.$compact ? props.theme.fontSizes.small : '14px')};
+  font-size: ${(props) =>
+    props.$compact ? props.theme.fontSizes.small : '14px'};
   line-height: ${(props) => (props.$compact ? '1.2' : '1.4')};
   padding: ${(props) => (props.$compact ? '12px 16px' : '10px 16px')};
   width: ${(props) => (props.$compact ? '100%' : 'auto')};
@@ -50,7 +59,9 @@ const ChainButton = styled(ConnectedDetails)<{ $isOpen?: boolean; $compact?: boo
     flex-shrink: 0;
   }
 
-  ${(props) => props.$isOpen && `
+  ${(props) =>
+    props.$isOpen &&
+    `
     svg {
       transform: rotate(180deg);
     }
@@ -104,7 +115,11 @@ const ChainDropdown = styled(Dropdown)<{ $compact?: boolean }>`
   }
 `;
 
-const NetworkOption = styled.button<{ $isActive: boolean; $color: string; $compact?: boolean }>`
+const NetworkOption = styled.button<{
+  $isActive: boolean;
+  $color: string;
+  $compact?: boolean;
+}>`
   display: flex;
   align-items: center;
   gap: 10px;
@@ -112,21 +127,24 @@ const NetworkOption = styled.button<{ $isActive: boolean; $color: string; $compa
   min-height: ${(props) => (props.$compact ? '4.2rem' : '40px')};
   border: none;
   border-radius: ${({ theme }) => theme.radii.button};
-  background-color: ${(props) => props.$isActive ? props.$color : 'rgba(0, 0, 0, 0.03)'};
+  background-color: ${(props) =>
+    props.$isActive ? props.$color : 'rgba(0, 0, 0, 0.03)'};
   font-size: ${({ theme }) => theme.fontSizes.small};
   font-weight: 500;
-  cursor: ${(props) => props.$isActive ? 'default' : 'pointer'};
+  cursor: ${(props) => (props.$isActive ? 'default' : 'pointer')};
   transition: all 0.2s ease-in-out;
   font-family: ${({ theme }) => theme.fonts.default};
   text-align: left;
   width: 100%;
 
-  &, & * {
-    color: ${(props) => props.$isActive ? '#FFFFFF' : '#000000'} !important;
+  &,
+  & * {
+    color: ${(props) => (props.$isActive ? '#FFFFFF' : '#000000')} !important;
   }
 
   &:hover {
-    background-color: ${(props) => props.$isActive ? props.$color : 'rgba(0, 0, 0, 0.08)'};
+    background-color: ${(props) =>
+      props.$isActive ? props.$color : 'rgba(0, 0, 0, 0.08)'};
   }
 
   &:disabled {
@@ -139,7 +157,7 @@ const NetworkDot = styled.span<{ $color: string; $isActive: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: ${(props) => props.$isActive ? '#FFFFFF' : props.$color};
+  background-color: ${(props) => (props.$isActive ? '#FFFFFF' : props.$color)};
   flex-shrink: 0;
 `;
 
@@ -153,12 +171,7 @@ const CheckMark = styled.span`
   color: inherit;
 `;
 
-export const Chain = memo(
-  ({
-    compact = false,
-  }: {
-    compact?: boolean;
-  }) => {
+export const Chain = memo(({ compact = false }: { compact?: boolean }) => {
   const { switchChain, isPending } = useSwitchChain();
   const { chain } = useAccount();
   const { isOpen, toggle, close, dropdownRef } = useOptimizedDropdown({
@@ -170,11 +183,16 @@ export const Chain = memo(
   const currentNetwork = isSupported ? getNetworkConfig(currentChainId) : null;
   const supportedNetworks = getSupportedNetworks();
 
-  const handleSwitchChain = useCallback((chainId: number) => {
-    if (chainId === currentChainId || isPending) return;
-    switchChain({ chainId });
-    close();
-  }, [switchChain, currentChainId, isPending, close]);
+  const handleSwitchChain = useCallback(
+    (chainId: number) => {
+      if (chainId === currentChainId || isPending) {
+        return;
+      }
+      switchChain({ chainId });
+      close();
+    },
+    [switchChain, currentChainId, isPending, close],
+  );
 
   const displayName = !isSupported
     ? 'Wrong Chain'
