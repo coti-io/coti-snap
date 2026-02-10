@@ -1,18 +1,19 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+
 import { colors, typography, transitions, spacing } from '../styles/theme';
 
-interface TokenIdProps {
+type TokenIdProps = {
   readonly tokenId?: string;
   readonly children?: React.ReactNode;
   readonly className?: string;
   readonly variant?: 'inline' | 'badge' | 'custom';
   readonly showHash?: boolean;
-}
+};
 
-interface TokenIdContainerProps {
+type TokenIdContainerProps = {
   $variant: 'inline' | 'badge' | 'custom';
-}
+};
 
 const variantStyles = {
   inline: css`
@@ -22,7 +23,7 @@ const variantStyles = {
     font-weight: ${typography.weights.normal};
     opacity: 0.8;
     padding: 0;
-    
+
     &:hover {
       opacity: 1;
     }
@@ -40,26 +41,27 @@ const variantStyles = {
     color: ${colors.text.muted};
     font-size: ${typography.sizes.base};
     font-weight: ${typography.weights.normal};
-  `
+  `,
 };
 
 const TokenIdContainer = styled.span<TokenIdContainerProps>`
   transition: opacity ${transitions.normal};
-  
+
   ${({ $variant }) => variantStyles[$variant]}
 `;
 
-export const TokenId: React.FC<TokenIdProps> = ({ 
+export const TokenId: React.FC<TokenIdProps> = ({
   tokenId,
   children,
   className,
   variant = 'inline',
-  showHash = true
+  showHash = true,
 }) => {
-  const content = children || (tokenId ? `${showHash ? '#' : ''}${tokenId}` : '');
-  
+  const content =
+    children || (tokenId ? `${showHash ? '#' : ''}${tokenId}` : '');
+
   return (
-    <TokenIdContainer 
+    <TokenIdContainer
       $variant={variant}
       className={className}
       aria-label={tokenId ? `Token ID ${tokenId}` : undefined}

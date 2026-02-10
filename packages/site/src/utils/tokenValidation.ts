@@ -12,6 +12,7 @@ export const TOKEN_VALIDATION_ERRORS = {
 
 /**
  * Validates if a string is a valid Ethereum address
+ * @param address
  */
 export const validateTokenAddress = (address: string): string => {
   if (!address || address.trim() === '') {
@@ -19,7 +20,7 @@ export const validateTokenAddress = (address: string): string => {
   }
 
   const trimmedAddress = address.trim();
-  
+
   if (!isAddress(trimmedAddress)) {
     return TOKEN_VALIDATION_ERRORS.INVALID_ADDRESS;
   }
@@ -29,6 +30,7 @@ export const validateTokenAddress = (address: string): string => {
 
 /**
  * Validates token ID for NFTs
+ * @param tokenId
  */
 export const validateTokenId = (tokenId: string): string => {
   if (!tokenId || tokenId.trim() === '') {
@@ -36,7 +38,7 @@ export const validateTokenId = (tokenId: string): string => {
   }
 
   const trimmedId = tokenId.trim();
-  
+
   // Check if it's a valid number (for most NFT standards)
   if (!/^\d+$/.test(trimmedId)) {
     return TOKEN_VALIDATION_ERRORS.INVALID_TOKEN_ID;
@@ -48,20 +50,23 @@ export const validateTokenId = (tokenId: string): string => {
 /**
  * Validates a complete token import form
  */
-export interface TokenFormData {
+export type TokenFormData = {
   address: string;
   tokenId?: string;
-}
+};
 
-export interface ValidationResult {
+export type ValidationResult = {
   isValid: boolean;
   errors: {
     address?: string;
     tokenId?: string;
   };
-}
+};
 
-export const validateTokenForm = (data: TokenFormData, isNFT = false): ValidationResult => {
+export const validateTokenForm = (
+  data: TokenFormData,
+  isNFT = false,
+): ValidationResult => {
   const errors: ValidationResult['errors'] = {};
 
   // Validate address
@@ -86,15 +91,23 @@ export const validateTokenForm = (data: TokenFormData, isNFT = false): Validatio
 
 /**
  * Creates a composite address for NFTs (address-tokenId)
+ * @param contractAddress
+ * @param tokenId
  */
-export const createNFTCompositeAddress = (contractAddress: string, tokenId: string): string => {
+export const createNFTCompositeAddress = (
+  contractAddress: string,
+  tokenId: string,
+): string => {
   return `${contractAddress.toLowerCase()}-${tokenId}`;
 };
 
 /**
  * Parses a composite NFT address back to its components
+ * @param compositeAddress
  */
-export const parseNFTAddress = (compositeAddress: string): { contractAddress: string; tokenId: string } => {
+export const parseNFTAddress = (
+  compositeAddress: string,
+): { contractAddress: string; tokenId: string } => {
   const parts = compositeAddress.split('-');
   if (parts.length < 2) {
     return {
@@ -102,7 +115,7 @@ export const parseNFTAddress = (compositeAddress: string): { contractAddress: st
       tokenId: '',
     };
   }
-  
+
   return {
     contractAddress: parts[0] || '',
     tokenId: parts.slice(1).join('-'), // In case token ID contains hyphens
@@ -111,10 +124,21 @@ export const parseNFTAddress = (compositeAddress: string): { contractAddress: st
 
 /**
  * Formats an address for display (truncated version)
+ * @param address
+ * @param startLength
+ * @param endLength
  */
-export const formatAddressForDisplay = (address: string | undefined, startLength = 6, endLength = 4): string => {
-  if (!address) return 'Unknown Address';
-  if (address.length <= startLength + endLength) return address;
-  
+export const formatAddressForDisplay = (
+  address: string | undefined,
+  startLength = 6,
+  endLength = 4,
+): string => {
+  if (!address) {
+    return 'Unknown Address';
+  }
+  if (address.length <= startLength + endLength) {
+    return address;
+  }
+
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 };

@@ -5,12 +5,9 @@ import { getNetworkConfig, isSupportedChainId } from './networks';
 export const USED_ONBOARD_CONTRACT_ADDRESS =
   ONBOARD_CONTRACT_ADDRESS as `0x${string}`;
 
-const ONBOARD_CONTRACT_EXPLORER_SUFFIX =
-  `/address/${USED_ONBOARD_CONTRACT_ADDRESS}?tab=transactions`;
+const ONBOARD_CONTRACT_EXPLORER_SUFFIX = `/address/${USED_ONBOARD_CONTRACT_ADDRESS}?tab=transactions`;
 
-export const getOnboardContractLink = (
-  chainId?: number | null,
-): string => {
+export const getOnboardContractLink = (chainId?: number | null): string => {
   const resolvedChainId = isSupportedChainId(chainId) ? chainId : undefined;
   const { explorerUrl } = getNetworkConfig(resolvedChainId);
   return `${explorerUrl}${ONBOARD_CONTRACT_EXPLORER_SUFFIX}`;

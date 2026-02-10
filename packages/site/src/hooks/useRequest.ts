@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import type { RequestArguments } from '@metamask/providers';
+import { useCallback } from 'react';
 
 import { useMetaMaskContext } from './MetamaskContext';
 
@@ -21,21 +21,24 @@ export const useRequest = () => {
    * @param params.params - The method params.
    * @returns The result of the request.
    */
-  const request: Request = useCallback(async ({ method, params }) => {
-    try {
-      const data =
-        (await provider?.request({
-          method,
-          params,
-        } as RequestArguments)) ?? null;
+  const request: Request = useCallback(
+    async ({ method, params }) => {
+      try {
+        const data =
+          (await provider?.request({
+            method,
+            params,
+          } as RequestArguments)) ?? null;
 
-      return data;
-    } catch (requestError: any) {
-      setError(requestError);
+        return data;
+      } catch (requestError: any) {
+        setError(requestError);
 
-      return null;
-    }
-  }, [provider, setError]);
+        return null;
+      }
+    },
+    [provider, setError],
+  );
 
   return request;
 };

@@ -1,33 +1,36 @@
+import type { BrowserProvider } from '@coti-io/coti-ethers';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { BrowserProvider } from '@coti-io/coti-ethers';
-import { ImportedToken } from '../types/token';
-import { useTokenOperations } from './useTokenOperations';
 
-interface UseTokenBalancesProps {
+import { useTokenOperations } from './useTokenOperations';
+import type { ImportedToken } from '../types/token';
+
+type UseTokenBalancesProps = {
   tokens: ImportedToken[];
   provider: BrowserProvider;
   aesKey?: string | null;
   cotiBalance?: string;
-}
+};
 
 export const useTokenBalances = ({
   tokens,
   provider,
   aesKey,
-  cotiBalance
+  cotiBalance,
 }: UseTokenBalancesProps) => {
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { decryptERC20Balance } = useTokenOperations(provider);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const tokenAddresses = useMemo(() => 
-    tokens.map(token => token.address).join(','), 
-    [tokens]
+  const tokenAddresses = useMemo(
+    () => tokens.map((token) => token.address).join(','),
+    [tokens],
   );
 
   const fetchBalances = useCallback(async () => {
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) {
+      return;
+    }
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -46,13 +49,18 @@ export const useTokenBalances = ({
 
       const batchSize = 3;
       for (let i = 0; i < tokens.length; i += batchSize) {
-        if (signal.aborted) return;
-        
+        if (signal.aborted) {
+          return;
+        }
+
         const batch = tokens.slice(i, i + batchSize);
         const batchPromises = batch.map(async (token) => {
           if (token.address && token.symbol !== 'COTI') {
             try {
-              const balance = await decryptERC20Balance(token.address, aesKey || undefined);
+              const balance = await decryptERC20Balance(
+                token.address,
+                aesKey || undefined,
+              );
               return { address: token.address, balance: balance.toString() };
             } catch (error) {
               void error;
@@ -63,14 +71,14 @@ export const useTokenBalances = ({
         });
 
         const batchResults = await Promise.all(batchPromises);
-        batchResults.forEach(result => {
+        batchResults.forEach((result) => {
           if (result) {
             newBalances[result.address] = result.balance;
           }
         });
 
         if (i + batchSize < tokens.length) {
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise((resolve) => setTimeout(resolve, 10));
         }
       }
 
@@ -90,7 +98,7 @@ export const useTokenBalances = ({
 
   useEffect(() => {
     fetchBalances();
-    
+
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -101,6 +109,6 @@ export const useTokenBalances = ({
   return {
     balances,
     isLoading,
-    refetch: fetchBalances
+    refetch: fetchBalances,
   };
 };

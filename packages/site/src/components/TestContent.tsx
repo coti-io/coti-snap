@@ -1,11 +1,14 @@
-import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
-import { shouldDisplayReconnectButton } from '../utils';
 import { Button } from './Button';
 import { ContentBorderWrapper, ContentContainer } from './styles';
+import { useInvokeSnap, useMetaMask, useRequestSnap } from '../hooks';
+import { shouldDisplayReconnectButton } from '../utils';
 
 export const TestContent = ({ userAESKey }: { userAESKey: string | null }) => {
   const { installedSnap } = useMetaMask();
-  const requestSnap = useRequestSnap(undefined, import.meta.env.VITE_SNAP_VERSION);
+  const requestSnap = useRequestSnap(
+    undefined,
+    import.meta.env.VITE_SNAP_VERSION,
+  );
   const invokeSnap = useInvokeSnap();
 
   const handleEncryptClick = async () => {

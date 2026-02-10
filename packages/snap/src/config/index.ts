@@ -35,13 +35,18 @@ export const detectEnvironment = (): 'testnet' | 'mainnet' => {
   }
 
   // Check for local development environment
-  if (typeof globalThis !== 'undefined' && (globalThis as any).__SNAP_ENV__ === 'local') {
+  if (
+    typeof globalThis !== 'undefined' &&
+    (globalThis as any).__SNAP_ENV__ === 'local'
+  ) {
     currentEnvironment = 'testnet';
     return 'testnet';
   }
 
   // Check for development mode
-  const isDevelopment = (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') ||
+  const isDevelopment =
+    (typeof process !== 'undefined' &&
+      process.env?.NODE_ENV === 'development') ||
     (typeof globalThis !== 'undefined' && (globalThis as any).__DEV__ === true);
 
   // Default to mainnet for production, testnet for development
@@ -60,10 +65,13 @@ export const resetEnvironment = (): void => {
 
 export const getCurrentNetworkConfig = (): NetworkConfig => {
   const environment = detectEnvironment();
-  const chainId = environment === 'testnet' ? COTI_TESTNET_CHAIN_ID : COTI_MAINNET_CHAIN_ID;
+  const chainId =
+    environment === 'testnet' ? COTI_TESTNET_CHAIN_ID : COTI_MAINNET_CHAIN_ID;
   const config = NETWORK_CONFIGS[chainId];
   if (!config) {
-    throw new Error(`Network configuration not found for environment: ${environment}`);
+    throw new Error(
+      `Network configuration not found for environment: ${environment}`,
+    );
   }
   return config;
 };

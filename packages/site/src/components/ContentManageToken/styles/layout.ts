@@ -1,11 +1,12 @@
 import styled from 'styled-components';
-import { 
-  colors, 
-  spacing, 
-  typography, 
-  borderRadius, 
-  transitions, 
-  buttonBase 
+
+import {
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  transitions,
+  buttonBase,
 } from './theme';
 
 export const MainStack = styled.div`
@@ -40,11 +41,11 @@ export const QuickAccessButton = styled.button`
   font-weight: ${typography.weights.semibold};
   font-size: ${typography.sizes.xs};
   ${buttonBase}
-  
+
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
   }
-  
+
   svg {
     width: ${spacing.xl};
     height: ${spacing.xl};
@@ -61,7 +62,6 @@ export const QuickAccessLabel = styled.span`
   font-weight: ${typography.weights.normal};
   text-align: center;
 `;
-
 
 export const BalanceSub = styled.div`
   font-size: ${typography.sizes.sm};
@@ -82,7 +82,7 @@ export const BalancePortfolioLink = styled.a`
   font-size: ${typography.sizes.xxl};
   line-height: 1;
   vertical-align: middle;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -92,7 +92,7 @@ export const BalancePortfolioIcon = styled.span`
   display: flex;
   align-items: center;
   height: ${typography.sizes.xxl};
-  
+
   svg {
     width: ${typography.sizes.xxl};
     height: ${typography.sizes.xxl};
@@ -119,18 +119,23 @@ export const TabsWrapper = styled.div`
 `;
 
 export const Tab = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== 'active'
+  shouldForwardProp: (prop) => prop !== 'active',
 })<{ active: boolean }>`
   background: none;
   border: none;
   outline: none;
   font-size: ${typography.sizes.xl};
-  font-weight: ${({ active }) => (active ? typography.weights.bold : typography.weights.medium)};
-  color: ${({ active }) => (active ? colors.text.primary : colors.text.tertiary)};
-  border-bottom: 3px solid ${({ active }) => (active ? colors.text.primary : colors.border.primary)};
+  font-weight: ${({ active }) =>
+    active ? typography.weights.bold : typography.weights.medium};
+  color: ${({ active }) =>
+    active ? colors.text.primary : colors.text.tertiary};
+  border-bottom: 3px solid
+    ${({ active }) => (active ? colors.text.primary : colors.border.primary)};
   padding: 0 ${spacing.xl} ${spacing.lg} ${spacing.xl};
   cursor: pointer;
-  transition: color ${transitions.normal}, border-bottom ${transitions.normal};
+  transition:
+    color ${transitions.normal},
+    border-bottom ${transitions.normal};
   flex: 1;
   text-align: center;
 `;

@@ -1,15 +1,8 @@
+import type { BrowserProvider } from '@coti-io/coti-ethers';
 import React, { useState, useCallback, useEffect } from 'react';
-import { BrowserProvider } from '@coti-io/coti-ethers';
-import { ImportedToken } from '../../types/token';
-import { useTokenOperations } from '../../hooks/useTokenOperations';
-import { useSnap } from '../../hooks/SnapContext';
-import { useImportedTokens } from '../../hooks/useImportedTokens';
-import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
-import { useDropdown } from '../../hooks/useDropdown';
-import { formatAddressForDisplay } from '../../utils/tokenValidation';
+
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { truncateBalance, formatTokenSymbol, formatBalance, formatTokenBalance } from '../../utils/formatters';
-import { 
+import {
   TokenDetailsContainer,
   TokenDetailsContent,
   TokenDetailsRow,
@@ -35,17 +28,30 @@ import {
   IconButton,
   MenuDropdown,
   MenuItem,
+  HeaderBar,
 } from './styles';
+import { HeaderBarSlotLeft, HeaderBarSlotRight } from './styles/transfer';
 import ArrowBack from '../../assets/arrow-back.svg';
 import CopyIcon from '../../assets/copy.svg';
 import CopySuccessIcon from '../../assets/copy-success.svg';
 import VerticalMenuIcon from '../../assets/icons/vertical-menu.svg';
 import { CotiLogo } from '../../assets/icons';
-import { HeaderBar } from './styles';
-import { HeaderBarSlotLeft, HeaderBarSlotRight } from './styles/transfer';
 import TrashIcon from '../../assets/icons/trash.svg';
+import { useSnap } from '../../hooks/SnapContext';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { useDropdown } from '../../hooks/useDropdown';
+import { useImportedTokens } from '../../hooks/useImportedTokens';
+import { useTokenOperations } from '../../hooks/useTokenOperations';
+import type { ImportedToken } from '../../types/token';
+import {
+  truncateBalance,
+  formatTokenSymbol,
+  formatBalance,
+  formatTokenBalance,
+} from '../../utils/formatters';
+import { formatAddressForDisplay } from '../../utils/tokenValidation';
 
-interface TokenDetailModalProps {
+type TokenDetailModalProps = {
   token: ImportedToken | null;
   open: boolean;
   onClose: () => void;
@@ -55,16 +61,16 @@ interface TokenDetailModalProps {
   cotiBalance?: string;
   aesKey?: string | null | undefined;
   onSendClick?: (token: ImportedToken) => void;
-}
+};
 
-const TokenDetails: React.FC<TokenDetailModalProps> = ({ 
-  token, 
-  open, 
+const TokenDetails: React.FC<TokenDetailModalProps> = ({
+  token,
+  open,
   onClose,
-  provider, 
-  cotiBalance, 
+  provider,
+  cotiBalance,
   aesKey,
-  onSendClick
+  onSendClick,
 }) => {
   const { userAESKey } = useSnap();
   const { decryptERC20Balance } = useTokenOperations(provider);
@@ -81,7 +87,9 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
   const effectiveAESKey = aesKey || userAESKey;
 
   const decryptBalance = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
     if (!token.address) {
       setDecryptedBalance(cotiBalance || '0');
       return;
@@ -113,9 +121,12 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
     }
   }, [token?.symbol, closeMenuDropdown]);
 
-  const handleCopy = useCallback((text: string) => {
-    copyToClipboard(text);
-  }, [copyToClipboard]);
+  const handleCopy = useCallback(
+    (text: string) => {
+      copyToClipboard(text);
+    },
+    [copyToClipboard],
+  );
 
   const handleRemoveToken = useCallback(() => {
     setShowHideModal(true);
@@ -134,140 +145,148 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
     setShowHideModal(false);
   }, []);
 
-  if (!open || !token) return null;
+  if (!open || !token) {
+    return null;
+  }
 
   const importedToken = importedTokens.find(
-    importedToken => importedToken.address.toLowerCase() === token.address.toLowerCase() ||
-    (importedToken.name === token.name && importedToken.symbol === token.symbol)
+    (importedToken) =>
+      importedToken.address.toLowerCase() === token.address.toLowerCase() ||
+      (importedToken.name === token.name &&
+        importedToken.symbol === token.symbol),
   );
-  
+
   const tokenAddress = importedToken?.address || token.address;
 
-  const shortAddress = tokenAddress ? formatAddressForDisplay(tokenAddress) : 'Native Token';
-  
-  const formattedBalance = isDecrypting ? 'Loading...' : (() => {
-    if (decryptedBalance && decryptedBalance !== '0' && decryptedBalance !== '(encrypted)') {
-      const decimals = token.symbol === 'COTI' ? 18 : (token.decimals || 18);
-      return formatTokenBalance(decryptedBalance, decimals);
-    }
-    return formatBalance(decryptedBalance);
-  })();
+  const shortAddress = tokenAddress
+    ? formatAddressForDisplay(tokenAddress)
+    : 'Native Token';
 
-  const hasBalance = decryptedBalance && decryptedBalance !== '0' && decryptedBalance !== '(encrypted)' && decryptedBalance !== '';
+  const formattedBalance = isDecrypting
+    ? 'Loading...'
+    : (() => {
+        if (
+          decryptedBalance &&
+          decryptedBalance !== '0' &&
+          decryptedBalance !== '(encrypted)'
+        ) {
+          const decimals = token.symbol === 'COTI' ? 18 : token.decimals || 18;
+          return formatTokenBalance(decryptedBalance, decimals);
+        }
+        return formatBalance(decryptedBalance);
+      })();
+
+  const hasBalance =
+    decryptedBalance &&
+    decryptedBalance !== '0' &&
+    decryptedBalance !== '(encrypted)' &&
+    decryptedBalance !== '';
 
   return (
     <>
-    <TokenDetailsContainer>
-      <HeaderBar>
-      <HeaderBarSlotLeft>
-        <IconButton onClick={onClose} type="button" aria-label="Go back">
-          <ArrowBack />
-        </IconButton>
-      </HeaderBarSlotLeft>
-      <HeaderBarSlotRight style={{ position: 'relative' }}>
-        {token?.symbol !== 'COTI' ? (
-          <>
-            <IconButton 
-              onClick={menuDropdown.toggle}
-              selected={menuDropdown.isOpen}
-              type="button" 
-              aria-label="Menu"
-            >
-              <VerticalMenuIcon />
+      <TokenDetailsContainer>
+        <HeaderBar>
+          <HeaderBarSlotLeft>
+            <IconButton onClick={onClose} type="button" aria-label="Go back">
+              <ArrowBack />
             </IconButton>
-            
-            {menuDropdown.isOpen && (
-              <MenuDropdown ref={menuDropdown.ref}>
-                <MenuItem onClick={handleRemoveToken} type="button">
-                  <TrashIcon />
-                  Hide {token.symbol}
-                </MenuItem>
-              </MenuDropdown>
-            )}
-          </>
-        ) : null}
-      </HeaderBarSlotRight>
-      </HeaderBar>
+          </HeaderBarSlotLeft>
+          <HeaderBarSlotRight style={{ position: 'relative' }}>
+            {token?.symbol !== 'COTI' ? (
+              <>
+                <IconButton
+                  onClick={menuDropdown.toggle}
+                  selected={menuDropdown.isOpen}
+                  type="button"
+                  aria-label="Menu"
+                >
+                  <VerticalMenuIcon />
+                </IconButton>
 
-      <BalanceContainer>
-        <BalanceTitle>Your balance</BalanceTitle>
-        <TokenBalanceRow>
-          <TokenBalanceLeft>
-            <TokenBalanceLogoBox>
-              <TokenBalanceLogoBig>
-                {token.symbol === 'COTI' ? (
-                  <CotiLogo />
-                ) : (
-                  token.symbol[0]
+                {menuDropdown.isOpen && (
+                  <MenuDropdown ref={menuDropdown.ref}>
+                    <MenuItem onClick={handleRemoveToken} type="button">
+                      <TrashIcon />
+                      Hide {token.symbol}
+                    </MenuItem>
+                  </MenuDropdown>
                 )}
-              </TokenBalanceLogoBig>
-            </TokenBalanceLogoBox>
-            <TokenBalanceName>{token.name}</TokenBalanceName>
-          </TokenBalanceLeft>
-          <TokenBalanceRight>
-            <TokenBalanceAmount title={formattedBalance}>
-              {truncateBalance(formattedBalance)}
-            </TokenBalanceAmount>
-            <TokenBalanceSymbol>{token.address ? formatTokenSymbol(token.symbol) : token.symbol}</TokenBalanceSymbol>
-          </TokenBalanceRight>
-        </TokenBalanceRow>
-      </BalanceContainer>
+              </>
+            ) : null}
+          </HeaderBarSlotRight>
+        </HeaderBar>
 
-      <TokenDetailsContent>
-      <BalanceTitle>Token details</BalanceTitle>
-        <TokenDetailsRow>
-          <TokenDetailsLabel>Network</TokenDetailsLabel>
-          <TokenDetailsValue>
-            <TokenNameRow>
-              <TokenCircle>
-                <CotiLogo />
-              </TokenCircle>
-              <TokenNameText>COTI</TokenNameText>
-            </TokenNameRow>
-        </TokenDetailsValue>
-        </TokenDetailsRow>
-        {token.symbol !== 'COTI' && (
+        <BalanceContainer>
+          <BalanceTitle>Your balance</BalanceTitle>
+          <TokenBalanceRow>
+            <TokenBalanceLeft>
+              <TokenBalanceLogoBox>
+                <TokenBalanceLogoBig>
+                  {token.symbol === 'COTI' ? <CotiLogo /> : token.symbol[0]}
+                </TokenBalanceLogoBig>
+              </TokenBalanceLogoBox>
+              <TokenBalanceName>{token.name}</TokenBalanceName>
+            </TokenBalanceLeft>
+            <TokenBalanceRight>
+              <TokenBalanceAmount title={formattedBalance}>
+                {truncateBalance(formattedBalance)}
+              </TokenBalanceAmount>
+              <TokenBalanceSymbol>
+                {token.address ? formatTokenSymbol(token.symbol) : token.symbol}
+              </TokenBalanceSymbol>
+            </TokenBalanceRight>
+          </TokenBalanceRow>
+        </BalanceContainer>
+
+        <TokenDetailsContent>
+          <BalanceTitle>Token details</BalanceTitle>
           <TokenDetailsRow>
-            <TokenDetailsLabel>Contract address</TokenDetailsLabel>
-            <AddressBadge onClick={() => handleCopy(tokenAddress)}>
-              <TokenDetailsLink>
-                {shortAddress}
-              </TokenDetailsLink>
-              <AddressCopyButton>
-                {copied ? (
-                  <CopySuccessIcon />
-                ) : (
-                  <CopyIcon />
-                )}
-              </AddressCopyButton>
-            </AddressBadge>
+            <TokenDetailsLabel>Network</TokenDetailsLabel>
+            <TokenDetailsValue>
+              <TokenNameRow>
+                <TokenCircle>
+                  <CotiLogo />
+                </TokenCircle>
+                <TokenNameText>COTI</TokenNameText>
+              </TokenNameRow>
+            </TokenDetailsValue>
           </TokenDetailsRow>
-        )}
-        <TokenDetailsRow>
-          <TokenDetailsLabel>Token decimals</TokenDetailsLabel>
-          <TokenDetailsValue>{token.decimals}</TokenDetailsValue>
-        </TokenDetailsRow>
-      </TokenDetailsContent>
-      <SendButton 
-        onClick={() => onSendClick && onSendClick(token)}
-        disabled={!hasBalance}
-      >
-        Send
-      </SendButton>
-    </TokenDetailsContainer>
-    
-    <ConfirmationModal
-      isOpen={showHideModal}
-      onClose={handleCancelHide}
-      onConfirm={handleHideToken}
-      title="Hide Token"
-      message={`You can add this token back in the future by going to "Import token" in your accounts options menu.`}
-      address={tokenAddress}
-      symbol={`${token.symbol}`}
-      confirmText="Hide"
-      confirmButtonColor="#e53935"
-      cancelText="Cancel"
-    />
+          {token.symbol !== 'COTI' && (
+            <TokenDetailsRow>
+              <TokenDetailsLabel>Contract address</TokenDetailsLabel>
+              <AddressBadge onClick={() => handleCopy(tokenAddress)}>
+                <TokenDetailsLink>{shortAddress}</TokenDetailsLink>
+                <AddressCopyButton>
+                  {copied ? <CopySuccessIcon /> : <CopyIcon />}
+                </AddressCopyButton>
+              </AddressBadge>
+            </TokenDetailsRow>
+          )}
+          <TokenDetailsRow>
+            <TokenDetailsLabel>Token decimals</TokenDetailsLabel>
+            <TokenDetailsValue>{token.decimals}</TokenDetailsValue>
+          </TokenDetailsRow>
+        </TokenDetailsContent>
+        <SendButton
+          onClick={() => onSendClick && onSendClick(token)}
+          disabled={!hasBalance}
+        >
+          Send
+        </SendButton>
+      </TokenDetailsContainer>
+
+      <ConfirmationModal
+        isOpen={showHideModal}
+        onClose={handleCancelHide}
+        onConfirm={handleHideToken}
+        title="Hide Token"
+        message={`You can add this token back in the future by going to "Import token" in your accounts options menu.`}
+        address={tokenAddress}
+        symbol={`${token.symbol}`}
+        confirmText="Hide"
+        confirmButtonColor="#e53935"
+        cancelText="Cancel"
+      />
     </>
   );
 };

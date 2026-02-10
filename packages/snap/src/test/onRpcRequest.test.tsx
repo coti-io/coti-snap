@@ -204,7 +204,8 @@ describe('onRpcRequest', () => {
       origin,
     });
 
-    const ui = (await deleteResponse.getInterface()) as SnapConfirmationInterface;
+    const ui =
+      (await deleteResponse.getInterface()) as SnapConfirmationInterface;
     expect(ui.type).toBe('confirmation');
     expect(ui).toRender(
       <Box>
@@ -237,7 +238,7 @@ describe('onRpcRequest', () => {
       <Box>
         <Heading>Warning</Heading>
         <Text>AES key not found.</Text>
-      </Box>
+      </Box>,
     );
 
     await ui.ok();
@@ -259,7 +260,8 @@ describe('onRpcRequest', () => {
       method: 'delete-aes-key',
     });
 
-    const ui = (await deleteResponse.getInterface()) as SnapConfirmationInterface;
+    const ui =
+      (await deleteResponse.getInterface()) as SnapConfirmationInterface;
     await ui.cancel();
 
     const rpcResponse = await deleteResponse;

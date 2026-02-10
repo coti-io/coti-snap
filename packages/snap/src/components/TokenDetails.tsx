@@ -13,11 +13,11 @@ import {
   Address,
 } from '@metamask/snaps-sdk/jsx';
 import type { Token } from 'src/types';
-import { TokenViewSelector } from '../types';
-import { formatTokenBalance, truncateAddress } from '../utils/token';
-import { generateTokenAvatar } from '../utils/image';
 
 import defaultToken from '../../images/default.svg';
+import { TokenViewSelector } from '../types';
+import { generateTokenAvatar } from '../utils/image';
+import { formatTokenBalance, truncateAddress } from '../utils/token';
 
 export const TokenDetails = ({ token }: { token: Token }) => {
   const renderNFTDetails = () => (
@@ -34,7 +34,8 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Box direction="vertical" alignment="center">
             <Heading size="md">{token.name}</Heading>
             <Text color="muted">
-              {token.symbol}{token.tokenId ? ` · #${token.tokenId}` : ''}
+              {token.symbol}
+              {token.tokenId ? ` · #${token.tokenId}` : ''}
             </Text>
           </Box>
         </Section>
@@ -89,7 +90,10 @@ export const TokenDetails = ({ token }: { token: Token }) => {
           <Box alignment="space-between" direction="horizontal">
             <Box alignment="center" direction="horizontal">
               <Box alignment="center" direction="vertical">
-                <Image src={generateTokenAvatar(token.symbol)} alt="Token logo" />
+                <Image
+                  src={generateTokenAvatar(token.symbol)}
+                  alt="Token logo"
+                />
               </Box>
               <Box direction="vertical" alignment="center">
                 <Text>{token.name}</Text>
@@ -145,5 +149,7 @@ export const TokenDetails = ({ token }: { token: Token }) => {
     </Box>
   );
 
-  return token.type === TokenViewSelector.NFT ? renderNFTDetails() : renderTokenDetails();
+  return token.type === TokenViewSelector.NFT
+    ? renderNFTDetails()
+    : renderTokenDetails();
 };

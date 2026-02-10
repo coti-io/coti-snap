@@ -1,33 +1,36 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 
-import { ContentBorderWrapper, ContentContainer } from '../styles';
+import { DeleteAESKey } from './DeleteAESKey';
+import { OnboardAccount } from './OnboardAccount';
+import { useSnap } from '../../hooks/SnapContext';
 import { ContentManageToken } from '../ContentManageToken';
 import { DisplayAESKey } from '../ContentManageToken/DisplayAESKey';
-import { OnboardAccount } from './OnboardAccount';
-import { DeleteAESKey } from './DeleteAESKey';
-import { useSnap } from '../../hooks/SnapContext';
+import { ContentBorderWrapper, ContentContainer } from '../styles';
 
-interface ContentManageAESKeyProps {
+type ContentManageAESKeyProps = {
   readonly userHasAESKey: boolean;
   readonly userAESKey: string | null;
-}
+};
 
-interface AESKeyState {
+type AESKeyState = {
   readonly showManage: boolean;
-}
+};
 
-export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHasAESKey, userAESKey }) => {
+export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({
+  userHasAESKey,
+  userAESKey,
+}) => {
   const { address } = useAccount();
   const { onboardingStep } = useSnap();
   const [aesKeyState, setAesKeyState] = useState<AESKeyState>({
-    showManage: false
+    showManage: false,
   });
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     setAesKeyState({
-      showManage: false
+      showManage: false,
     });
     setShowDeleteConfirmation(false);
   }, [address]);
@@ -36,9 +39,9 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
     return !userHasAESKey || onboardingStep !== null;
   }, [userHasAESKey, onboardingStep]);
 
-  const shouldShowTokenManagement = useMemo(() => 
-    userHasAESKey && !aesKeyState.showManage && !showDeleteConfirmation, 
-    [userHasAESKey, aesKeyState, showDeleteConfirmation]
+  const shouldShowTokenManagement = useMemo(
+    () => userHasAESKey && !aesKeyState.showManage && !showDeleteConfirmation,
+    [userHasAESKey, aesKeyState, showDeleteConfirmation],
   );
 
   const handleDeleteAESKey = () => {
@@ -55,7 +58,6 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
   };
 
   const renderContent = (): JSX.Element | null => {
-
     if (shouldShowOnboarding) {
       return <OnboardAccount />;
     }
@@ -66,7 +68,7 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
 
     if (aesKeyState.showManage && userAESKey) {
       return (
-        <DisplayAESKey 
+        <DisplayAESKey
           aesKey={userAESKey}
           onNavigateToTokens={handleNavigateToTokens}
           onDeleteAESKey={handleDeleteAESKey}
@@ -83,9 +85,7 @@ export const ContentManageAESKey: React.FC<ContentManageAESKeyProps> = ({ userHa
 
   return (
     <ContentBorderWrapper>
-      <ContentContainer>
-        {renderContent()}
-      </ContentContainer>
+      <ContentContainer>{renderContent()}</ContentContainer>
     </ContentBorderWrapper>
   );
 };

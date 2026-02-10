@@ -11,10 +11,10 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 import { formatEther } from 'ethers';
 
+import { TokenAdded } from './TokenAdded';
 import { COMPANION_DAPP_LINK } from '../config';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
-import { TokenAdded } from './TokenAdded';
 
 type HomeProps = {
   balance: bigint;
@@ -37,7 +37,10 @@ export const Home = ({
       {!aesKey && (
         <Box direction="horizontal" alignment="center">
           <Banner title="" severity="info">
-            <Text>To view private balances, click on the Onboard account and follow instructions.</Text>
+            <Text>
+              To view private balances, click on the Onboard account and follow
+              instructions.
+            </Text>
           </Banner>
         </Box>
       )}

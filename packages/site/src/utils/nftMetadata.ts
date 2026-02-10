@@ -11,7 +11,8 @@ const ensureTrailingSlash = (value: string): string => {
 };
 
 const resolveDefaultGateway = (): string => {
-  const customGateway = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
+  const customGateway = (typeof import.meta !== 'undefined' &&
+    (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
   if (customGateway) {
     return ensureTrailingSlash(customGateway);
   }
@@ -26,7 +27,8 @@ const IPFS_GATEWAYS: string[] = (() => {
     'https://dweb.link/ipfs/',
   ];
 
-  const customGateway = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
+  const customGateway = (typeof import.meta !== 'undefined' &&
+    (import.meta as any).env?.VITE_IPFS_GATEWAY) as string | undefined;
   if (customGateway) {
     const normalized = ensureTrailingSlash(customGateway);
     if (!gateways.includes(normalized)) {
@@ -39,7 +41,10 @@ const IPFS_GATEWAYS: string[] = (() => {
 const IPFS_GATEWAY = resolveDefaultGateway();
 
 const isFallbackEnabled = (): boolean => {
-  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_ENABLE_IPFS_FALLBACK === 'false') {
+  if (
+    typeof process !== 'undefined' &&
+    process.env?.NEXT_PUBLIC_ENABLE_IPFS_FALLBACK === 'false'
+  ) {
     return false;
   }
   return true;
@@ -48,14 +53,20 @@ const isFallbackEnabled = (): boolean => {
 const IPFS_FALLBACK_ENABLED = isFallbackEnabled();
 
 const toHexTokenId = (tokenId?: string): string | null => {
-  if (!tokenId) return null;
+  if (!tokenId) {
+    return null;
+  }
   const trimmed = tokenId.trim();
-  if (trimmed.length === 0) return null;
+  if (trimmed.length === 0) {
+    return null;
+  }
 
   try {
     if (trimmed.startsWith('0x')) {
       const hex = trimmed.slice(2);
-      if (!hex) return null;
+      if (!hex) {
+        return null;
+      }
       return hex.padStart(64, '0');
     }
 
@@ -67,10 +78,17 @@ const toHexTokenId = (tokenId?: string): string | null => {
   }
 };
 
-export const resolveTokenUri = (uri?: string | null, tokenId?: string): string | null => {
-  if (!uri) return null;
+export const resolveTokenUri = (
+  uri?: string | null,
+  tokenId?: string,
+): string | null => {
+  if (!uri) {
+    return null;
+  }
   let resolved = uri.trim();
-  if (!resolved) return null;
+  if (!resolved) {
+    return null;
+  }
 
   const hexTokenId = toHexTokenId(tokenId);
   if (hexTokenId) {
@@ -92,11 +110,11 @@ export const resolveTokenUri = (uri?: string | null, tokenId?: string): string |
   return resolved;
 };
 
-export interface ImageUriResolution {
+export type ImageUriResolution = {
   resolved: string | null;
   original: string | null;
   fallbacks: string[];
-}
+};
 
 const toGatewayFromHttpIpfsPath = (url: string): string | null => {
   try {
@@ -120,9 +138,20 @@ const toGatewayFromHttpIpfsPath = (url: string): string | null => {
   }
 };
 
-export const extractImageUri = (metadata: Record<string, any> | null | undefined, tokenId?: string): ImageUriResolution => {
-  if (!metadata) return { resolved: null, original: null, fallbacks: [] };
-  const potentialKeys = ['image', 'image_url', 'imageUrl', 'animation_url', 'animationUrl'];
+export const extractImageUri = (
+  metadata: Record<string, any> | null | undefined,
+  tokenId?: string,
+): ImageUriResolution => {
+  if (!metadata) {
+    return { resolved: null, original: null, fallbacks: [] };
+  }
+  const potentialKeys = [
+    'image',
+    'image_url',
+    'imageUrl',
+    'animation_url',
+    'animationUrl',
+  ];
 
   for (const key of potentialKeys) {
     const value = metadata[key];
@@ -160,18 +189,27 @@ export const extractImageUri = (metadata: Record<string, any> | null | undefined
 
 export const parseDataUriJson = (uri: string): Record<string, any> | null => {
   const DATA_PREFIX = 'data:application/json';
-  if (!uri.startsWith(DATA_PREFIX)) return null;
+  if (!uri.startsWith(DATA_PREFIX)) {
+    return null;
+  }
 
   const commaIndex = uri.indexOf(',');
-  if (commaIndex === -1) return null;
+  if (commaIndex === -1) {
+    return null;
+  }
 
   const meta = uri.slice(0, commaIndex);
   const data = uri.slice(commaIndex + 1);
 
   try {
     if (meta.includes(';base64')) {
-      const decoder = typeof window !== 'undefined' && window.atob ? window.atob.bind(window) : null;
-      if (!decoder) return null;
+      const decoder =
+        typeof window !== 'undefined' && window.atob
+          ? window.atob.bind(window)
+          : null;
+      if (!decoder) {
+        return null;
+      }
       const decoded = decoder(data);
       return JSON.parse(decoded);
     }
@@ -187,11 +225,15 @@ const extractCIDFromGatewayUrl = (url: string): string | null => {
   try {
     // Path-based format: https://ipfs.io/ipfs/Qm...
     const pathMatch = url.match(/\/ipfs\/([^/?#]+)/);
-    if (pathMatch && pathMatch[1]) return pathMatch[1];
+    if (pathMatch?.[1]) {
+      return pathMatch[1];
+    }
 
     // Subdomain format: https://Qm....ipfs.dweb.link/
     const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
-    if (subdomainMatch && subdomainMatch[1]) return subdomainMatch[1];
+    if (subdomainMatch?.[1]) {
+      return subdomainMatch[1];
+    }
 
     return null;
   } catch {
@@ -199,8 +241,12 @@ const extractCIDFromGatewayUrl = (url: string): string | null => {
   }
 };
 
-export const fetchImageAsDataUri = async (url: string): Promise<string | null> => {
-  if (typeof window === 'undefined' || !url) return null;
+export const fetchImageAsDataUri = async (
+  url: string,
+): Promise<string | null> => {
+  if (typeof window === 'undefined' || !url) {
+    return null;
+  }
 
   // Resolve IPFS URLs to HTTP gateways
   let urlsToTry: string[] = [];
@@ -209,7 +255,7 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
     const cid = url.slice(7); // Remove 'ipfs://'
     // Try multiple gateways for IPFS URLs (both path and subdomain formats)
     urlsToTry = [
-      ...IPFS_GATEWAYS.map(gateway => `${gateway}${cid}`),
+      ...IPFS_GATEWAYS.map((gateway) => `${gateway}${cid}`),
       // Add subdomain format URLs
       `https://${cid}.ipfs.dweb.link/`,
       `https://${cid}.ipfs.cf-ipfs.com/`,
@@ -223,10 +269,10 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
     if (cid) {
       // Generate alternative URLs in both path and subdomain formats
       const alternativeUrls = [
-        ...IPFS_GATEWAYS.map(gateway => `${gateway}${cid}`),
+        ...IPFS_GATEWAYS.map((gateway) => `${gateway}${cid}`),
         `https://${cid}.ipfs.dweb.link/`,
         `https://${cid}.ipfs.cf-ipfs.com/`,
-      ].filter(altUrl => altUrl !== url); // Don't retry the same URL
+      ].filter((altUrl) => altUrl !== url); // Don't retry the same URL
 
       urlsToTry.push(...alternativeUrls);
     }
@@ -239,9 +285,14 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(tryUrl, { mode: 'cors', signal: controller.signal });
+      const response = await fetch(tryUrl, {
+        mode: 'cors',
+        signal: controller.signal,
+      });
       clearTimeout(timeoutId);
-      if (!response.ok) continue;
+      if (!response.ok) {
+        continue;
+      }
 
       const blob = await response.blob();
 
@@ -254,7 +305,9 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
         reader.readAsDataURL(blob);
       });
 
-      if (dataUri) return dataUri;
+      if (dataUri) {
+        return dataUri;
+      }
     } catch (error) {
       void error;
       continue; // Timeout or network error, try next gateway
@@ -267,8 +320,13 @@ export const fetchImageAsDataUri = async (url: string): Promise<string | null> =
 /**
  * Fetch JSON metadata from a URL, with IPFS gateway fallback and timeout.
  * If the URL is an IPFS gateway URL, tries multiple gateways.
+ * @param url
+ * @param timeoutMs
  */
-export const fetchJsonWithIpfsFallback = async (url: string, timeoutMs = 8000): Promise<Record<string, any> | null> => {
+export const fetchJsonWithIpfsFallback = async (
+  url: string,
+  timeoutMs = 8000,
+): Promise<Record<string, any> | null> => {
   const urlsToTry: string[] = [];
 
   const cid = extractCIDFromGatewayUrl(url);
@@ -295,7 +353,9 @@ export const fetchJsonWithIpfsFallback = async (url: string, timeoutMs = 8000): 
       });
       clearTimeout(timeoutId);
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        continue;
+      }
 
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {

@@ -33,6 +33,11 @@ const Container = styled.div`
   }
 `;
 
+/**
+ *
+ * @param options0
+ * @param options0.children
+ */
 export function Layout({ children }: { children?: React.ReactNode }) {
   return (
     <LayoutWrapper>

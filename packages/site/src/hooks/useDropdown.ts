@@ -1,17 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-interface UseDropdownReturn {
+type UseDropdownReturn = {
   isOpen: boolean;
   toggle: () => void;
   close: () => void;
   ref: React.RefObject<HTMLDivElement>;
-}
+};
 
 export const useDropdown = (): UseDropdownReturn => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const toggle = useCallback(() => setIsOpen(prev => !prev), []);
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
   const close = useCallback(() => setIsOpen(false), []);
 
   useEffect(() => {
@@ -31,4 +31,4 @@ export const useDropdown = (): UseDropdownReturn => {
   }, [isOpen, close]);
 
   return { isOpen, toggle, close, ref };
-}; 
+};

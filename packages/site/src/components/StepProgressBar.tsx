@@ -17,10 +17,10 @@ const ProgressLine = styled.div`
 
 const ProgressFill = styled.div<{ $progress: number }>`
   height: 100%;
-  background-color: #1E29F6;
+  background-color: #1e29f6;
   border-radius: 2px;
   transition: width 0.3s ease;
-  width: ${props => props.$progress}%;
+  width: ${(props) => props.$progress}%;
 `;
 
 const StepsContainer = styled.div`
@@ -34,11 +34,9 @@ const StepCircle = styled.div<{ $completed: boolean; $current: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: ${props =>
-    props.$completed ? '#1E29F6' :
-    props.$current ? '#1E29F6' : '#e0e0e0'};
-  color: ${props =>
-    props.$completed || props.$current ? 'white' : '#666'};
+  background-color: ${(props) =>
+    props.$completed ? '#1E29F6' : props.$current ? '#1E29F6' : '#e0e0e0'};
+  color: ${(props) => (props.$completed || props.$current ? 'white' : '#666')};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,10 +44,13 @@ const StepCircle = styled.div<{ $completed: boolean; $current: boolean }>`
   font-weight: bold;
   position: relative;
   z-index: 1;
-  border: 2px solid ${props =>
-    props.$completed ? '#1E29F6' :
-    props.$current ? '#1E29F6' : '#e0e0e0'};
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  border: 2px solid
+    ${(props) =>
+      props.$completed ? '#1E29F6' : props.$current ? '#1E29F6' : '#e0e0e0'};
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
 `;
 
 const StepLabel = styled.div<{ $completed: boolean; $current: boolean }>`
@@ -60,17 +61,17 @@ const StepLabel = styled.div<{ $completed: boolean; $current: boolean }>`
   font-size: 12px;
   color: #000000 !important;
   white-space: nowrap;
-  font-weight: ${props => props.$current ? 'bold' : 'normal'};
+  font-weight: ${(props) => (props.$current ? 'bold' : 'normal')};
 `;
 
-interface StepProgressBarProps {
+type StepProgressBarProps = {
   currentStep: number;
   steps: string[];
-}
+};
 
-export const StepProgressBar: React.FC<StepProgressBarProps> = ({ 
-  currentStep, 
-  steps 
+export const StepProgressBar: React.FC<StepProgressBarProps> = ({
+  currentStep,
+  steps,
 }) => {
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
 
@@ -84,19 +85,13 @@ export const StepProgressBar: React.FC<StepProgressBarProps> = ({
           const stepNumber = index + 1;
           const isCompleted = stepNumber < currentStep;
           const isCurrent = stepNumber === currentStep;
-          
+
           return (
             <div key={index} style={{ position: 'relative' }}>
-              <StepCircle 
-                $completed={isCompleted} 
-                $current={isCurrent}
-              >
+              <StepCircle $completed={isCompleted} $current={isCurrent}>
                 {stepNumber}
               </StepCircle>
-              <StepLabel 
-                $completed={isCompleted} 
-                $current={isCurrent}
-              >
+              <StepLabel $completed={isCompleted} $current={isCurrent}>
                 {step}
               </StepLabel>
             </div>

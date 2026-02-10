@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ModalBackdrop,
-  DepositModalContainer,
-  DepositCloseButton,
-  DepositTitle,
-  SendButton,
-} from '../styles';
-import { JazziconComponent } from '../../common';
+
 import {
   ModalContent,
   IconContainer,
@@ -14,8 +7,16 @@ import {
   MessageText,
   ButtonContainer,
 } from './ConfirmationModal.styles';
+import { JazziconComponent } from '../../common';
+import {
+  ModalBackdrop,
+  DepositModalContainer,
+  DepositCloseButton,
+  DepositTitle,
+  SendButton,
+} from '../styles';
 
-interface ConfirmationModalProps {
+type ConfirmationModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -26,7 +27,7 @@ interface ConfirmationModalProps {
   confirmText?: string;
   confirmButtonColor?: string;
   cancelText?: string;
-}
+};
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
@@ -37,38 +38,34 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   address,
   symbol,
   confirmText = 'Confirm',
-  cancelText = 'Cancel'
+  cancelText = 'Cancel',
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <ModalBackdrop onClick={onClose}>
-      <DepositModalContainer onClick={e => e.stopPropagation()}>
-        <DepositCloseButton 
+      <DepositModalContainer onClick={(e) => e.stopPropagation()}>
+        <DepositCloseButton
           onClick={onClose}
           type="button"
           aria-label="Close modal"
         >
           ×
         </DepositCloseButton>
-        
+
         <DepositTitle>{title}</DepositTitle>
-        
+
         <ModalContent>
           {address && (
             <IconContainer>
               <JazziconComponent address={address} />
             </IconContainer>
           )}
-          {symbol && (
-            <SymbolText>
-              {symbol}
-            </SymbolText>
-          )}
-          <MessageText>
-            {message}
-          </MessageText>
-          
+          {symbol && <SymbolText>{symbol}</SymbolText>}
+          <MessageText>{message}</MessageText>
+
           <ButtonContainer>
             <SendButton
               onClick={onClose}

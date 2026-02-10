@@ -22,7 +22,7 @@ const TooltipText = styled.div`
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  box-shadow: 0 4px 24px rgba(24,25,29,0.10);
+  box-shadow: 0 4px 24px rgba(24, 25, 29, 0.1);
   font-size: 1.2rem;
   font-weight: 400;
   line-height: 1.4;
@@ -37,7 +37,7 @@ const TooltipText = styled.div`
     border-width: 0 8px 10px 8px;
     border-style: solid;
     border-color: transparent transparent #fff transparent;
-    filter: drop-shadow(0 -2px 4px rgba(24,25,29,0.10));
+    filter: drop-shadow(0 -2px 4px rgba(24, 25, 29, 0.1));
   }
 
   ${TooltipContainer}:hover & {
@@ -46,10 +46,10 @@ const TooltipText = styled.div`
   }
 `;
 
-interface TooltipProps {
+type TooltipProps = {
   text: string;
   children: React.ReactNode;
-}
+};
 
 export const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
   return (
@@ -58,4 +58,4 @@ export const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
       <TooltipText>{text}</TooltipText>
     </TooltipContainer>
   );
-}; 
+};

@@ -1,23 +1,31 @@
 import { useEffect, useState } from 'react';
 
-import { defaultSnapOrigin } from '../config';
-import type { GetSnapsResponse } from '../types';
 import { useMetaMaskContext } from './MetamaskContext';
 import { useRequest } from './useRequest';
+import { defaultSnapOrigin } from '../config';
+import type { GetSnapsResponse } from '../types';
 
 /**
  * A Hook to retrieve useful data from MetaMask.
  * @returns The informations.
  */
 export const useMetaMask = () => {
-  const { provider, setInstalledSnap, installedSnap, isInstallingSnap, hasCheckedForProvider } = useMetaMaskContext();
+  const {
+    provider,
+    setInstalledSnap,
+    installedSnap,
+    isInstallingSnap,
+    hasCheckedForProvider,
+  } = useMetaMaskContext();
   const request = useRequest();
 
   const [isFlask, setIsFlask] = useState(false);
 
-  const basicMetaMaskDetection = typeof window !== 'undefined' && 
-    typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
-  
+  const basicMetaMaskDetection =
+    typeof window !== 'undefined' &&
+    typeof window.ethereum !== 'undefined' &&
+    window.ethereum.isMetaMask;
+
   const snapsDetected = provider !== null || basicMetaMaskDetection;
 
   /**
@@ -52,16 +60,18 @@ export const useMetaMask = () => {
       }
     };
 
-    detect().catch(error => {
+    detect().catch((error) => {
       void error;
     });
   }, [provider]);
 
   useEffect(() => {
-    if (!provider) return;
+    if (!provider) {
+      return;
+    }
 
     const handleSnapUpdate = () => {
-      getSnap().catch(error => {
+      getSnap().catch((error) => {
         void error;
       });
     };
@@ -76,12 +86,12 @@ export const useMetaMask = () => {
     };
   }, [provider]);
 
-  return { 
-    isFlask, 
-    snapsDetected, 
-    installedSnap, 
-    getSnap, 
+  return {
+    isFlask,
+    snapsDetected,
+    installedSnap,
+    getSnap,
     isInstallingSnap,
-    hasCheckedForProvider
+    hasCheckedForProvider,
   };
 };

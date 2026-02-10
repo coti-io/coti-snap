@@ -5,7 +5,7 @@ import {
   SUPPORTED_CHAIN_IDS,
 } from './wagmi';
 
-export interface NetworkConfig {
+export type NetworkConfig = {
   id: number;
   name: string;
   displayName: string;
@@ -22,7 +22,7 @@ export interface NetworkConfig {
   faucetUrl?: string;
   color: string;
   badgeColor: string;
-}
+};
 
 export const NETWORKS: Record<number, NetworkConfig> = {
   [COTI_TESTNET_CHAIN_ID]: {
@@ -62,7 +62,7 @@ export const NETWORKS: Record<number, NetworkConfig> = {
   },
 };
 
-export type SupportedChainId = typeof SUPPORTED_CHAIN_IDS[number];
+export type SupportedChainId = (typeof SUPPORTED_CHAIN_IDS)[number];
 
 const SUPPORTED_CHAIN_ID_SET = new Set<number>(SUPPORTED_CHAIN_IDS);
 
@@ -81,9 +81,7 @@ export const normalizeChainId = (
   return isSupportedChainId(chainId) ? chainId : DEFAULT_CHAIN_ID;
 };
 
-export const getNetworkConfig = (
-  chainId?: number | null,
-): NetworkConfig => {
+export const getNetworkConfig = (chainId?: number | null): NetworkConfig => {
   const normalizedChainId = normalizeChainId(chainId ?? undefined);
   return NETWORKS[normalizedChainId]!;
 };

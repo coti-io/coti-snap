@@ -16,8 +16,10 @@ export const ImportERC721 = ({
   errorType?: 'general' | 'ownership' | 'duplicate';
 }) => {
   const getErrorMessage = () => {
-    if (!errorInForm) return undefined;
-    
+    if (!errorInForm) {
+      return undefined;
+    }
+
     switch (errorType) {
       case 'ownership':
         return 'You must own this NFT to import it';

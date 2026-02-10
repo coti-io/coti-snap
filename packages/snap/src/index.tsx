@@ -8,15 +8,13 @@ import {
   encodeKey,
   decrypt,
 } from '@coti-io/coti-sdk-typescript';
+import { UserInputEventType } from '@metamask/snaps-sdk';
 import type {
+  OnHomePageHandler,
   OnInstallHandler,
   OnRpcRequestHandler,
   OnUpdateHandler,
-} from '@metamask/snaps-sdk';
-import {
-  type OnHomePageHandler,
-  type OnUserInputHandler,
-  UserInputEventType,
+  OnUserInputHandler,
 } from '@metamask/snaps-sdk';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
@@ -27,15 +25,15 @@ import { ImportERC721 } from './components/ImportERC721';
 import { Settings } from './components/Settings';
 import { TokenDetails } from './components/TokenDetails';
 import { WrongChain } from './components/WrongChain';
+import { setEnvironment } from './config';
 import { TokenViewSelector } from './types';
 import { getSVGfromMetadata } from './utils/image';
 import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress,
   setExpectedEnvironment,
-  getExpectedEnvironment
+  getExpectedEnvironment,
 } from './utils/snap';
-import { setEnvironment } from './config';
 import {
   checkChainId,
   hideToken,
@@ -46,7 +44,7 @@ import {
   truncateAddress,
   checkIfERC20Unique,
   checkIfERC721Unique,
-  checkERC721Ownership
+  checkERC721Ownership,
 } from './utils/token';
 
 export const returnToHomePage = async (id: string) => {
@@ -89,14 +87,14 @@ export const onInstall: OnInstallHandler = async () => {
     }));
 };
 
-export const onHomePage: OnHomePageHandler = async () => {  
+export const onHomePage: OnHomePageHandler = async () => {
   const chainCheck = await checkChainId();
   if (!chainCheck) {
     return {
       content: <WrongChain />,
     };
   }
-    
+
   try {
     const { balance, tokenBalances } = await recalculateBalances();
     const state = await getStateByChainIdAndAddress();
@@ -276,12 +274,12 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           const address = erc721formState['erc721-address'] as string;
           const tokenId = erc721formState['erc721-id'] as string;
-          
+
           const tokenIsUnique = await checkIfERC721Unique(address, tokenId);
           if (!tokenIsUnique) {
             throw new Error('Token already exists');
           }
-          
+
           const userOwnsToken = await checkERC721Ownership(address, tokenId);
           if (!userOwnsToken) {
             await snap.request({
@@ -291,7 +289,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 content: (
                   <Box>
                     <Heading>Token Not Owned</Heading>
-                    <Text>You don't own this NFT. Only tokens you own can be imported.</Text>
+                    <Text>
+                      You don't own this NFT. Only tokens you own can be
+                      imported.
+                    </Text>
                   </Box>
                 ),
               },
@@ -299,7 +300,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             await returnToHomePage(id);
             return;
           }
-          
+
           const erc721Info = await getERC721Details(address);
           if (address && tokenId) {
             await importToken(
@@ -312,8 +313,11 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           }
           await recalculateBalances();
           await returnToHomePage(id);
-        } catch (error) {          
-          if (error instanceof Error && error.message === 'Token already exists') {
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message === 'Token already exists'
+          ) {
             await snap.request({
               method: 'snap_dialog',
               params: {
@@ -329,7 +333,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             await returnToHomePage(id);
             return;
           }
-          
+
           await snap.request({
             method: 'snap_updateInterface',
             params: {
@@ -374,7 +378,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           await recalculateBalances();
           await returnToHomePage(id);
         } catch (error) {
-          if (error instanceof Error && error.message === 'Token already exists') {
+          if (
+            error instanceof Error &&
+            error.message === 'Token already exists'
+          ) {
             await snap.request({
               method: 'snap_dialog',
               params: {
@@ -391,7 +398,10 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
             return;
           }
 
-          if (error instanceof Error && error.message === 'Invalid token type') {
+          if (
+            error instanceof Error &&
+            error.message === 'Invalid token type'
+          ) {
             await snap.request({
               method: 'snap_dialog',
               params: {
@@ -399,7 +409,9 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
                 content: (
                   <Box>
                     <Heading>Invalid Token</Heading>
-                    <Text>The contract address provided is not a valid ERC20 token.</Text>
+                    <Text>
+                      The contract address provided is not a valid ERC20 token.
+                    </Text>
                   </Box>
                 ),
               },
@@ -415,7 +427,6 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
               ui: <ImportERC20 errorInForm={true} />,
             },
           });
-          return;
         }
     }
   } else if (event.type === UserInputEventType.InputChangeEvent) {
@@ -564,7 +575,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         method: 'snap_manageState',
         params: { operation: 'get' },
       });
-      const debugChainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+      const debugChainIdHex = (await ethereum.request({
+        method: 'eth_chainId',
+      })) as string;
       const debugChainId = parseInt(debugChainIdHex, 16).toString();
       const debugExpectedEnv = await getExpectedEnvironment();
       return {
@@ -580,8 +593,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       const requestedChainId = hasKeyParams?.chainId;
       console.log('[SNAP] has-aes-key called with chainId:', requestedChainId);
       const currentState = await getStateByChainIdAndAddress(requestedChainId);
-      console.log('[SNAP] has-aes-key state for chainId', requestedChainId, ':', JSON.stringify(currentState));
-      console.log('[SNAP] has-aes-key result:', !!currentState.aesKey);
+      console.log(
+        '[SNAP] has-aes-key state for chainId',
+        requestedChainId,
+        ':',
+        JSON.stringify(currentState),
+      );
+      console.log('[SNAP] has-aes-key result:', Boolean(currentState.aesKey));
       if (currentState.aesKey) {
         return true;
       }
@@ -591,9 +609,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'get-aes-key':
       const getKeyParams = request.params as { chainId?: string } | undefined;
       const getRequestedChainId = getKeyParams?.chainId;
-      console.log('[SNAP] get-aes-key called with chainId:', getRequestedChainId);
-      const currentAESState = await getStateByChainIdAndAddress(getRequestedChainId);
-      console.log('[SNAP] get-aes-key state for chainId', getRequestedChainId, ':', currentAESState.aesKey ? 'HAS KEY' : 'NO KEY');
+      console.log(
+        '[SNAP] get-aes-key called with chainId:',
+        getRequestedChainId,
+      );
+      const currentAESState =
+        await getStateByChainIdAndAddress(getRequestedChainId);
+      console.log(
+        '[SNAP] get-aes-key state for chainId',
+        getRequestedChainId,
+        ':',
+        currentAESState.aesKey ? 'HAS KEY' : 'NO KEY',
+      );
       if (!currentAESState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -633,10 +660,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'delete-aes-key':
-      const deleteKeyParams = request.params as { chainId?: string } | undefined;
+      const deleteKeyParams = request.params as
+        | { chainId?: string }
+        | undefined;
       const deleteChainId = deleteKeyParams?.chainId;
       console.log('[SNAP] delete-aes-key called with chainId:', deleteChainId);
-      const currentDeleteState = await getStateByChainIdAndAddress(deleteChainId);
+      const currentDeleteState =
+        await getStateByChainIdAndAddress(deleteChainId);
       if (!currentDeleteState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -668,17 +698,23 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       });
 
       if (deleteResult) {
-        await setStateByChainIdAndAddress({
-          ...currentDeleteState,
-          aesKey: null,
-        }, deleteChainId);
+        await setStateByChainIdAndAddress(
+          {
+            ...currentDeleteState,
+            aesKey: null,
+          },
+          deleteChainId,
+        );
         return true;
       }
 
       return null;
 
     case 'set-aes-key':
-      const { newUserAesKey, chainId: setChainId } = request.params as { newUserAesKey: string; chainId?: string };
+      const { newUserAesKey, chainId: setChainId } = request.params as {
+        newUserAesKey: string;
+        chainId?: string;
+      };
       console.log('[SNAP] set-aes-key called with chainId:', setChainId);
 
       if (!newUserAesKey) {
@@ -699,10 +735,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       const currentStateForSet = await getStateByChainIdAndAddress(setChainId);
 
-      await setStateByChainIdAndAddress({
-        ...currentStateForSet,
-        aesKey: newUserAesKey,
-      }, setChainId);
+      await setStateByChainIdAndAddress(
+        {
+          ...currentStateForSet,
+          aesKey: newUserAesKey,
+        },
+        setChainId,
+      );
 
       return true;
 
@@ -713,11 +752,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'get-permissions':
       try {
         const permissions = await ethereum.request({
-          "method": "wallet_requestPermissions",
-          "params": [
-           {
-             eth_accounts: {}
-           }
+          method: 'wallet_requestPermissions',
+          params: [
+            {
+              eth_accounts: {},
+            },
           ],
         });
         return permissions ?? [];
@@ -726,9 +765,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
     case 'set-environment':
-      const { environment } = request.params as { environment: 'testnet' | 'mainnet' };
+      const { environment } = request.params as {
+        environment: 'testnet' | 'mainnet';
+      };
 
-      if (!environment || (environment !== 'testnet' && environment !== 'mainnet')) {
+      if (
+        !environment ||
+        (environment !== 'testnet' && environment !== 'mainnet')
+      ) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -736,7 +780,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             content: (
               <Box>
                 <Heading>Error</Heading>
-                <Text>Invalid environment. Must be 'testnet' or 'mainnet'.</Text>
+                <Text>
+                  Invalid environment. Must be 'testnet' or 'mainnet'.
+                </Text>
               </Box>
             ),
           },
@@ -750,15 +796,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     case 'check-account-permissions':
       try {
-        const { targetAccount } = (request.params as { targetAccount?: string }) || {};
+        const { targetAccount } =
+          (request.params as { targetAccount?: string }) || {};
 
-        const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+        const accounts = (await ethereum.request({
+          method: 'eth_accounts',
+        })) as string[];
 
         let currentAccount: string | null;
         if (targetAccount) {
           currentAccount = targetAccount.toLowerCase();
         } else {
-          currentAccount = accounts.length > 0 ? accounts[0]?.toLowerCase() || null : null;
+          currentAccount =
+            accounts.length > 0 ? accounts[0]?.toLowerCase() || null : null;
         }
 
         if (!currentAccount) {
@@ -766,24 +816,26 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             hasPermission: false,
             currentAccount: null,
             permittedAccounts: accounts,
-            error: 'No active account found'
+            error: 'No active account found',
           };
         }
 
-        const hasPermission = accounts.some(account => account.toLowerCase() === currentAccount);
+        const hasPermission = accounts.some(
+          (account) => account.toLowerCase() === currentAccount,
+        );
         const permittedAccounts = accounts;
 
         return {
           hasPermission,
           currentAccount,
-          permittedAccounts
+          permittedAccounts,
         };
       } catch (error) {
         return {
           hasPermission: false,
           currentAccount: null,
           permittedAccounts: [],
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
 
@@ -798,11 +850,24 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           tokenId?: string;
         };
 
-        if (!importParams || !importParams.address || !importParams.name || !importParams.symbol || !importParams.tokenType) {
+        if (
+          !importParams ||
+          !importParams.address ||
+          !importParams.name ||
+          !importParams.symbol ||
+          !importParams.tokenType
+        ) {
           return { success: false, error: 'Missing required parameters' };
         }
 
-        const { address: tokenAddress, name: tokenName, symbol: tokenSymbol, decimals: tokenDecimals, tokenType, tokenId } = importParams;
+        const {
+          address: tokenAddress,
+          name: tokenName,
+          symbol: tokenSymbol,
+          decimals: tokenDecimals,
+          tokenType,
+          tokenId,
+        } = importParams;
 
         if (tokenType === 'ERC20') {
           const isUnique = await checkIfERC20Unique(tokenAddress);
@@ -822,7 +887,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           tokenSymbol,
           tokenDecimals || '0',
           tokenId,
-          tokenType
+          tokenType,
         );
 
         await recalculateBalances();
@@ -831,7 +896,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       } catch (error) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
 
@@ -853,14 +918,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       } catch (error) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
 
     case 'get-tokens':
       try {
-        const getTokensParams = request.params as { chainId?: string } | undefined;
-        const tokenState = await getStateByChainIdAndAddress(getTokensParams?.chainId);
+        const getTokensParams = request.params as
+          | { chainId?: string }
+          | undefined;
+        const tokenState = await getStateByChainIdAndAddress(
+          getTokensParams?.chainId,
+        );
         const allTokens = tokenState.tokenBalances || [];
         return {
           success: true,
@@ -877,7 +946,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return {
           success: false,
           tokens: [],
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
 

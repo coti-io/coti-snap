@@ -4,18 +4,27 @@
 
 /**
  * Truncates a balance string to specified length with ellipsis
+ * @param balance
+ * @param maxLength
  */
 export const truncateBalance = (balance: string, maxLength = 10): string => {
   if (!balance || balance.length <= maxLength) {
     return balance;
   }
-  return balance.slice(0, maxLength) + '...';
+  return `${balance.slice(0, maxLength)}...`;
 };
 
 /**
  * Formats a number to a currency-like string
+ * @param amount
+ * @param currency
+ * @param decimals
  */
-export const formatCurrency = (amount: number | string, currency = 'USD', decimals = 2): string => {
+export const formatCurrency = (
+  amount: number | string,
+  currency = 'USD',
+  decimals = 2,
+): string => {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
 
   if (isNaN(numAmount)) {
@@ -32,6 +41,7 @@ export const formatCurrency = (amount: number | string, currency = 'USD', decima
 
 /**
  * Formats a large number with appropriate suffixes (K, M, B)
+ * @param num
  */
 export const formatNumber = (num: number | string): string => {
   const numValue = typeof num === 'string' ? parseFloat(num) : num;
@@ -41,13 +51,13 @@ export const formatNumber = (num: number | string): string => {
   }
 
   if (numValue >= 1e9) {
-    return (numValue / 1e9).toFixed(1) + 'B';
+    return `${(numValue / 1e9).toFixed(1)}B`;
   }
   if (numValue >= 1e6) {
-    return (numValue / 1e6).toFixed(1) + 'M';
+    return `${(numValue / 1e6).toFixed(1)}M`;
   }
   if (numValue >= 1e3) {
-    return (numValue / 1e3).toFixed(1) + 'K';
+    return `${(numValue / 1e3).toFixed(1)}K`;
   }
 
   return numValue.toFixed(2);
@@ -55,25 +65,38 @@ export const formatNumber = (num: number | string): string => {
 
 /**
  * Formats a token symbol for display
+ * @param symbol
  */
 export const formatTokenSymbol = (symbol: string): string => {
-  if (!symbol) return '';
+  if (!symbol) {
+    return '';
+  }
   return symbol.toUpperCase();
 };
 
 /**
  * Formats a token name for display
+ * @param name
  */
 export const formatTokenName = (name: string): string => {
-  if (!name) return 'Unknown Token';
+  if (!name) {
+    return 'Unknown Token';
+  }
   return name.trim();
 };
 
 /**
  * Formats a token balance from wei to human readable format
+ * @param balance
+ * @param decimals
  */
-export const formatTokenBalance = (balance: string, decimals: number): string => {
-  if (!balance || balance === '0') return '0';
+export const formatTokenBalance = (
+  balance: string,
+  decimals: number,
+): string => {
+  if (!balance || balance === '0') {
+    return '0';
+  }
 
   if (balance.includes('.')) {
     return formatBalance(balance);
@@ -82,7 +105,8 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
   if (/^\d+$/.test(balance)) {
     try {
       const balanceNumber = BigInt(balance);
-      const numDecimals = typeof decimals === 'bigint' ? Number(decimals) : decimals;
+      const numDecimals =
+        typeof decimals === 'bigint' ? Number(decimals) : decimals;
       const divisor = BigInt(10) ** BigInt(numDecimals);
       const wholePart = balanceNumber / divisor;
       const fractionalPart = balanceNumber % divisor;
@@ -92,7 +116,9 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
       }
 
       const wholeStr = wholePart.toString();
-      const fractionalStr = fractionalPart.toString().padStart(numDecimals, '0');
+      const fractionalStr = fractionalPart
+        .toString()
+        .padStart(numDecimals, '0');
 
       let trimmedFractional = fractionalStr.replace(/0+$/, '');
 
@@ -106,7 +132,10 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
         trimmedFractional = fractionalStr.slice(0, 2);
       }
 
-      const formatted = trimmedFractional.length > 0 ? `${wholeStr}.${trimmedFractional}` : wholeStr;
+      const formatted =
+        trimmedFractional.length > 0
+          ? `${wholeStr}.${trimmedFractional}`
+          : wholeStr;
       return formatBalance(formatted);
     } catch (error) {
       void error;
@@ -123,7 +152,9 @@ export const formatTokenBalance = (balance: string, decimals: number): string =>
 const MAX_BALANCE_LENGTH = 12;
 
 export const formatBalance = (balance: string): string => {
-  if (!balance || balance === '0') return '0';
+  if (!balance || balance === '0') {
+    return '0';
+  }
 
   if (balance.includes('.')) {
     const [whole = '', decimal = ''] = balance.split('.');

@@ -1,16 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useAccount } from 'wagmi';
 import styled from 'styled-components';
+import { useAccount } from 'wagmi';
 
-import { COTI_FAUCET_LINK, ONBOARD_CONTRACT_GITHUB_LINK, getOnboardContractLink } from '../../config/onboard';
-import { useWrongChain } from '../../hooks';
-import { useSnap } from '../../hooks/SnapContext';
-import { ButtonAction, ButtonCancel } from '../Button';
-import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
-import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
-import { LoadingWithProgress } from '../LoadingWithProgress';
-import { ContentText, ContentTitle } from '../styles';
-import { Alert } from '../ContentManageToken/Alert';
 import {
   ContentButtons,
   ContentInput,
@@ -18,15 +9,28 @@ import {
   EditableInputContainer,
   Link,
 } from './styles';
+import {
+  COTI_FAUCET_LINK,
+  ONBOARD_CONTRACT_GITHUB_LINK,
+  getOnboardContractLink,
+} from '../../config/onboard';
+import { useWrongChain } from '../../hooks';
+import { useSnap } from '../../hooks/SnapContext';
+import { ButtonAction, ButtonCancel } from '../Button';
+import { ContentConnectYourWallet } from '../ContentConnectYourWallet';
+import { Alert } from '../ContentManageToken/Alert';
+import { ContentSwitchNetwork } from '../ContentSwitchNetwork';
+import { LoadingWithProgress } from '../LoadingWithProgress';
+import { ContentText, ContentTitle } from '../styles';
 
 const ContentTextSpaced = styled(ContentText)`
   line-height: 1.6;
 `;
 
-interface OnboardAccountWizardProps {
+type OnboardAccountWizardProps = {
   readonly handleOnboardAccount: () => void;
   readonly handleCancelOnboard: () => void;
-}
+};
 
 export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
   handleCancelOnboard,
@@ -37,7 +41,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
     settingAESKeyError,
     onboardContractAddress,
     handleOnChangeContactAddress,
-    handleCancelOnboard: snapCancelOnboard
+    handleCancelOnboard: snapCancelOnboard,
   } = useSnap();
 
   const { address, chain } = useAccount();
@@ -97,7 +101,12 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
           </Link>{' '}
         </ContentTextSpaced>
         <ContentInput>
-          <ContentText id="contract-address-description"><Link target="_blank" href={ONBOARD_CONTRACT_GITHUB_LINK}>AccountOnboard.sol</Link> address</ContentText>
+          <ContentText id="contract-address-description">
+            <Link target="_blank" href={ONBOARD_CONTRACT_GITHUB_LINK}>
+              AccountOnboard.sol
+            </Link>{' '}
+            address
+          </ContentText>
           <EditableInputContainer
             $isEditable={isEditable}
             $isError={settingAESKeyError}
@@ -124,7 +133,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
           />
           <ButtonAction
             primary
-            text={isValidating ? "Validating..." : "Onboard"}
+            text={isValidating ? 'Validating...' : 'Onboard'}
             fullWidth={true}
             onClick={handleOnboardClick}
             disabled={isValidating}
@@ -157,9 +166,7 @@ export const OnboardAccountWizard: React.FC<OnboardAccountWizardProps> = ({
           </Alert>
         )}
         {settingAESKeyError === 'unknownError' && (
-          <Alert type="error">
-            Error to onboard account, try again
-          </Alert>
+          <Alert type="error">Error to onboard account, try again</Alert>
         )}
       </>
     )

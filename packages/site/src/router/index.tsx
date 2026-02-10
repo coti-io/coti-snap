@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 
+import { SmartRouter } from './SmartRouter.js';
 import {
   ContentConnectYourWallet,
   ContentManageAESKey,
@@ -10,85 +11,118 @@ import { ContentInstallAESKeyManager } from '../components/ContentInstallAESKeyM
 import { PermissionGuard } from '../components/PermissionGuard';
 import { useMetaMask, useWrongChain } from '../hooks';
 import { useSnap } from '../hooks/SnapContext';
-import { SmartRouter } from './SmartRouter.js';
 
+/**
+ *
+ * @param options0
+ * @param options0.children
+ */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isConnected } = useAccount();
-  
+
   if (!isConnected) {
     return <Navigate to="/connect" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
+/**
+ *
+ * @param options0
+ * @param options0.children
+ */
 function NetworkProtectedRoute({ children }: { children: React.ReactNode }) {
   const { wrongChain } = useWrongChain();
-  
+
   if (wrongChain) {
     return <Navigate to="/network" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
+/**
+ *
+ * @param options0
+ * @param options0.children
+ */
 function SnapProtectedRoute({ children }: { children: React.ReactNode }) {
   const { installedSnap } = useMetaMask();
-  
+
   if (!installedSnap) {
     return <Navigate to="/install" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
+/**
+ *
+ * @param options0
+ * @param options0.children
+ */
 function InstallProtectedRoute({ children }: { children: React.ReactNode }) {
   const { installedSnap } = useMetaMask();
-  
+
   if (installedSnap) {
     return <Navigate to="/wallet" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
+/**
+ *
+ */
 function Dashboard() {
   const { userHasAESKey, userAESKey } = useSnap();
-  
+
   return (
     <PermissionGuard>
-      <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+      <ContentManageAESKey
+        userHasAESKey={userHasAESKey}
+        userAESKey={userAESKey}
+      />
     </PermissionGuard>
   );
 }
 
+/**
+ *
+ */
 function TokenManagement() {
   const { userHasAESKey, userAESKey } = useSnap();
   return (
     <PermissionGuard>
-      <ContentManageAESKey userHasAESKey={userHasAESKey} userAESKey={userAESKey} />
+      <ContentManageAESKey
+        userHasAESKey={userHasAESKey}
+        userAESKey={userAESKey}
+      />
     </PermissionGuard>
   );
 }
 
-
+/**
+ *
+ */
 function RootRedirect() {
   const { isConnected } = useAccount();
   const { wrongChain } = useWrongChain();
   const { installedSnap } = useMetaMask();
-  
+
   if (!isConnected) {
     return <Navigate to="/connect" replace />;
   }
-  
+
   if (wrongChain) {
     return <Navigate to="/network" replace />;
   }
-  
+
   if (!installedSnap) {
     return <Navigate to="/install" replace />;
   }
-  
+
   return <Navigate to="/wallet" replace />;
 }
 

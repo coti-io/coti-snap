@@ -1,10 +1,10 @@
 import { useCallback, memo, useTransition } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 
-import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
-import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
-import LogOutIcon from '../../assets/icons/logOut.svg';
 import { AddressDisplay } from './AddressDisplay';
+import { ConnectedDetails, Dropdown, DisconnectButton } from './styles';
+import LogOutIcon from '../../assets/icons/logOut.svg';
+import { useOptimizedDropdown } from '../../hooks/useOptimizedDropdown';
 
 export const WalletManager = memo(() => {
   const { address } = useAccount();
@@ -26,7 +26,7 @@ export const WalletManager = memo(() => {
       <AddressDisplay address={address || ''} isOpen={isOpen} />
       <Dropdown ref={dropdownRef} $isVisible={isOpen}>
         <DisconnectButton onClick={handleDisconnect}>
-          <LogOutIcon/>
+          <LogOutIcon />
           Disconnect
         </DisconnectButton>
       </Dropdown>

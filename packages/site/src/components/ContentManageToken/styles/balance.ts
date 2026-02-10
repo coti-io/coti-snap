@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+
 import { colors, spacing } from './theme';
 
 export const PrimaryBalanceAmount = styled.div`
@@ -21,7 +22,6 @@ export const SecondaryBalanceAmount = styled.div`
   display: flex;
 `;
 
-
 export const TokenBalanceAmount = styled.div`
   font-weight: 600;
   font-size: 16px;
@@ -39,7 +39,7 @@ export const BalanceEye = styled.button`
   align-items: center;
   border: none;
   cursor: pointer;
-  
+
   svg {
     width: 22px;
     height: 22px;

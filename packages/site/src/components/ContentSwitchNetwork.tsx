@@ -2,7 +2,12 @@ import { memo, useCallback, useTransition } from 'react';
 import styled from 'styled-components';
 import { useAccount, useSwitchChain } from 'wagmi';
 
-import { ContentBorderWrapper, ContentContainer, ContentText, ContentTitle } from './styles';
+import {
+  ContentBorderWrapper,
+  ContentContainer,
+  ContentText,
+  ContentTitle,
+} from './styles';
 import { getSupportedNetworks, isSupportedChainId } from '../config/networks';
 
 const StyledButton = styled.button`
@@ -13,7 +18,7 @@ const StyledButton = styled.button`
   font-size: 1.4rem;
   font-weight: 500;
   line-height: 1.2;
-  color: #FFFFFF;
+  color: #ffffff;
   background-color: #ff1900;
   border: none;
   border-radius: 12px;
@@ -53,19 +58,22 @@ export const ContentSwitchNetwork = memo(() => {
   const connectedChainId = account.chain?.id;
   const supportedNetworks = getSupportedNetworks();
 
-  const handleSwitchChain = useCallback((targetChainId: number) => {
-    startTransition(() => {
-      switchChain({ chainId: targetChainId });
-    });
-  }, [switchChain]);
+  const handleSwitchChain = useCallback(
+    (targetChainId: number) => {
+      startTransition(() => {
+        switchChain({ chainId: targetChainId });
+      });
+    },
+    [switchChain],
+  );
 
   return (
     <ContentBorderWrapper>
       <ContentContainer>
         <ContentTitle>Switch Network</ContentTitle>
         <ContentText>
-          It looks like you are not on the COTI network, please switch network to
-          continue.
+          It looks like you are not on the COTI network, please switch network
+          to continue.
         </ContentText>
         <ButtonsWrapper>
           {supportedNetworks.map((network) => (

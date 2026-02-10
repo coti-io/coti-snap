@@ -44,9 +44,7 @@ export const Root: FunctionComponent<RootProps> = ({ children }) => {
           <MetaMaskProvider>
             <SnapProvider>
               <GlobalBackground>
-                <Wrapper>
-                  {children}
-                </Wrapper>
+                <Wrapper>{children}</Wrapper>
               </GlobalBackground>
             </SnapProvider>
           </MetaMaskProvider>

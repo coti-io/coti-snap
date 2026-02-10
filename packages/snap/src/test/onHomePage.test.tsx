@@ -1,9 +1,12 @@
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
+import * as snapHandlers from '..';
 import { TokenViewSelector } from '../types';
-import * as snapHandlers from '../index';
 
-const { getStateByChainIdAndAddress, setStateByChainIdAndAddress } = require('../utils/snap');
+const {
+  getStateByChainIdAndAddress,
+  setStateByChainIdAndAddress,
+} = require('../utils/snap');
 const { checkChainId, recalculateBalances } = require('../utils/token');
 
 jest.mock('../utils/snap', () => ({
@@ -30,7 +33,12 @@ jest.mock('../components/WrongChain', () => ({
 }));
 
 jest.mock('../components/Home', () => ({
-  Home: ({ balance, tokenBalances, tokenView, aesKey }: {
+  Home: ({
+    balance,
+    tokenBalances,
+    tokenView,
+    aesKey,
+  }: {
     balance: bigint;
     tokenBalances: unknown[];
     tokenView: string;

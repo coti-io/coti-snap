@@ -1,3 +1,4 @@
+import type { GeneralState, State } from '../types';
 import {
   getStateData,
   setStateData,
@@ -5,7 +6,6 @@ import {
   getStateByChainIdAndAddress,
   setStateByChainIdAndAddress,
 } from '../utils/snap';
-import type { GeneralState, State } from '../types';
 
 const mockSnapRequest = jest.fn();
 
@@ -27,12 +27,16 @@ describe('Snap State Management Utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSnapRequest.mockClear();
-    (global.ethereum.request as jest.Mock).mockClear();
+    global.ethereum.request.mockClear();
   });
 
   describe('getStateData', () => {
     it('should retrieve state data from snap', async () => {
-      const mockState = { chainId: '7082400', address: '0x123', balance: '100' };
+      const mockState = {
+        chainId: '7082400',
+        address: '0x123',
+        balance: '100',
+      };
       mockSnapRequest.mockResolvedValue(mockState);
 
       const result = await getStateData<typeof mockState>();
@@ -77,7 +81,8 @@ describe('Snap State Management Utilities', () => {
             balance: '100',
             tokenBalances: [],
             aesKey: 'test-key',
-            tokenView: 'ERC20' as unknown as import('../types').TokenViewSelector,
+            tokenView:
+              'ERC20' as unknown as import('../types').TokenViewSelector,
           },
         },
       };
@@ -100,7 +105,7 @@ describe('Snap State Management Utilities', () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
       // Mock eth_accounts
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      global.ethereum.request.mockResolvedValue([mockAddress]);
 
       // Mock getExpectedEnvironment (returns state with expectedEnvironment)
       mockSnapRequest.mockResolvedValue({
@@ -122,7 +127,7 @@ describe('Snap State Management Utilities', () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
       // Mock eth_accounts and eth_chainId
-      (global.ethereum.request as jest.Mock)
+      global.ethereum.request
         .mockResolvedValueOnce([mockAddress]) // eth_accounts
         .mockResolvedValueOnce('0x6c11a0'); // eth_chainId (7082400 in hex)
 
@@ -138,9 +143,11 @@ describe('Snap State Management Utilities', () => {
     });
 
     it('should throw error when no account is connected', async () => {
-      (global.ethereum.request as jest.Mock).mockResolvedValue([]);
+      global.ethereum.request.mockResolvedValue([]);
 
-      await expect(getStateIdentifier()).rejects.toThrow('No account connected');
+      await expect(getStateIdentifier()).rejects.toThrow(
+        'No account connected',
+      );
     });
   });
 
@@ -161,7 +168,7 @@ describe('Snap State Management Utilities', () => {
         },
       };
 
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      global.ethereum.request.mockResolvedValue([mockAddress]);
       mockSnapRequest.mockResolvedValue(mockGeneralState);
 
       const result = await getStateByChainIdAndAddress();
@@ -172,7 +179,7 @@ describe('Snap State Management Utilities', () => {
     it('should return empty state for new chain/address combination', async () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      global.ethereum.request.mockResolvedValue([mockAddress]);
       mockSnapRequest.mockResolvedValue({
         __global_settings__: { expectedEnvironment: 'testnet' },
       });
@@ -185,7 +192,7 @@ describe('Snap State Management Utilities', () => {
     it('should handle null state gracefully', async () => {
       const mockAddress = '0x1234567890123456789012345678901234567890';
 
-      (global.ethereum.request as jest.Mock)
+      global.ethereum.request
         .mockResolvedValueOnce([mockAddress])
         .mockResolvedValueOnce('0x6c11a0'); // eth_chainId fallback
 
@@ -219,7 +226,7 @@ describe('Snap State Management Utilities', () => {
         },
       };
 
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      global.ethereum.request.mockResolvedValue([mockAddress]);
 
       mockSnapRequest
         .mockResolvedValueOnce(existingState) // getExpectedEnvironment
@@ -257,7 +264,7 @@ describe('Snap State Management Utilities', () => {
         __global_settings__: { expectedEnvironment: 'testnet' },
       };
 
-      (global.ethereum.request as jest.Mock).mockResolvedValue([mockAddress]);
+      global.ethereum.request.mockResolvedValue([mockAddress]);
 
       mockSnapRequest
         .mockResolvedValueOnce(existingState) // getExpectedEnvironment

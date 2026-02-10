@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
+
+import { Alert } from './Alert';
 import { SendButton } from './styles';
 import SpinnerIcon from '../../assets/spinner.png';
-import { Alert } from './Alert';
 
 const Container = styled.div`
   display: flex;
@@ -21,7 +22,7 @@ const Title = styled.h2`
 
 const Description = styled.p`
   font-size: 16px;
-  color: #18191d !important;;
+  color: #18191d !important;
   line-height: 1.5;
   font-weight: 450;
 `;
@@ -41,14 +42,14 @@ const SpinnerImage = styled.img`
   animation: ${spin} 1s linear infinite;
 `;
 
-interface RequestAESKeyProps {
+type RequestAESKeyProps = {
   onRequestAESKey: () => Promise<void>;
   isRequesting: boolean;
-}
+};
 
 export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
   onRequestAESKey,
-  isRequesting
+  isRequesting,
 }) => {
   const [rejectionError, setRejectionError] = useState(false);
 
@@ -67,19 +68,20 @@ export const RequestAESKey: React.FC<RequestAESKeyProps> = ({
     <Container>
       <Title>Unlock Your Balances</Title>
       <Description>
-        To view and manage your private balances, please allow access to your security key.
+        To view and manage your private balances, please allow access to your
+        security key.
       </Description>
-      <SendButton
-        onClick={handleRequest}
-        disabled={isRequesting}
-      >
-        {isRequesting ? <SpinnerImage src={SpinnerIcon} alt="Loading" /> : undefined}
+      <SendButton onClick={handleRequest} disabled={isRequesting}>
+        {isRequesting ? (
+          <SpinnerImage src={SpinnerIcon} alt="Loading" />
+        ) : undefined}
         {isRequesting ? 'Requesting' : 'Request'}
       </SendButton>
       <br />
       {rejectionError && (
         <Alert type="error">
-          Request failed or was cancelled. Please try again and approve the MetaMask request to continue.
+          Request failed or was cancelled. Please try again and approve the
+          MetaMask request to continue.
         </Alert>
       )}
     </Container>

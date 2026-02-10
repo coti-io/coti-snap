@@ -1,9 +1,7 @@
-import type { Json } from '@metamask/snaps-sdk';
-import { type SnapsProvider } from '@metamask/snaps-sdk';
+import type { Json, SnapsProvider } from '@metamask/snaps-sdk';
 import type { GeneralState, State, StateIdentifier } from 'src/types';
 
 declare const snap: SnapsProvider;
-
 
 /**
  * Retrieves the current state data.
@@ -33,7 +31,9 @@ export async function setStateData<StateType>(data: StateType): Promise<void> {
 }
 
 export const getStateIdentifier = async (): Promise<StateIdentifier> => {
-  const accounts = await ethereum.request({ method: 'eth_accounts' }) as string[];
+  const accounts = (await ethereum.request({
+    method: 'eth_accounts',
+  })) as string[];
   const currentAddress = accounts.length > 0 ? accounts[0] : null;
 
   if (!currentAddress) {
@@ -46,7 +46,9 @@ export const getStateIdentifier = async (): Promise<StateIdentifier> => {
   if (expectedEnv) {
     chainId = expectedEnv === 'testnet' ? '7082400' : '2632500';
   } else {
-    const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+    const chainIdHex = (await ethereum.request({
+      method: 'eth_chainId',
+    })) as string;
     chainId = parseInt(chainIdHex, 16).toString();
   }
 
@@ -60,10 +62,23 @@ export const getStateByChainIdAndAddress = async (
   const state = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;
-  console.log('[SNAP] getStateByChainIdAndAddress - overrideChainId:', overrideChainId, 'identifier.chainId:', identifier.chainId, 'using chainId:', chainId);
-  console.log('[SNAP] getStateByChainIdAndAddress - available chainIds in state:', Object.keys(state));
+  console.log(
+    '[SNAP] getStateByChainIdAndAddress - overrideChainId:',
+    overrideChainId,
+    'identifier.chainId:',
+    identifier.chainId,
+    'using chainId:',
+    chainId,
+  );
+  console.log(
+    '[SNAP] getStateByChainIdAndAddress - available chainIds in state:',
+    Object.keys(state),
+  );
   const result = state[chainId]?.[address] ?? ({} as State);
-  console.log('[SNAP] getStateByChainIdAndAddress - found state:', result.aesKey ? 'HAS AES KEY' : 'NO AES KEY');
+  console.log(
+    '[SNAP] getStateByChainIdAndAddress - found state:',
+    result.aesKey ? 'HAS AES KEY' : 'NO AES KEY',
+  );
   return result;
 };
 
@@ -75,7 +90,12 @@ export const setStateByChainIdAndAddress = async (
   const oldState = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;
-  console.log('[SNAP] setStateByChainIdAndAddress - overrideChainId:', overrideChainId, 'using chainId:', chainId);
+  console.log(
+    '[SNAP] setStateByChainIdAndAddress - overrideChainId:',
+    overrideChainId,
+    'using chainId:',
+    chainId,
+  );
   const newState = {
     ...oldState,
     [chainId]: {
@@ -97,7 +117,9 @@ export const getGlobalSettings = async (): Promise<GlobalSettings> => {
   return (state[GLOBAL_SETTINGS_KEY] as GlobalSettings) || {};
 };
 
-export const setGlobalSettings = async (settings: GlobalSettings): Promise<void> => {
+export const setGlobalSettings = async (
+  settings: GlobalSettings,
+): Promise<void> => {
   const state = (await getStateData<Record<string, unknown>>()) || {};
   await setStateData({
     ...state,
@@ -105,7 +127,9 @@ export const setGlobalSettings = async (settings: GlobalSettings): Promise<void>
   });
 };
 
-export const setExpectedEnvironment = async (environment: 'testnet' | 'mainnet'): Promise<void> => {
+export const setExpectedEnvironment = async (
+  environment: 'testnet' | 'mainnet',
+): Promise<void> => {
   const settings = await getGlobalSettings();
   await setGlobalSettings({
     ...settings,
@@ -113,7 +137,9 @@ export const setExpectedEnvironment = async (environment: 'testnet' | 'mainnet')
   });
 };
 
-export const getExpectedEnvironment = async (): Promise<'testnet' | 'mainnet' | null> => {
+export const getExpectedEnvironment = async (): Promise<
+  'testnet' | 'mainnet' | null
+> => {
   const settings = await getGlobalSettings();
   return settings.expectedEnvironment ?? null;
 };

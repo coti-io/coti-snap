@@ -1,4 +1,3 @@
-import COTILogo from '../../assets/logo.svg';
 import { HeaderButtons } from './HeaderButtons';
 import { MobileMenu } from './MobileMenu';
 import {
@@ -7,6 +6,7 @@ import {
   LinkTransparent,
   LogoWrapper,
 } from './styles';
+import COTILogo from '../../assets/logo.svg';
 
 export const Header = () => {
   return (

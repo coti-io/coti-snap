@@ -1,7 +1,8 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import LoaderIcon from '../assets/icons/loader.png';
+
 import { StepProgressBar } from './StepProgressBar';
+import LoaderIcon from '../assets/icons/loader.png';
 import { useSnap } from '../hooks/SnapContext';
 import type { OnboardingStep } from '../hooks/SnapContext';
 
@@ -36,12 +37,7 @@ const ContentTitle = styled.p`
   color: #000000 !important;
 `;
 
-const ONBOARDING_STEPS = [
-  'Request',
-  'Sign',
-  'Confirm',
-  'Done'
-];
+const ONBOARDING_STEPS = ['Request', 'Sign', 'Confirm', 'Done'];
 
 const getStepNumber = (onboardingStep: OnboardingStep): number => {
   switch (onboardingStep) {
@@ -58,10 +54,10 @@ const getStepNumber = (onboardingStep: OnboardingStep): number => {
   }
 };
 
-interface LoadingWithProgressProps {
+type LoadingWithProgressProps = {
   title: string;
   actionText: string;
-}
+};
 
 export const LoadingWithProgress: React.FC<LoadingWithProgressProps> = ({
   title,
@@ -73,7 +69,7 @@ export const LoadingWithProgress: React.FC<LoadingWithProgressProps> = ({
   return (
     <>
       <ContentTitle>{title}</ContentTitle>
-      
+
       <div
         style={{
           display: 'flex',
@@ -82,16 +78,10 @@ export const LoadingWithProgress: React.FC<LoadingWithProgressProps> = ({
           alignItems: 'center',
         }}
       >
-        <SpinnerImage
-          src={LoaderIcon}
-          alt="Loading"
-        />
+        <SpinnerImage src={LoaderIcon} alt="Loading" />
         <ContentText>{actionText}</ContentText>
 
-        <StepProgressBar 
-        currentStep={currentStep} 
-        steps={ONBOARDING_STEPS} 
-      />
+        <StepProgressBar currentStep={currentStep} steps={ONBOARDING_STEPS} />
       </div>
     </>
   );

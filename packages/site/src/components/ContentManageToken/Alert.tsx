@@ -1,20 +1,21 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+
 import ErrorIcon from '../../assets/badges/error.svg';
-import SuccessIcon from '../../assets/badges/success.svg';
 import LoadingIcon from '../../assets/badges/loading.svg';
+import SuccessIcon from '../../assets/badges/success.svg';
 
 export type AlertType = 'error' | 'success' | 'loading';
 
-interface AlertProps {
+type AlertProps = {
   type: AlertType;
   children: React.ReactNode;
   className?: string;
-}
+};
 
-interface AlertContainerProps {
+type AlertContainerProps = {
   $type: AlertType;
-}
+};
 
 const ALERT_STYLES = {
   error: css`
@@ -49,9 +50,9 @@ const AlertContainer = styled.div<AlertContainerProps>`
   font-size: 1.6rem;
   width: auto;
   transition: all 0.2s ease-in-out;
-  
+
   ${({ $type }) => ALERT_STYLES[$type]}
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -71,18 +72,14 @@ const AlertContent = styled.div`
   color: #000000 !important;
 `;
 
-export const Alert: React.FC<AlertProps> = ({ 
-  type, 
-  children, 
-  className 
-}) => {
+export const Alert: React.FC<AlertProps> = ({ type, children, className }) => {
   const IconComponent = ALERT_ICONS[type];
   const alertRole = type === 'error' ? 'alert' : 'status';
   const alertAriaLive = type === 'error' ? 'assertive' : 'polite';
 
   return (
-    <AlertContainer 
-      $type={type} 
+    <AlertContainer
+      $type={type}
       className={className}
       role={alertRole}
       aria-live={alertAriaLive}
@@ -90,9 +87,7 @@ export const Alert: React.FC<AlertProps> = ({
       <IconWrapper aria-hidden="true">
         <IconComponent />
       </IconWrapper>
-      <AlertContent>
-        {children}
-      </AlertContent>
+      <AlertContent>{children}</AlertContent>
     </AlertContainer>
   );
-}; 
+};

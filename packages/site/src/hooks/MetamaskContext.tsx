@@ -45,7 +45,8 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   const [installedSnap, setInstalledSnap] = useState<Snap | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isInstallingSnap, setIsInstallingSnap] = useState<boolean>(false);
-  const [hasCheckedForProvider, setHasCheckedForProvider] = useState<boolean>(false);
+  const [hasCheckedForProvider, setHasCheckedForProvider] =
+    useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -88,15 +89,15 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <MetaMaskContext.Provider
-      value={{ 
-        provider, 
-        error, 
-        setError, 
-        installedSnap, 
+      value={{
+        provider,
+        error,
+        setError,
+        installedSnap,
         setInstalledSnap,
         isInstallingSnap,
         setIsInstallingSnap,
-        hasCheckedForProvider
+        hasCheckedForProvider,
       }}
     >
       {children}

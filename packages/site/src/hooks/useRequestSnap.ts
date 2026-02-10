@@ -1,7 +1,7 @@
-import { defaultSnapOrigin } from '../config';
-import type { Snap } from '../types';
 import { useMetaMaskContext } from './MetamaskContext';
 import { useRequest } from './useRequest';
+import { defaultSnapOrigin } from '../config';
+import type { Snap } from '../types';
 
 /**
  * Utility hook to wrap the `wallet_requestSnaps` method.
@@ -24,7 +24,7 @@ export const useRequestSnap = (
   const requestSnap = async () => {
     try {
       setIsInstallingSnap(true);
-      
+
       const snaps = (await request({
         method: 'wallet_requestSnaps',
         params: {
@@ -35,11 +35,14 @@ export const useRequestSnap = (
       // Updates the `installedSnap` context variable since we just installed the Snap.
       const installedSnap = snaps?.[snapId] ?? null;
       setInstalledSnap(installedSnap);
-      
-      setTimeout(() => {
-        setIsInstallingSnap(false);
-      }, installedSnap ? 3000 : 1000);
-      
+
+      setTimeout(
+        () => {
+          setIsInstallingSnap(false);
+        },
+        installedSnap ? 3000 : 1000,
+      );
+
       return installedSnap;
     } catch (error) {
       void error;
