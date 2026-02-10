@@ -10,12 +10,16 @@ const FooterContainer = styled.footer`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 24px 16px;
-  gap: 8px;
-  height: 120px; /* Fixed height to prevent layout shift */
+  padding: clamp(12px, 2vh, 24px) 16px;
+  gap: clamp(4px, 1vh, 8px);
+  height: clamp(96px, 12vh, 120px);
   box-sizing: border-box;
   contain: layout style;
   z-index: 1;
+  
+  @media screen and (max-width: 768px), screen and (max-height: 700px) {
+    padding: clamp(10px, 2vh, 16px) 12px;
+  }
 `;
 
 const Title = styled.h3`
@@ -23,12 +27,14 @@ const Title = styled.h3`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text?.default};
+  line-height: 1.3;
 `;
 
 const Description = styled.p`
   margin: 0;
   font-size: 14px;
   color: ${({ theme }) => theme.colors.text?.muted};
+  line-height: 1.4;
 `;
 
 const VersionInfo = styled.span`

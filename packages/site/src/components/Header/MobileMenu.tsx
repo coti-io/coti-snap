@@ -30,7 +30,7 @@ export const MobileMenu = memo(() => {
   const { isConnected, address } = useAccount();
   const { connectors, connect } = useConnect({ config });
   const { disconnect } = useDisconnect();
-  const { wrongChain } = useWrongChain();
+  useWrongChain();
 
   const connectorId = isFlask ? CONNECTOR_MM_FLASK_EXPORT.ID : CONNECTOR_MM_REGULAR_EXPORT.ID;
 
@@ -62,7 +62,7 @@ export const MobileMenu = memo(() => {
               {address ? truncateString(address) : 'no address'}
             </MobileAddressDisplay>
 
-            {wrongChain && <Chain />}
+            <Chain compact />
 
             <DisconnectButton onClick={handleDisconnect}>
               <LogOutIcon/>
