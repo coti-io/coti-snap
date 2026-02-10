@@ -320,6 +320,7 @@ export const fetchImageAsDataUri = async (
 /**
  * Fetch JSON metadata from a URL, with IPFS gateway fallback and timeout.
  * If the URL is an IPFS gateway URL, tries multiple gateways.
+ *
  * @param url
  * @param timeoutMs
  */

@@ -4,6 +4,7 @@
 
 /**
  * Truncates a balance string to specified length with ellipsis
+ *
  * @param balance
  * @param maxLength
  */
@@ -16,6 +17,7 @@ export const truncateBalance = (balance: string, maxLength = 10): string => {
 
 /**
  * Formats a number to a currency-like string
+ *
  * @param amount
  * @param currency
  * @param decimals
@@ -41,6 +43,7 @@ export const formatCurrency = (
 
 /**
  * Formats a large number with appropriate suffixes (K, M, B)
+ *
  * @param num
  */
 export const formatNumber = (num: number | string): string => {
@@ -65,6 +68,7 @@ export const formatNumber = (num: number | string): string => {
 
 /**
  * Formats a token symbol for display
+ *
  * @param symbol
  */
 export const formatTokenSymbol = (symbol: string): string => {
@@ -76,6 +80,7 @@ export const formatTokenSymbol = (symbol: string): string => {
 
 /**
  * Formats a token name for display
+ *
  * @param name
  */
 export const formatTokenName = (name: string): string => {
@@ -87,6 +92,7 @@ export const formatTokenName = (name: string): string => {
 
 /**
  * Formats a token balance from wei to human readable format
+ *
  * @param balance
  * @param decimals
  */

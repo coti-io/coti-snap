@@ -54,7 +54,7 @@ const aesKey = await invokeSnap({ method: 'get-aes-key' });
 // Set AES key
 await invokeSnap({
   method: 'set-aes-key',
-  params: { newUserAesKey: 'your-aes-key' }
+  params: { newUserAesKey: 'your-aes-key' },
 });
 
 // Delete AES key
@@ -67,13 +67,13 @@ await invokeSnap({ method: 'delete-aes-key' });
 // Encrypt data
 const encrypted = await invokeSnap({
   method: 'encrypt',
-  params: { value: 'data-to-encrypt' }
+  params: { value: 'data-to-encrypt' },
 });
 
 // Decrypt data
 const decrypted = await invokeSnap({
   method: 'decrypt',
-  params: { value: encryptedData }
+  params: { value: encryptedData },
 });
 ```
 
@@ -81,16 +81,16 @@ const decrypted = await invokeSnap({
 
 ### RPC Methods
 
-| Method | Description | Parameters |
-|--------|-------------|------------|
-| `has-aes-key` | Check if AES key exists | None |
-| `get-aes-key` | Retrieve AES key | None |
-| `set-aes-key` | Store AES key | `{ newUserAesKey: string }` |
-| `delete-aes-key` | Remove AES key | None |
-| `encrypt` | Encrypt data | `{ value: string }` |
-| `decrypt` | Decrypt data | `{ value: string }` |
-| `connect-to-wallet` | Connect to MetaMask | None |
-| `get-permissions` | Get wallet permissions | None |
+| Method              | Description             | Parameters                  |
+| ------------------- | ----------------------- | --------------------------- |
+| `has-aes-key`       | Check if AES key exists | None                        |
+| `get-aes-key`       | Retrieve AES key        | None                        |
+| `set-aes-key`       | Store AES key           | `{ newUserAesKey: string }` |
+| `delete-aes-key`    | Remove AES key          | None                        |
+| `encrypt`           | Encrypt data            | `{ value: string }`         |
+| `decrypt`           | Decrypt data            | `{ value: string }`         |
+| `connect-to-wallet` | Connect to MetaMask     | None                        |
+| `get-permissions`   | Get wallet permissions  | None                        |
 
 ### Permissions
 
