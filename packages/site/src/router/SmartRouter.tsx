@@ -19,19 +19,24 @@ const Container = styled.div`
   width: 564px;
   height: 100%;
   max-height: 100vh;
-  max-height: calc(100vh - 120px);
-  padding-bottom: 120px;
-  gap: 24px;
+  max-height: calc(100vh - clamp(96px, 12vh, 120px));
+  padding-bottom: clamp(96px, 12vh, 120px);
+  gap: clamp(12px, 2vh, 24px);
   box-sizing: border-box;
   border-radius: 14px;
   background: transparent;
   ${({ theme }) => theme.mediaQueries.small} {
     width: 100%;
-    padding: 1.6rem;
-    padding-bottom: calc(120px + 1.6rem);
-    margin: 0;
+    padding: 0 1.6rem;
+    padding-bottom: calc(clamp(96px, 12vh, 120px) + 1.6rem);
+    margin: auto;
     max-width: 100vw;
     box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 768px), screen and (max-height: 700px) {
+    max-height: calc(100vh - clamp(96px, 12vh, 96px));
+    padding-bottom: clamp(96px, 12vh, 96px);
   }
 `;
 
@@ -45,6 +50,12 @@ const ChainIndicator = styled.div`
   display: flex;
   justify-content: flex-end;
   box-sizing: border-box;
+  position: relative;
+  z-index: 900;
+
+  @media screen and (max-width: 770px) {
+    display: none;
+  }
 `;
 
 export function SmartRouter() {

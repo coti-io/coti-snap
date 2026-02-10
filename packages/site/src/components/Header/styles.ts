@@ -112,7 +112,7 @@ export const ButtonsContainer = styled.div`
     gap: 8px;
   }
 
-  ${({ theme }) => theme.mediaQueries.small} {
+  @media screen and (max-width: 770px) {
     display: none;
   }
 `;
@@ -127,6 +127,7 @@ export const MobileMenuButton = styled.button`
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 1001;
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 
@@ -139,7 +140,7 @@ export const MobileMenuButton = styled.button`
     background: rgba(255, 255, 255, 0.2);
   }
 
-  ${({ theme }) => theme.mediaQueries.small} {
+  @media screen and (max-width: 770px) {
     display: flex;
   }
 
@@ -156,6 +157,7 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
   top: 68px;
   left: 50%;
   flex-direction: column;
+  align-items: stretch;
   background: rgba(20, 20, 40, 0.95);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -163,7 +165,7 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
   box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.4), 0px 0px 1px rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  z-index: 20;
+  z-index: 999;
   gap: 12px;
   min-width: 280px;
   max-width: calc(100vw - 32px);
@@ -181,14 +183,14 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
   contain: layout style;
   will-change: transform, opacity;
 
-  ${({ theme }) => theme.mediaQueries.small} {
+  @media screen and (max-width: 770px) {
     display: flex;
     min-width: calc(100vw - 32px);
     max-width: calc(100vw - 32px);
     top: 60px;
   }
 
-  @media screen and (min-width: 601px) {
+  @media screen and (min-width: 771px) {
     display: none;
   }
 `;
