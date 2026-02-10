@@ -14,6 +14,8 @@ const ChainWrapper = styled.div<{ $compact?: boolean }>`
   z-index: 900;
   width: ${(props) => (props.$compact ? '100%' : 'auto')};
   align-self: ${(props) => (props.$compact ? 'stretch' : 'auto')};
+  flex-direction: ${(props) => (props.$compact ? 'column' : 'row')};
+  align-items: ${(props) => (props.$compact ? 'stretch' : 'center')};
 `;
 
 const ChainButton = styled(ConnectedDetails)<{ $isOpen?: boolean; $compact?: boolean }>`
