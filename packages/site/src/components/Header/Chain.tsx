@@ -21,6 +21,10 @@ const ChainWrapper = styled.div<{ $compact?: boolean }>`
   align-self: ${(props) => (props.$compact ? 'stretch' : 'auto')};
   flex-direction: ${(props) => (props.$compact ? 'column' : 'row')};
   align-items: ${(props) => (props.$compact ? 'stretch' : 'center')};
+
+  @media screen and (max-height: 820px) {
+    ${(props) => (!props.$compact ? 'display: none;' : '')}
+  }
 `;
 
 const ChainButton = styled(ConnectedDetails)<{
@@ -68,7 +72,10 @@ const ChainButton = styled(ConnectedDetails)<{
   `}
 `;
 
-const ChainDropdown = styled(Dropdown)<{ $compact?: boolean }>`
+const ChainDropdown = styled(Dropdown)<{
+  $compact?: boolean;
+  $hideButton?: boolean;
+}>`
   left: auto;
   right: 0;
   min-width: ${(props) => (props.$compact ? '160px' : '180px')};
@@ -85,7 +92,7 @@ const ChainDropdown = styled(Dropdown)<{ $compact?: boolean }>`
     props.$compact &&
     `
       position: static;
-      margin-top: 8px;
+      margin-top: ${props.$hideButton ? '0' : '8px'};
       min-width: 100%;
       align-self: stretch;
       max-height: none;
@@ -177,6 +184,7 @@ export const Chain = memo(({ compact = false }: { compact?: boolean }) => {
   const { isOpen, toggle, close, dropdownRef } = useOptimizedDropdown({
     closeOnOutsideClick: true,
   });
+  const hideChainButton = compact && isOpen;
 
   const currentChainId = chain?.id;
   const isSupported = isSupportedChainId(currentChainId);
@@ -200,19 +208,25 @@ export const Chain = memo(({ compact = false }: { compact?: boolean }) => {
 
   return (
     <ChainWrapper ref={dropdownRef} $compact={compact}>
-      <ChainButton
-        as="button"
-        onClick={toggle}
-        $wrongChain={!isSupported}
-        $isOpen={isOpen}
-        $compact={compact}
-        disabled={isPending}
-      >
-        {displayName}
-        <DownArrowIcon />
-      </ChainButton>
+      {!hideChainButton && (
+        <ChainButton
+          as="button"
+          onClick={toggle}
+          $wrongChain={!isSupported}
+          $isOpen={isOpen}
+          $compact={compact}
+          disabled={isPending}
+        >
+          {displayName}
+          <DownArrowIcon />
+        </ChainButton>
+      )}
 
-      <ChainDropdown $isVisible={isOpen} $compact={compact}>
+      <ChainDropdown
+        $isVisible={isOpen}
+        $compact={compact}
+        $hideButton={hideChainButton}
+      >
         {supportedNetworks.map((network) => {
           const isActive = network.id === currentChainId;
           return (

@@ -186,7 +186,8 @@ export function SmartRouter() {
         : /Android|iPhone|iPad|iPod|IEMobile|BlackBerry|Opera Mini|Windows Phone/i.test(
             ua,
           );
-    setIsMobile(isUaMobile);
+    const isSmallViewport = window.innerWidth <= 770 || window.innerHeight <= 820;
+    setIsMobile(isUaMobile && isSmallViewport);
   }, []);
 
   if (isMobile) {
