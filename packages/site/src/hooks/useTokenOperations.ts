@@ -1,6 +1,6 @@
 import type { itUint } from '@coti-io/coti-ethers';
 import { BrowserProvider, Contract } from '@coti-io/coti-ethers';
-import { decryptUint, decryptString } from '@coti-io/coti-sdk-typescript';
+import * as CotiSDK from '@coti-io/coti-sdk-typescript';
 import { ethers } from 'ethers';
 import type { Eip1193Provider } from 'ethers';
 import { useState, useCallback } from 'react';
@@ -8,6 +8,7 @@ import { useState, useCallback } from 'react';
 import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { abi as PRIVATE_ERC20_ABI } from '../abis/ERC20Confidential.json';
+import PRIVATE_ERC20_256_ABI from '../abis/ERC20Confidential256.json';
 import { abi as ERC721_ABI } from '../abis/ERC721.json';
 import { abi as PRIVATE_ERC721_ABI } from '../abis/ERC721Confidential.json';
 import { notifyImportedTokensUpdated } from '../utils/importedTokensEvents';
@@ -23,9 +24,95 @@ import {
   fetchJsonWithIpfsFallback,
 } from '../utils/nftMetadata';
 
+const { decryptUint, decryptString } = CotiSDK;
+const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 as
+  | ((ciphertext: unknown, userKey: string) => bigint)
+  | undefined;
+
 // Helper function to get function selector
 const getSelector = (functionSignature: string): string => {
   return ethers.id(functionSignature).slice(0, 10);
+};
+
+const ERC165_ABI = [
+  'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
+];
+
+const PRIVATE_ERC20_64_INTERFACE_ID = '0x8409a9cf';
+const PRIVATE_ERC20_256_INTERFACE_ID = '0xdfeb393e';
+
+const splitCt128 = (value: unknown): { high: bigint; low: bigint } | unknown => {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'high' in value &&
+    'low' in value
+  ) {
+    return value as { high: bigint; low: bigint };
+  }
+  if (typeof value === 'bigint') {
+    const mask = (1n << 64n) - 1n;
+    return { high: value >> 64n, low: value & mask };
+  }
+  return value;
+};
+
+const normalizeItUint256ForAbi = (value: any): any => {
+  const cipher = value?.ciphertext ?? value;
+  if (
+    cipher?.high?.high !== undefined &&
+    cipher?.high?.low !== undefined &&
+    cipher?.low?.high !== undefined &&
+    cipher?.low?.low !== undefined
+  ) {
+    return value;
+  }
+
+  const high = splitCt128(cipher?.ciphertextHigh ?? cipher?.high);
+  const low = splitCt128(cipher?.ciphertextLow ?? cipher?.low);
+
+  if (
+    high &&
+    low &&
+    typeof high === 'object' &&
+    typeof low === 'object' &&
+    'high' in high &&
+    'low' in high &&
+    'high' in low &&
+    'low' in low
+  ) {
+    return {
+      ciphertext: { high, low },
+      signature: value?.signature ?? cipher?.signature,
+    };
+  }
+
+  return value;
+};
+
+const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
+  if (
+    ciphertext?.high?.high !== undefined &&
+    ciphertext?.high?.low !== undefined &&
+    ciphertext?.low?.high !== undefined &&
+    ciphertext?.low?.low !== undefined
+  ) {
+    const d1 = decryptUint(ciphertext.high.high, aesKey);
+    const d2 = decryptUint(ciphertext.high.low, aesKey);
+    const d3 = decryptUint(ciphertext.low.high, aesKey);
+    const d4 = decryptUint(ciphertext.low.low, aesKey);
+    return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
+  }
+
+  if (
+    decryptUint256 &&
+    ciphertext?.ciphertextHigh !== undefined &&
+    ciphertext?.ciphertextLow !== undefined
+  ) {
+    return decryptUint256(ciphertext, aesKey);
+  }
+
+  return 0n;
 };
 
 export type TokenType = 'ERC20' | 'ERC721' | 'ERC1155';
@@ -240,7 +327,8 @@ const fetchMetadataFromUri = async (
   try {
     const metadata = await fetchJsonWithIpfsFallback(uri);
     return buildMetadataResult(uri, metadata, tokenId);
-  } catch {
+  } catch (error) {
+    console.warn('[fetchMetadataFromUri] Failed to fetch metadata', error);
     return buildMetadataResult(uri, null, tokenId);
   }
 };
@@ -330,7 +418,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   );
 
   const getTokenConfidentialStatus = useCallback(
-    async (tokenAddress: string): Promise<boolean> => {
+    async (
+      tokenAddress: string,
+    ): Promise<{ confidential: boolean; version?: 64 | 256 }> => {
       try {
         const browserProvider = getBrowserProvider();
         const code = await browserProvider.getCode(tokenAddress);
@@ -339,23 +429,51 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           throw new Error('No contract deployed at this address');
         }
 
-        const confidentialSelectors = [
-          ethers.id('accountEncryptionAddress(address)').slice(0, 10),
-          ethers.id('transfer(address,(uint256,bytes))').slice(0, 10),
-        ];
-
-        let hasConfidentialMethods = false;
-        for (const selector of confidentialSelectors) {
-          if (code.includes(selector.slice(2))) {
-            hasConfidentialMethods = true;
-            break;
+        const erc165 = new ethers.Contract(
+          tokenAddress,
+          ERC165_ABI,
+          browserProvider,
+        );
+        if (typeof erc165.supportsInterface === 'function') {
+          try {
+            const supports256 = await erc165.supportsInterface(
+              PRIVATE_ERC20_256_INTERFACE_ID,
+            );
+            if (supports256) {
+              return { confidential: true, version: 256 };
+            }
+            const supports64 = await erc165.supportsInterface(
+              PRIVATE_ERC20_64_INTERFACE_ID,
+            );
+            if (supports64) {
+              return { confidential: true, version: 64 };
+            }
+          } catch (error) {
+            console.warn(
+              '[getTokenConfidentialStatus] supportsInterface failed, falling back to selector scan',
+              error,
+            );
           }
         }
 
-        if (hasConfidentialMethods) {
-          return true;
+        const selectorAccount = ethers
+          .id('accountEncryptionAddress(address)')
+          .slice(2);
+        const selector64 = ethers
+          .id('transfer(address,(uint256,bytes))')
+          .slice(2);
+        const selector256 = ethers
+          .id('transfer(address,((uint256,uint256),bytes))')
+          .slice(2);
+
+        if (code.includes(selectorAccount) || code.includes(selector64)) {
+          if (code.includes(selector256)) {
+            return { confidential: true, version: 256 };
+          }
+          return { confidential: true, version: 64 };
         }
-        return false;
+
+        return { confidential: false };
       } catch (error) {
         throw new Error(`Failed to analyze token: ${error}`);
       }
@@ -379,30 +497,33 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           throw new Error('Invalid recipient address');
         }
 
-        const isConfidential = await getTokenConfidentialStatus(tokenAddress);
+        const { confidential, version } =
+          await getTokenConfidentialStatus(tokenAddress);
         const signer = await getBrowserProvider().getSigner();
         let tx;
 
-        if (isConfidential) {
+        if (confidential) {
           if (!aesKey) {
             throw new Error('AES key is required for private ERC20 transfer');
           }
           signer.setAesKey(aesKey);
-          const contract = new Contract(
-            tokenAddress,
-            PRIVATE_ERC20_ABI,
-            signer,
-          );
-          const encryptedAmount = (await signer.encryptValue(
+          const abi = version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
+          const selector =
+            version === 256
+              ? 'transfer(address,((uint256,uint256),bytes))'
+              : 'transfer(address,(uint256,bytes))';
+          const contract = new Contract(tokenAddress, abi, signer);
+          let encryptedAmount = (await signer.encryptValue(
             ethers.toBigInt(amount),
             tokenAddress,
-            getSelector('transfer(address,(uint256,bytes))'),
+            getSelector(selector),
           )) as itUint;
-          tx = await (contract as any)['transfer(address,(uint256,bytes))'](
-            to,
-            encryptedAmount,
-            { gasLimit: 12000000 },
-          );
+          if (version === 256) {
+            encryptedAmount = normalizeItUint256ForAbi(encryptedAmount);
+          }
+          tx = await (contract as any)[selector](to, encryptedAmount, {
+            gasLimit: 12000000,
+          });
         } else {
           const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
           tx = await (contract as any)['transfer(address,uint256)'](
@@ -426,7 +547,14 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   const getERC20Details = useCallback(
     async (tokenAddress: string): Promise<TokenDetails> => {
       return withLoading(async () => {
-        const contract = await getContract(tokenAddress, PRIVATE_ERC20_ABI);
+        const { confidential, version } =
+          await getTokenConfidentialStatus(tokenAddress);
+        const abi = confidential
+          ? version === 256
+            ? PRIVATE_ERC20_256_ABI
+            : PRIVATE_ERC20_ABI
+          : ERC20_ABI;
+        const contract = await getContract(tokenAddress, abi);
         const [name, symbol, decimals] = await Promise.all([
           (contract as any).name(),
           (contract as any).symbol(),
@@ -446,15 +574,18 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   const decryptERC20Balance = useCallback(
     async (tokenAddress: string, aesKey?: string) => {
       return withLoading(async () => {
-        const isConfidential = await getTokenConfidentialStatus(tokenAddress);
+        const { confidential, version } =
+          await getTokenConfidentialStatus(tokenAddress);
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
         const signerAddress = await signer.getAddress();
 
-        if (isConfidential) {
+        if (confidential) {
+          const abi =
+            version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
           const tokenContract = new ethers.Contract(
             tokenAddress,
-            PRIVATE_ERC20_ABI,
+            abi,
             signer,
           );
           let tokenBalance = null;
@@ -468,9 +599,14 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           }
 
           if (tokenBalance && aesKey) {
-            const decryptedBalance = decryptUint(tokenBalance, aesKey);
-            return decryptedBalance;
+            if (version === 256) {
+              return decryptCtUint256(tokenBalance, aesKey);
+            }
+            return decryptUint(tokenBalance, aesKey);
           } else if (tokenBalance && !aesKey) {
+            if (version === 256) {
+              return 0n;
+            }
             return BigInt(tokenBalance.toString());
           }
           return 0n;
@@ -825,8 +961,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             );
           }
 
-          const isConfidential = await getTokenConfidentialStatus(address);
-          const abi = isConfidential ? PRIVATE_ERC20_ABI : ERC20_ABI;
+          const { confidential, version } =
+            await getTokenConfidentialStatus(address);
+          const abi = confidential
+            ? version === 256
+              ? PRIVATE_ERC20_256_ABI
+              : PRIVATE_ERC20_ABI
+            : ERC20_ABI;
           const contract = new ethers.Contract(address, abi, provider);
 
           if (!contract.name || !contract.symbol || !contract.decimals) {
