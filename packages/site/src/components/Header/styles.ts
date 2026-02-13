@@ -115,6 +115,10 @@ export const ButtonsContainer = styled.div`
   @media screen and (max-width: 770px) {
     display: none;
   }
+
+  @media screen and (max-height: 820px) {
+    display: none;
+  }
 `;
 
 export const MobileMenuButton = styled.button`
@@ -141,6 +145,10 @@ export const MobileMenuButton = styled.button`
   }
 
   @media screen and (max-width: 770px) {
+    display: flex;
+  }
+
+  @media screen and (max-height: 820px) {
     display: flex;
   }
 
@@ -191,7 +199,12 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
     top: 60px;
   }
 
-  @media screen and (min-width: 771px) {
+  @media screen and (max-height: 820px) {
+    display: flex;
+    top: 60px;
+  }
+
+  @media screen and (min-width: 771px) and (min-height: 821px) {
     display: none;
   }
 `;
@@ -450,4 +463,8 @@ export const ConnectedContainer = styled.div`
   justify-content: flex-end;
   gap: 12px;
   flex-shrink: 0;
+
+  @media screen and (max-height: 820px) {
+    display: none;
+  }
 `;
