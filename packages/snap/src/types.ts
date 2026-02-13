@@ -5,6 +5,7 @@ export type Token = {
   address: string;
   type: TokenViewSelector;
   confidential: boolean;
+  confidentialVersion?: 64 | 256;
   balance: string | null;
   tokenImage?: string;
   decimals: string | null;

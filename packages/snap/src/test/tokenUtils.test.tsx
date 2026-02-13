@@ -122,6 +122,7 @@ describe('Token Utilities', () => {
       expect(type).toEqual({
         type: TokenViewSelector.NFT,
         confidential: true,
+        confidentialVersion: undefined,
       });
     });
 
@@ -143,6 +144,7 @@ describe('Token Utilities', () => {
       expect(type).toEqual({
         type: TokenViewSelector.ERC20,
         confidential: true,
+        confidentialVersion: undefined,
       });
     });
 
@@ -162,6 +164,7 @@ describe('Token Utilities', () => {
       expect(type).toEqual({
         type: TokenViewSelector.UNKNOWN,
         confidential: false,
+        confidentialVersion: undefined,
       });
     });
   });
