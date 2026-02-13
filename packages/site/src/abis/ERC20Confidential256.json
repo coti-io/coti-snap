@@ -1,0 +1,1430 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AccessControlBadConfirmation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "approver",
+        "type": "address"
+      }
+    ],
+    "name": "ERC20InvalidApprover",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      }
+    ],
+    "name": "ERC20InvalidReceiver",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "ERC20InvalidSender",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      }
+    ],
+    "name": "ERC20InvalidSpender",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct ctUint256",
+        "name": "ownerValue",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct ctUint256",
+        "name": "spenderValue",
+        "type": "tuple"
+      }
+    ],
+    "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct ctUint256",
+        "name": "senderValue",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct ctUint256",
+        "name": "receiverValue",
+        "type": "tuple"
+      }
+    ],
+    "name": "Transfer",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINTER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "accountEncryptionAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isSpender",
+        "type": "bool"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct gtUint256",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ownerCiphertext",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "spenderCiphertext",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct IPrivateERC20.Allowance",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes[2][2]",
+            "name": "signature",
+            "type": "bytes[2][2]"
+          }
+        ],
+        "internalType": "struct itUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "approve",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct gtUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "approve",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "ctUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct ctUint256",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct gtUint256",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isSpender",
+        "type": "bool"
+      }
+    ],
+    "name": "reencryptAllowance",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "callerConfirmation",
+        "type": "address"
+      }
+    ],
+    "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "offBoardAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setAccountEncryptionAddress",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct gtUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes[2][2]",
+            "name": "signature",
+            "type": "bytes[2][2]"
+          }
+        ],
+        "internalType": "struct itUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "transferAndCall",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "high",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "ctUint64",
+                    "name": "high",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "ctUint64",
+                    "name": "low",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct ctUint128",
+                "name": "low",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes[2][2]",
+            "name": "signature",
+            "type": "bytes[2][2]"
+          }
+        ],
+        "internalType": "struct itUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "high",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "gtUint64",
+                "name": "high",
+                "type": "uint256"
+              },
+              {
+                "internalType": "gtUint64",
+                "name": "low",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct gtUint128",
+            "name": "low",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct gtUint256",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
