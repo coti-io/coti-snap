@@ -41,6 +41,55 @@ const ERC165_ABI = [
 const PRIVATE_ERC20_64_INTERFACE_ID = '0x8409a9cf';
 const PRIVATE_ERC20_256_INTERFACE_ID = '0xdfeb393e';
 
+const splitCt128 = (value: unknown): { high: bigint; low: bigint } | unknown => {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'high' in value &&
+    'low' in value
+  ) {
+    return value as { high: bigint; low: bigint };
+  }
+  if (typeof value === 'bigint') {
+    const mask = (1n << 64n) - 1n;
+    return { high: value >> 64n, low: value & mask };
+  }
+  return value;
+};
+
+const normalizeItUint256ForAbi = (value: any): any => {
+  const cipher = value?.ciphertext ?? value;
+  if (
+    cipher?.high?.high !== undefined &&
+    cipher?.high?.low !== undefined &&
+    cipher?.low?.high !== undefined &&
+    cipher?.low?.low !== undefined
+  ) {
+    return value;
+  }
+
+  const high = splitCt128(cipher?.ciphertextHigh ?? cipher?.high);
+  const low = splitCt128(cipher?.ciphertextLow ?? cipher?.low);
+
+  if (
+    high &&
+    low &&
+    typeof high === 'object' &&
+    typeof low === 'object' &&
+    'high' in high &&
+    'low' in high &&
+    'high' in low &&
+    'low' in low
+  ) {
+    return {
+      ciphertext: { high, low },
+      signature: value?.signature ?? cipher?.signature,
+    };
+  }
+
+  return value;
+};
+
 const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
   if (
     ciphertext?.high?.high !== undefined &&
@@ -278,7 +327,8 @@ const fetchMetadataFromUri = async (
   try {
     const metadata = await fetchJsonWithIpfsFallback(uri);
     return buildMetadataResult(uri, metadata, tokenId);
-  } catch {
+  } catch (error) {
+    console.warn('[fetchMetadataFromUri] Failed to fetch metadata', error);
     return buildMetadataResult(uri, null, tokenId);
   }
 };
@@ -398,8 +448,11 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             if (supports64) {
               return { confidential: true, version: 64 };
             }
-          } catch {
-            // fall back to selector scan
+          } catch (error) {
+            console.warn(
+              '[getTokenConfidentialStatus] supportsInterface failed, falling back to selector scan',
+              error,
+            );
           }
         }
 
@@ -460,11 +513,14 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               ? 'transfer(address,((uint256,uint256),bytes))'
               : 'transfer(address,(uint256,bytes))';
           const contract = new Contract(tokenAddress, abi, signer);
-          const encryptedAmount = (await signer.encryptValue(
+          let encryptedAmount = (await signer.encryptValue(
             ethers.toBigInt(amount),
             tokenAddress,
             getSelector(selector),
           )) as itUint;
+          if (version === 256) {
+            encryptedAmount = normalizeItUint256ForAbi(encryptedAmount);
+          }
           tx = await (contract as any)[selector](to, encryptedAmount, {
             gasLimit: 12000000,
           });

@@ -65,7 +65,8 @@ export const getTokenURI = async (
       return null;
     }
     return decryptedURI;
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] getTokenURI failed', error);
     return null;
   }
 };
@@ -83,7 +84,8 @@ export const getPublicTokenURI = async (
     );
     const uri = await contract.getFunction('tokenURI')(BigInt(tokenId));
     return uri || null;
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] getPublicTokenURI failed', error);
     return null;
   }
 };
@@ -111,7 +113,8 @@ export const getERC20Details = async (
 
     const decimals = _decimals.toString();
     return { decimals, symbol, name };
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] getERC20Details failed', error);
     return null;
   }
 };
@@ -135,7 +138,8 @@ export const getERC721Details = async (
     ]);
 
     return { symbol, name };
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] getERC721Details failed', error);
     return null;
   }
 };
@@ -171,7 +175,8 @@ export const checkERC721Ownership = async (
 
       const owner = await contract.ownerOf(BigInt(tokenId));
       return owner.toLowerCase() === userAddress.toLowerCase();
-    } catch {
+    } catch (error) {
+      console.warn('[SNAP] checkERC721Ownership ownerOf failed', error);
       try {
         contract = new ethers.Contract(
           address,
@@ -187,11 +192,16 @@ export const checkERC721Ownership = async (
 
         const owner = await contract.ownerOf(BigInt(tokenId));
         return owner.toLowerCase() === userAddress.toLowerCase();
-      } catch {
+      } catch (error2) {
+        console.warn(
+          '[SNAP] checkERC721Ownership confidential ownerOf failed',
+          error2,
+        );
         return false;
       }
     }
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] checkERC721Ownership failed', error);
     return false;
   }
 };
@@ -247,7 +257,8 @@ export async function getTokenType(address: string): Promise<{
         return { type: TokenViewSelector.NFT, confidential: true };
       }
       return { type: TokenViewSelector.NFT, confidential: false };
-    } catch {
+    } catch (error) {
+      console.warn('[SNAP] getTokenType ERC721 tokenURI failed', error);
       return { type: TokenViewSelector.NFT, confidential: false };
     }
   }
@@ -340,11 +351,16 @@ export async function getTokenType(address: string): Promise<{
           ? { confidentialVersion }
           : {}),
       };
-    } catch {
+    } catch (error) {
+      console.warn(
+        '[SNAP] getTokenType confidential ERC20 detection failed',
+        error,
+      );
       // Confidential ERC20 check failed - token is standard ERC20
       return { type: TokenViewSelector.ERC20, confidential: false };
     }
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] getTokenType ERC20 detection failed', error);
     // Standard ERC20 check failed - token type unknown
     return { type: TokenViewSelector.UNKNOWN, confidential: false };
   }
@@ -390,7 +406,8 @@ export const decryptBalance = (
       return null;
     }
     return decryptUint(balance as ctUint, aesKey);
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] decryptBalance failed', error);
     return null;
   }
 };
@@ -426,7 +443,7 @@ export const checkChainId = async (): Promise<boolean> => {
 
     return false;
   } catch (error) {
-    void error;
+    console.warn('[SNAP] checkChainId failed', error);
     const expectedEnv = await getExpectedEnvironment();
     if (expectedEnv) {
       const { setEnvironment } = await import('../config');
@@ -499,7 +516,21 @@ export const recalculateBalances = async (): Promise<{
     const tokenBalances: Tokens = await Promise.all(
       tokens.map(async (token) => {
         if (token.type === TokenViewSelector.ERC20) {
-          const confidentialVersion = token.confidentialVersion ?? 64;
+          let confidentialVersion = token.confidentialVersion ?? 64;
+          if (token.confidential && token.confidentialVersion === undefined) {
+            try {
+              const detected = await getTokenType(token.address);
+              if (detected.confidentialVersion) {
+                confidentialVersion = detected.confidentialVersion;
+              }
+            } catch (error) {
+              console.warn(
+                '[SNAP] recalculateBalances confidentialVersion detection failed',
+                error,
+              );
+              // keep default
+            }
+          }
           const erc20ReadAbi =
             token.confidential && confidentialVersion === 256
               ? erc20Confidential256Abi
@@ -527,6 +558,11 @@ export const recalculateBalances = async (): Promise<{
 
           return {
             ...token,
+            ...(token.confidential
+              ? { confidentialVersion }
+              : token.confidentialVersion !== undefined
+                ? { confidentialVersion: token.confidentialVersion }
+                : {}),
             balance: tokenBalance?.toString() ?? null,
           };
         }
@@ -567,7 +603,8 @@ export const recalculateBalances = async (): Promise<{
       tokenBalances,
     });
     return { balance, tokenBalances };
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] recalculateBalances failed', error);
     return {
       balance: BigInt(0),
       tokenBalances: tokens.map((token) => ({ ...token, balance: null })),
@@ -689,7 +726,8 @@ export const formatTokenBalance = (
     }
 
     return formatted.slice(0, dotIndex + maxDecimals + 1);
-  } catch {
+  } catch (error) {
+    console.warn('[SNAP] formatTokenBalance failed', error);
     return '0';
   }
 };
