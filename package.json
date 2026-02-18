@@ -73,7 +73,7 @@
   },
   "resolutions": {
     "h3": "^1.15.5",
-    "fast-xml-parser": "^5.3.4",
+    "fast-xml-parser": "^5.3.6",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0"
   }
