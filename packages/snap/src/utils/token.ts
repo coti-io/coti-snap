@@ -108,7 +108,7 @@ export const getTokenURI = async (
     }
     return decryptedURI;
   } catch (error) {
-    console.warn('[SNAP] getTokenURI failed', error);
+    void error;
     return null;
   }
 };
@@ -127,7 +127,7 @@ export const getPublicTokenURI = async (
     const uri = await contract.getFunction('tokenURI')(BigInt(tokenId));
     return uri || null;
   } catch (error) {
-    console.warn('[SNAP] getPublicTokenURI failed', error);
+    void error;
     return null;
   }
 };
@@ -156,7 +156,7 @@ export const getERC20Details = async (
     const decimals = _decimals.toString();
     return { decimals, symbol, name };
   } catch (error) {
-    console.warn('[SNAP] getERC20Details failed', error);
+    void error;
     return null;
   }
 };
@@ -181,7 +181,7 @@ export const getERC721Details = async (
 
     return { symbol, name };
   } catch (error) {
-    console.warn('[SNAP] getERC721Details failed', error);
+    void error;
     return null;
   }
 };
@@ -218,7 +218,7 @@ export const checkERC721Ownership = async (
       const owner = await contract.ownerOf(BigInt(tokenId));
       return owner.toLowerCase() === userAddress.toLowerCase();
     } catch (error) {
-      console.warn('[SNAP] checkERC721Ownership ownerOf failed', error);
+      void error;
       try {
         contract = new ethers.Contract(
           address,
@@ -235,15 +235,12 @@ export const checkERC721Ownership = async (
         const owner = await contract.ownerOf(BigInt(tokenId));
         return owner.toLowerCase() === userAddress.toLowerCase();
       } catch (error2) {
-        console.warn(
-          '[SNAP] checkERC721Ownership confidential ownerOf failed',
-          error2,
-        );
+        void error2;
         return false;
       }
     }
   } catch (error) {
-    console.warn('[SNAP] checkERC721Ownership failed', error);
+    void error;
     return false;
   }
 };
@@ -300,7 +297,7 @@ export async function getTokenType(address: string): Promise<{
       }
       return { type: TokenViewSelector.NFT, confidential: false };
     } catch (error) {
-      console.warn('[SNAP] getTokenType ERC721 tokenURI failed', error);
+      void error;
       return { type: TokenViewSelector.NFT, confidential: false };
     }
   }
@@ -323,10 +320,7 @@ export async function getTokenType(address: string): Promise<{
         return 64;
       }
     } catch (error) {
-      console.warn(
-        '[SNAP] getTokenType: supportsInterface failed, falling back to selector scan',
-        error,
-      );
+      void error;
     }
 
     try {
@@ -346,10 +340,7 @@ export async function getTokenType(address: string): Promise<{
         }
       }
     } catch (error) {
-      console.warn(
-        '[SNAP] getTokenType: selector scan failed',
-        error,
-      );
+      void error;
       return undefined;
     }
 
@@ -371,7 +362,13 @@ export async function getTokenType(address: string): Promise<{
     await erc20Contract.decimals();
     await erc20Contract.symbol();
     await erc20Contract.totalSupply();
-    await erc20Contract.balanceOf(ZeroAddress);
+    const balanceOfMethod =
+      (erc20Contract as any)['balanceOf(address)'] ??
+      (erc20Contract as any).balanceOf;
+    if (!balanceOfMethod) {
+      throw new Error('Required ERC20 methods not available');
+    }
+    await balanceOfMethod(ZeroAddress);
 
     try {
       const erc20ConfidentialContract = new ethers.Contract(
@@ -400,15 +397,12 @@ export async function getTokenType(address: string): Promise<{
           : {}),
       };
     } catch (error) {
-      console.warn(
-        '[SNAP] getTokenType confidential ERC20 detection failed',
-        error,
-      );
+      void error;
       // Confidential ERC20 check failed - token is standard ERC20
       return { type: TokenViewSelector.ERC20, confidential: false };
     }
   } catch (error) {
-    console.warn('[SNAP] getTokenType ERC20 detection failed', error);
+    void error;
     // Standard ERC20 check failed - token type unknown
     return { type: TokenViewSelector.UNKNOWN, confidential: false };
   }
@@ -574,9 +568,6 @@ export const decryptBalance = (
         const d4 = decryptUint(nested.low.low, aesKey);
         const decrypted = (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
         if (isInsaneDecryptedValue(decrypted, decimals)) {
-          console.warn(
-            '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
-          );
           return null;
         }
         return decrypted;
@@ -588,9 +579,6 @@ export const decryptBalance = (
         }
         const decrypted = decryptUint256(balance, aesKey);
         if (isInsaneDecryptedValue(decrypted, decimals)) {
-          console.warn(
-            '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
-          );
           return null;
         }
         return decrypted;
@@ -604,14 +592,11 @@ export const decryptBalance = (
     const decrypted =
       typeof rawDecrypted === 'bigint' ? rawDecrypted : BigInt(rawDecrypted);
     if (isInsaneDecryptedValue(decrypted, decimals)) {
-      console.warn(
-        '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
-      );
       return null;
     }
     return decrypted;
   } catch (error) {
-    console.warn('[SNAP] decryptBalance failed', error);
+    void error;
     return null;
   }
 };
@@ -677,7 +662,7 @@ export const checkChainId = async (): Promise<boolean> => {
 
     return false;
   } catch (error) {
-    console.warn('[SNAP] checkChainId failed', error);
+    void error;
     const expectedEnv = await getExpectedEnvironment();
     if (expectedEnv) {
       const { setEnvironment } = await import('../config');
@@ -747,14 +732,6 @@ export const recalculateBalances = async (): Promise<{
     }
 
     const balance = await provider.getBalance(signerAddress);
-    console.log(
-      '[SNAP] recalculateBalances - balance for',
-      signerAddress,
-      'on',
-      environment,
-      ':',
-      balance.toString(),
-    );
 
     const tokenBalances: Tokens = await Promise.all(
       tokens.map(async (token) => {
@@ -773,10 +750,7 @@ export const recalculateBalances = async (): Promise<{
                   }
                 }
               } catch (error) {
-                console.warn(
-                  '[SNAP] recalculateBalances confidential detection failed',
-                  error,
-                );
+                void error;
               }
             }
 
@@ -919,11 +893,7 @@ export const recalculateBalances = async (): Promise<{
           }
           return { ...token, balance: null };
         } catch (tokenError) {
-          console.warn(
-            '[SNAP] recalculateBalances token failed',
-            token.address,
-            tokenError,
-          );
+          void tokenError;
           return { ...token, balance: null };
         }
       }),
@@ -936,7 +906,7 @@ export const recalculateBalances = async (): Promise<{
     });
     return { balance, tokenBalances };
   } catch (error) {
-    console.warn('[SNAP] recalculateBalances failed', error);
+    void error;
     const fallbackBalance =
       state.balance && state.balance !== '0'
         ? BigInt(state.balance)
@@ -1073,7 +1043,7 @@ export const formatTokenBalance = (
 
     return formatted.slice(0, dotIndex + maxDecimals + 1);
   } catch (error) {
-    console.warn('[SNAP] formatTokenBalance failed', error);
+    void error;
     return '0';
   }
 };

@@ -76,23 +76,7 @@ export const getStateByChainIdAndAddress = async (
   const state = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;
-  console.log(
-    '[SNAP] getStateByChainIdAndAddress - overrideChainId:',
-    overrideChainId,
-    'identifier.chainId:',
-    identifier.chainId,
-    'using chainId:',
-    chainId,
-  );
-  console.log(
-    '[SNAP] getStateByChainIdAndAddress - available chainIds in state:',
-    Object.keys(state),
-  );
   const result = state[chainId]?.[address] ?? ({} as State);
-  console.log(
-    '[SNAP] getStateByChainIdAndAddress - found state:',
-    result.aesKey ? 'HAS AES KEY' : 'NO AES KEY',
-  );
   return result;
 };
 
@@ -105,12 +89,6 @@ export const setStateByChainIdAndAddress = async (
   const oldState = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;
-  console.log(
-    '[SNAP] setStateByChainIdAndAddress - overrideChainId:',
-    overrideChainId,
-    'using chainId:',
-    chainId,
-  );
   const newState = {
     ...oldState,
     [chainId]: {

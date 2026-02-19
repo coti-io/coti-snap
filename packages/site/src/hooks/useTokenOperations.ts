@@ -335,19 +335,9 @@ const buildMetadataResult = async (
   metadata: Record<string, any> | null,
   tokenId?: string,
 ): Promise<NFTMetadataResult> => {
-  console.log('[buildMetadataResult] Input metadata:', metadata);
-
   const { resolved, original, fallbacks } = extractImageUri(
     metadata ?? undefined,
     tokenId,
-  );
-  console.log(
-    '[buildMetadataResult] Extracted image URIs - original:',
-    original,
-    'resolved:',
-    resolved,
-    'fallbacks:',
-    fallbacks,
   );
 
   const sources: string[] = [];
@@ -364,8 +354,6 @@ const buildMetadataResult = async (
   pushUnique(original);
   pushUnique(resolved);
   fallbacks.forEach((fallback) => pushUnique(fallback));
-
-  console.log('[buildMetadataResult] All sources to try:', sources);
 
   let fallbackImage: string | null = null;
   for (const source of sources) {
@@ -406,15 +394,6 @@ const buildMetadataResult = async (
 
   const displayImage = imageDataUri ?? fallbackImage ?? null;
 
-  console.log(
-    '[buildMetadataResult] Final result - displayImage:',
-    displayImage,
-    'imageDataUri:',
-    imageDataUri,
-    'fallbackImage:',
-    fallbackImage,
-  );
-
   return {
     uri,
     metadata,
@@ -441,7 +420,7 @@ const fetchMetadataFromUri = async (
     const metadata = await fetchJsonWithIpfsFallback(uri);
     return buildMetadataResult(uri, metadata, tokenId);
   } catch (error) {
-    console.warn('[fetchMetadataFromUri] Failed to fetch metadata', error);
+    void error;
     return buildMetadataResult(uri, null, tokenId);
   }
 };
@@ -565,10 +544,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               detectedVersion = 64;
             }
           } catch (error) {
-            console.warn(
-              '[getTokenConfidentialStatus] supportsInterface failed, falling back to selector scan',
-              error,
-            );
+            void error;
           }
         }
 
@@ -845,7 +821,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         }
         return false;
       } catch (error) {
-        console.error('[getNFTConfidentialStatus] Error:', error);
+        void error;
         throw new Error(`Failed to analyze NFT: ${error}`);
       }
     },
@@ -1090,29 +1066,23 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             ? await getERC1155TokenURI(tokenAddress, tokenId)
             : await getERC721TokenURI(tokenAddress, tokenId, aesKey);
 
-        console.log('[NFT Metadata] Raw URI from contract:', rawUri);
-
         if (!rawUri) {
           return { uri: null, metadata: null, image: null };
         }
 
         const resolvedUri = resolveTokenUri(rawUri, tokenId);
-        console.log('[NFT Metadata] Resolved URI:', resolvedUri);
-
         if (!resolvedUri) {
           return { uri: null, metadata: null, image: null };
         }
 
         const result = await fetchMetadataFromUri(resolvedUri, tokenId);
-        console.log('[NFT Metadata] Fetched metadata result:', result);
-
         return {
           uri: resolvedUri,
           metadata: result.metadata,
           image: result.image,
         };
       } catch (error) {
-        console.error('[NFT Metadata] Error:', error);
+        void error;
         throw new Error(
           `Failed to fetch NFT metadata: ${error instanceof Error ? error.message : String(error)}`,
         );

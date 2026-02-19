@@ -216,18 +216,8 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
       normalizedChainId !== null && isSupportedChainId(normalizedChainId);
     const previousChainId = previousChainIdRef.current;
 
-    console.log(
-      '[FRONTEND] Network change effect - connectedChainId:',
-      connectedChainId,
-      'previousChainId:',
-      previousChainId,
-      'normalizedChainId:',
-      normalizedChainId,
-    );
-
     if (!isValidChainId) {
       if (previousChainId !== null) {
-        console.log('[FRONTEND] Invalid chain - clearing state');
         setUserHasAesKEY(false);
         setAesKeysByChain({});
         setSettingAESKeyError(null);
@@ -248,13 +238,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
 
     if (previousChainId !== null && previousChainId !== normalizedChainId) {
-      console.log(
-        '[FRONTEND] Chain changed from',
-        previousChainId,
-        'to',
-        normalizedChainId,
-        '- clearing state',
-      );
       setUserHasAesKEY(false);
       setAesKeysByChain({});
       setSettingAESKeyError(null);
@@ -555,10 +538,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         return;
       }
 
-      console.log(
-        '[FRONTEND] setAESKey - saving with chainId:',
-        chainIdForStorage,
-      );
       const result = await invokeSnap({
         method: 'set-aes-key',
         params: {
@@ -631,15 +610,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
   const getAESKey = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      console.log(
-        '[FRONTEND] getAESKey - chainIdForStorage:',
-        chainIdForStorage,
-      );
       const result = await invokeSnap({
         method: 'get-aes-key',
         params: { chainId: chainIdForStorage?.toString() },
       });
-      console.log('[FRONTEND] getAESKey - result received');
 
       if (result !== null) {
         updateUserAesKey(result as string);
@@ -663,10 +637,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
     setLoading(true);
     try {
-      console.log(
-        '[FRONTEND] deleteAESKey - deleting for chainId:',
-        chainIdForStorage,
-      );
       const result = await invokeSnap({
         method: 'delete-aes-key',
         params: { chainId: chainIdForStorage?.toString() },
@@ -726,15 +696,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
 
   const checkSnapHasAESKey = useCallback(async (): Promise<boolean> => {
     try {
-      console.log(
-        '[FRONTEND] checkSnapHasAESKey - chainIdForStorage:',
-        chainIdForStorage,
-      );
       const result = await invokeSnap({
         method: 'has-aes-key',
         params: { chainId: chainIdForStorage?.toString() },
       });
-      console.log('[FRONTEND] checkSnapHasAESKey - result:', result);
       return Boolean(result);
     } catch (error) {
       void error;
@@ -820,12 +785,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     try {
       // First, check if the snap already has the AES key stored (no user prompt)
       const snapHasKey = await checkSnapHasAESKey();
-      console.log(
-        '[FRONTEND] handlePermissionCheck - snapHasKey:',
-        snapHasKey,
-        'for chainId:',
-        chainIdForStorage,
-      );
 
       if (snapHasKey) {
         // Snap has the key - mark user as having AES key
@@ -961,9 +920,6 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     // If isInitializing is still true after 3 seconds, force it to false and trigger check
     const fallbackTimer = setTimeout(() => {
       if (isInitializing && !initialCheckRef.current) {
-        console.log(
-          '[FRONTEND] Fallback: forcing permission check after network switch',
-        );
         void handlePermissionCheck();
       }
     }, 3000);
@@ -1044,17 +1000,10 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
         typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : null;
 
       if (!chainIdNum || !isSupportedChainId(chainIdNum)) {
-        console.log('[FRONTEND] chainChanged - unsupported chain:', chainIdNum);
         return;
       }
 
       const newEnvironment = getEnvironmentForChain(chainIdNum);
-      console.log(
-        '[FRONTEND] chainChanged - detected chain:',
-        chainIdNum,
-        'environment:',
-        newEnvironment,
-      );
 
       try {
         await invokeSnap({
