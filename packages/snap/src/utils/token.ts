@@ -613,7 +613,12 @@ export const checkChainId = async (): Promise<boolean> => {
         const chainIdHex = (await ethereum.request({
           method: 'eth_chainId',
         })) as string;
-        const currentChainId = parseInt(chainIdHex, 16).toString();
+        const parsedChainId = parseInt(chainIdHex, 16);
+        if (!Number.isFinite(parsedChainId)) {
+          setEnvironment(expectedEnv);
+          return true;
+        }
+        const currentChainId = parsedChainId.toString();
 
         if (currentChainId === COTI_TESTNET_CHAIN_ID) {
           if (expectedEnv !== 'testnet') {
