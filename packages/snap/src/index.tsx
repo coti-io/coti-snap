@@ -591,15 +591,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'has-aes-key':
       const hasKeyParams = request.params as { chainId?: string } | undefined;
       const requestedChainId = hasKeyParams?.chainId;
-      console.log('[SNAP] has-aes-key called with chainId:', requestedChainId);
       const currentState = await getStateByChainIdAndAddress(requestedChainId);
-      console.log(
-        '[SNAP] has-aes-key state for chainId',
-        requestedChainId,
-        ':',
-        JSON.stringify(currentState),
-      );
-      console.log('[SNAP] has-aes-key result:', Boolean(currentState.aesKey));
       if (currentState.aesKey) {
         return true;
       }
@@ -609,18 +601,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     case 'get-aes-key':
       const getKeyParams = request.params as { chainId?: string } | undefined;
       const getRequestedChainId = getKeyParams?.chainId;
-      console.log(
-        '[SNAP] get-aes-key called with chainId:',
-        getRequestedChainId,
-      );
       const currentAESState =
         await getStateByChainIdAndAddress(getRequestedChainId);
-      console.log(
-        '[SNAP] get-aes-key state for chainId',
-        getRequestedChainId,
-        ':',
-        currentAESState.aesKey ? 'HAS KEY' : 'NO KEY',
-      );
       if (!currentAESState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -664,7 +646,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         | { chainId?: string }
         | undefined;
       const deleteChainId = deleteKeyParams?.chainId;
-      console.log('[SNAP] delete-aes-key called with chainId:', deleteChainId);
       const currentDeleteState =
         await getStateByChainIdAndAddress(deleteChainId);
       if (!currentDeleteState.aesKey) {
@@ -715,8 +696,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         newUserAesKey: string;
         chainId?: string;
       };
-      console.log('[SNAP] set-aes-key called with chainId:', setChainId);
-
       if (!newUserAesKey) {
         await snap.request({
           method: 'snap_dialog',

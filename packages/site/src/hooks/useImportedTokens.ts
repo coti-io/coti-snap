@@ -109,7 +109,7 @@ export const useImportedTokens = () => {
         notifyImportedTokensUpdated();
       }
     } catch (err) {
-      console.warn('[syncFromSnap] Failed to sync tokens from snap:', err);
+      void err;
     }
   }, [address, chainId, invokeSnap]);
 
@@ -212,15 +212,15 @@ export const useImportedTokens = () => {
                 await tryImport();
                 return;
               } catch (retryError) {
-                console.warn('Failed to sync token to snap:', retryError);
+                void retryError;
                 return;
               }
             }
 
-            console.warn('Failed to sync token to snap:', snapError);
+            void snapError;
           }
         } catch (snapError) {
-          console.warn('Failed to sync token to snap:', snapError);
+          void snapError;
         }
       } catch (error) {
         void error;
@@ -252,7 +252,7 @@ export const useImportedTokens = () => {
             },
           });
         } catch (snapError) {
-          console.warn('Failed to sync token removal to snap:', snapError);
+          void snapError;
         }
       } catch (error) {
         void error;

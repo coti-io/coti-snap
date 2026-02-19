@@ -123,35 +123,28 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({
   );
 
   useEffect(() => {
-    console.log('[NFTDetails] Received imageUrl:', imageUrl);
     originalImageRef.current = imageUrl;
     const finalImage =
       imageUrl && imageUrl.trim() !== '' ? imageUrl : DefaultNFTImage;
-    console.log('[NFTDetails] Setting displayImage to:', finalImage);
     setDisplayImage(finalImage);
     setFallbackIndex(0);
   }, [imageUrl]);
 
   const handleImageError = useCallback(() => {
-    console.log('[NFTDetails] Image load error for:', displayImage);
-
     if (displayImage === DefaultNFTImage) {
       return;
     }
 
     const originalUrl = originalImageRef.current;
     if (!originalUrl) {
-      console.log('[NFTDetails] No original URL, using default image');
       setDisplayImage(DefaultNFTImage);
       return;
     }
 
     // Try to extract CID and use alternative gateways
     const cid = extractCIDFromUrl(originalUrl);
-    console.log('[NFTDetails] Extracted CID:', cid);
 
     if (!cid) {
-      console.log('[NFTDetails] Could not extract CID, using default image');
       setDisplayImage(DefaultNFTImage);
       return;
     }
@@ -166,16 +159,11 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({
     if (fallbackIndex < allGateways.length) {
       const nextUrl = allGateways[fallbackIndex];
       if (nextUrl) {
-        console.log(
-          `[NFTDetails] Trying fallback ${fallbackIndex + 1}/${allGateways.length}:`,
-          nextUrl,
-        );
         setDisplayImage(nextUrl);
         setFallbackIndex((prev) => prev + 1);
       }
     } else {
       // No more fallbacks, use default image
-      console.log('[NFTDetails] All fallbacks exhausted, using default image');
       setDisplayImage(DefaultNFTImage);
     }
   }, [displayImage, fallbackIndex]);
