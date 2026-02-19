@@ -841,6 +841,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             const result = await tokenOps.decryptERC20Balance(
               token.address,
               aesKey || '',
+              token.decimals,
             );
             tokenBalance = result.toString();
           }
@@ -900,6 +901,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             const tokenBalance = await tokenOps.decryptERC20Balance(
               token.address,
               aesKey || '',
+              token.decimals,
             );
             setCurrentBalance(tokenBalance.toString());
             setTokenBalances((prev) => ({
@@ -976,6 +978,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
               const tokenBalance = await tokenOps.decryptERC20Balance(
                 currentToken.address,
                 aesKey || '',
+                currentToken.decimals,
               );
               setCurrentBalance(tokenBalance.toString());
               setTokenBalances((prev) => ({

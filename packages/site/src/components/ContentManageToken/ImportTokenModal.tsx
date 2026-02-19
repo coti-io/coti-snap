@@ -221,6 +221,7 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(
         const balance = await decryptERC20Balance(
           state.address,
           userAESKey || undefined,
+          tokenInfo.decimals,
         );
 
         updateState({

@@ -100,7 +100,11 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
     }
     setIsDecrypting(true);
     try {
-      const balance = await decryptERC20Balance(token.address, effectiveAESKey);
+      const balance = await decryptERC20Balance(
+        token.address,
+        effectiveAESKey,
+        token.decimals,
+      );
       setDecryptedBalance(`${balance}`);
     } catch (error) {
       setDecryptedBalance('(encrypted)');

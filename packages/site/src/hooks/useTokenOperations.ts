@@ -29,6 +29,37 @@ const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 
   | ((ciphertext: unknown, userKey: string) => bigint)
   | undefined;
 
+const INSANE_BALANCE_BASE = 1000000000000n;
+
+const normalizeDecimals = (decimals?: number): number => {
+  if (decimals === undefined || decimals === null) {
+    return 18;
+  }
+  if (!Number.isFinite(decimals)) {
+    return 18;
+  }
+  if (decimals < 0) {
+    return 0;
+  }
+  if (decimals > 36) {
+    return 36;
+  }
+  return Math.floor(decimals);
+};
+
+const isZeroValue = (value: unknown): boolean => {
+  if (typeof value === 'bigint') {
+    return value === 0n;
+  }
+  if (typeof value === 'number') {
+    return value === 0;
+  }
+  if (typeof value === 'string') {
+    return value === '0';
+  }
+  return false;
+};
+
 // Helper function to get function selector
 const getSelector = (functionSignature: string): string => {
   return ethers.id(functionSignature).slice(0, 10);
@@ -113,6 +144,83 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
   }
 
   return 0n;
+};
+
+const isZeroCtUint256 = (ciphertext: any): boolean => {
+  if (!ciphertext) {
+    return false;
+  }
+  if (isZeroValue(ciphertext)) {
+    return true;
+  }
+  if (
+    ciphertext?.high?.high !== undefined &&
+    ciphertext?.high?.low !== undefined &&
+    ciphertext?.low?.high !== undefined &&
+    ciphertext?.low?.low !== undefined
+  ) {
+    return (
+      isZeroValue(ciphertext.high.high) &&
+      isZeroValue(ciphertext.high.low) &&
+      isZeroValue(ciphertext.low.high) &&
+      isZeroValue(ciphertext.low.low)
+    );
+  }
+
+  if (
+    ciphertext?.ciphertextHigh !== undefined &&
+    ciphertext?.ciphertextLow !== undefined
+  ) {
+    return (
+      isZeroValue(ciphertext.ciphertextHigh) &&
+      isZeroValue(ciphertext.ciphertextLow)
+    );
+  }
+
+  return false;
+};
+
+const isInsaneDecryptedValue = (value: bigint, decimals?: number): boolean => {
+  const safeDecimals = normalizeDecimals(decimals);
+  const threshold = INSANE_BALANCE_BASE * 10n ** BigInt(safeDecimals);
+  return value > threshold;
+};
+
+const isCtUint256Shape = (value: any): boolean => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const hasNested =
+    value?.high?.high !== undefined &&
+    value?.high?.low !== undefined &&
+    value?.low?.high !== undefined &&
+    value?.low?.low !== undefined;
+  const hasFlat =
+    value?.ciphertextHigh !== undefined &&
+    value?.ciphertextLow !== undefined;
+  return hasNested || hasFlat;
+};
+
+const probeConfidentialVersion256 = async (
+  tokenAddress: string,
+  provider: any,
+): Promise<256 | undefined> => {
+  try {
+    const contract = new ethers.Contract(
+      tokenAddress,
+      PRIVATE_ERC20_256_ABI,
+      provider,
+    );
+    const balance = await (contract as any)['balanceOf(address)'](
+      ethers.ZeroAddress,
+    );
+    if (isCtUint256Shape(balance)) {
+      return 256;
+    }
+  } catch (error) {
+    void error;
+  }
+  return undefined;
 };
 
 export type TokenType = 'ERC20' | 'ERC721' | 'ERC1155';
@@ -434,19 +542,22 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           ERC165_ABI,
           browserProvider,
         );
+        let detectedVersion: 64 | 256 | undefined;
+        let isConfidential = false;
+
         if (typeof erc165.supportsInterface === 'function') {
           try {
             const supports256 = await erc165.supportsInterface(
               PRIVATE_ERC20_256_INTERFACE_ID,
             );
             if (supports256) {
-              return { confidential: true, version: 256 };
+              detectedVersion = 256;
             }
             const supports64 = await erc165.supportsInterface(
               PRIVATE_ERC20_64_INTERFACE_ID,
             );
             if (supports64) {
-              return { confidential: true, version: 64 };
+              detectedVersion = 64;
             }
           } catch (error) {
             console.warn(
@@ -454,6 +565,22 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               error,
             );
           }
+        }
+
+        try {
+          const confidentialContract = new ethers.Contract(
+            tokenAddress,
+            PRIVATE_ERC20_ABI,
+            browserProvider,
+          );
+          const accountEncryptionMethod =
+            (confidentialContract as any).accountEncryptionAddress;
+          if (accountEncryptionMethod) {
+            await accountEncryptionMethod(tokenAddress);
+            isConfidential = true;
+          }
+        } catch (error) {
+          void error;
         }
 
         const selectorAccount = ethers
@@ -466,11 +593,36 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           .id('transfer(address,((uint256,uint256),bytes))')
           .slice(2);
 
-        if (code.includes(selectorAccount) || code.includes(selector64)) {
-          if (code.includes(selector256)) {
-            return { confidential: true, version: 256 };
+        if (
+          isConfidential ||
+          code.includes(selectorAccount) ||
+          code.includes(selector64) ||
+          code.includes(selector256)
+        ) {
+          if (!detectedVersion) {
+            if (code.includes(selector256)) {
+              detectedVersion = 256;
+            } else if (code.includes(selector64)) {
+              detectedVersion = 64;
+            }
           }
-          return { confidential: true, version: 64 };
+
+          if (!detectedVersion) {
+            const probed = await probeConfidentialVersion256(
+              tokenAddress,
+              browserProvider,
+            );
+            if (probed) {
+              detectedVersion = probed;
+            }
+          }
+
+          return {
+            confidential: true,
+            ...(detectedVersion !== undefined
+              ? { version: detectedVersion }
+              : {}),
+          };
         }
 
         return { confidential: false };
@@ -572,7 +724,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   );
 
   const decryptERC20Balance = useCallback(
-    async (tokenAddress: string, aesKey?: string) => {
+    async (tokenAddress: string, aesKey?: string, decimals?: number) => {
       return withLoading(async () => {
         const { confidential, version } =
           await getTokenConfidentialStatus(tokenAddress);
@@ -581,8 +733,20 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         const signerAddress = await signer.getAddress();
 
         if (confidential) {
+          let confidentialVersion = version;
+          if (confidentialVersion === undefined) {
+            const probed = await probeConfidentialVersion256(
+              tokenAddress,
+              browserProvider,
+            );
+            if (probed) {
+              confidentialVersion = probed;
+            }
+          }
           const abi =
-            version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
+            confidentialVersion === 256
+              ? PRIVATE_ERC20_256_ABI
+              : PRIVATE_ERC20_ABI;
           const tokenContract = new ethers.Contract(
             tokenAddress,
             abi,
@@ -599,12 +763,34 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           }
 
           if (tokenBalance && aesKey) {
-            if (version === 256) {
-              return decryptCtUint256(tokenBalance, aesKey);
+            if (confidentialVersion === 256) {
+              if (isZeroCtUint256(tokenBalance)) {
+                return 0n;
+              }
+              const decryptedValue = decryptCtUint256(tokenBalance, aesKey);
+              if (isInsaneDecryptedValue(decryptedValue, decimals)) {
+                throw new Error(
+                  'AES key mismatch: Decrypted value suspiciously high. Re-onboarding required.',
+                );
+              }
+              return decryptedValue;
             }
-            return decryptUint(tokenBalance, aesKey);
+            if (isZeroValue(tokenBalance)) {
+              return 0n;
+            }
+            const decryptedRaw = decryptUint(tokenBalance, aesKey);
+            const decryptedValue =
+              typeof decryptedRaw === 'bigint'
+                ? decryptedRaw
+                : BigInt(decryptedRaw);
+            if (isInsaneDecryptedValue(decryptedValue, decimals)) {
+              throw new Error(
+                'AES key mismatch: Decrypted value suspiciously high. Re-onboarding required.',
+              );
+            }
+            return decryptedValue;
           } else if (tokenBalance && !aesKey) {
-            if (version === 256) {
+            if (confidentialVersion === 256) {
               return 0n;
             }
             return BigInt(tokenBalance.toString());
