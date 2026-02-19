@@ -44,7 +44,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@coti-io/coti-sdk-typescript": "^1.0.4",
+    "@coti-io/coti-sdk-typescript": "^1.0.6",
     "@metamask/snaps-sdk": "^6.13.0",
     "ethers": "^6.13.4",
     "jest-transform-stub": "^2.0.0"
