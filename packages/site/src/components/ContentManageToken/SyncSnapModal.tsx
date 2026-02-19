@@ -12,8 +12,13 @@ import SpinnerIcon from '../../assets/spinner.png';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useInvokeSnap } from '../../hooks/useInvokeSnap';
 import { useModal } from '../../hooks/useModal';
+import { useAccount } from 'wagmi';
 import type { ImportedToken } from '../../types/token';
 import { parseNFTAddress } from '../../utils/tokenValidation';
+import {
+  getEnvironmentForChain,
+  isSupportedChainId,
+} from '../../config/networks';
 
 type SyncStatus = 'pending' | 'syncing' | 'success' | 'skipped' | 'error';
 type ModalPhase = 'ready' | 'syncing' | 'done';
@@ -272,6 +277,8 @@ export const SyncSnapModal: React.FC<SyncSnapModalProps> = React.memo(
   ({ open, onClose }) => {
     const { importedTokens } = useImportedTokens();
     const invokeSnap = useInvokeSnap();
+    const { chain } = useAccount();
+    const chainId = chain?.id;
     const [phase, setPhase] = useState<ModalPhase>('ready');
     const [tokenStates, setTokenStates] = useState<TokenSyncState[]>([]);
     const isSyncingRef = useRef(false);
@@ -314,6 +321,24 @@ export const SyncSnapModal: React.FC<SyncSnapModalProps> = React.memo(
       }
       isSyncingRef.current = true;
       setPhase('syncing');
+
+      try {
+        await invokeSnap({ method: 'connect-to-wallet' });
+      } catch (error) {
+        void error;
+      }
+
+      if (isSupportedChainId(chainId)) {
+        const environment = getEnvironmentForChain(chainId);
+        try {
+          await invokeSnap({
+            method: 'set-environment',
+            params: { environment },
+          });
+        } catch (error) {
+          void error;
+        }
+      }
 
       for (let i = 0; i < tokenStates.length; i++) {
         const { token } = tokenStates[i]!;
@@ -372,7 +397,7 @@ export const SyncSnapModal: React.FC<SyncSnapModalProps> = React.memo(
 
       setPhase('done');
       isSyncingRef.current = false;
-    }, [tokenStates, invokeSnap]);
+    }, [tokenStates, invokeSnap, chainId]);
 
     if (!open) {
       return null;

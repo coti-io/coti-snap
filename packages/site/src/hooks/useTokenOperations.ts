@@ -204,6 +204,7 @@ const isCtUint256Shape = (value: any): boolean => {
 const probeConfidentialVersion256 = async (
   tokenAddress: string,
   provider: any,
+  accountAddress?: string,
 ): Promise<256 | undefined> => {
   try {
     const contract = new ethers.Contract(
@@ -211,8 +212,12 @@ const probeConfidentialVersion256 = async (
       PRIVATE_ERC20_256_ABI,
       provider,
     );
+    const targetAddress =
+      accountAddress && ethers.isAddress(accountAddress)
+        ? accountAddress
+        : ethers.ZeroAddress;
     const balance = await (contract as any)['balanceOf(address)'](
-      ethers.ZeroAddress,
+      targetAddress,
     );
     if (isCtUint256Shape(balance)) {
       return 256;
@@ -734,10 +739,11 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
         if (confidential) {
           let confidentialVersion = version;
-          if (confidentialVersion === undefined) {
+          if (confidentialVersion !== 256) {
             const probed = await probeConfidentialVersion256(
               tokenAddress,
               browserProvider,
+              signerAddress,
             );
             if (probed) {
               confidentialVersion = probed;

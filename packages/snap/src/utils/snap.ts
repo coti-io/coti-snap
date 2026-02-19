@@ -30,11 +30,24 @@ export async function setStateData<StateType>(data: StateType): Promise<void> {
   });
 }
 
-export const getStateIdentifier = async (): Promise<StateIdentifier> => {
+export const getStateIdentifier = async (
+  options: { requestAccounts?: boolean } = {},
+): Promise<StateIdentifier> => {
   const accounts = (await ethereum.request({
     method: 'eth_accounts',
   })) as string[];
-  const currentAddress = accounts.length > 0 ? accounts[0] : null;
+  let currentAddress = accounts.length > 0 ? accounts[0] : null;
+
+  if (!currentAddress && options.requestAccounts) {
+    try {
+      const requested = (await ethereum.request({
+        method: 'eth_requestAccounts',
+      })) as string[];
+      currentAddress = requested.length > 0 ? requested[0] : null;
+    } catch (error) {
+      void error;
+    }
+  }
 
   if (!currentAddress) {
     throw new Error('No account connected');
@@ -57,8 +70,9 @@ export const getStateIdentifier = async (): Promise<StateIdentifier> => {
 
 export const getStateByChainIdAndAddress = async (
   overrideChainId?: string | null,
+  requestAccounts = false,
 ): Promise<State> => {
-  const identifier = await getStateIdentifier();
+  const identifier = await getStateIdentifier({ requestAccounts });
   const state = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;
@@ -85,8 +99,9 @@ export const getStateByChainIdAndAddress = async (
 export const setStateByChainIdAndAddress = async (
   state: State,
   overrideChainId?: string | null,
+  requestAccounts = false,
 ): Promise<void> => {
-  const identifier = await getStateIdentifier();
+  const identifier = await getStateIdentifier({ requestAccounts });
   const oldState = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
   const { address } = identifier;

@@ -8,6 +8,11 @@ import {
   getExpectedEnvironment,
   setExpectedEnvironment,
 } from './snap';
+import {
+  COTI_MAINNET_CHAIN_ID,
+  COTI_TESTNET_CHAIN_ID,
+  setEnvironment,
+} from '../config';
 import erc20Abi from '../abis/ERC20.json';
 import erc20ConfidentialAbi from '../abis/ERC20Confidential.json';
 import erc20Confidential256Abi from '../abis/ERC20Confidential256.json';
@@ -32,10 +37,47 @@ const PRIVATE_ERC20_256_INTERFACE_ID = '0xdfeb393e';
 const ERC721_INTERFACE_ID = '0x80ac58cd';
 const ERC1155_INTERFACE_ID = '0xd9b67a26';
 
-const getJsonRpcProvider = async () => {
+const resolveEnvironment = async (): Promise<'testnet' | 'mainnet'> => {
   const expectedEnv = await getExpectedEnvironment();
+
+  try {
+    const chainIdHex = (await ethereum.request({
+      method: 'eth_chainId',
+    })) as string;
+    const currentChainId = parseInt(chainIdHex, 16).toString();
+
+    if (currentChainId === COTI_TESTNET_CHAIN_ID) {
+      setEnvironment('testnet');
+      if (expectedEnv !== 'testnet') {
+        await setExpectedEnvironment('testnet');
+      }
+      return 'testnet';
+    }
+
+    if (currentChainId === COTI_MAINNET_CHAIN_ID) {
+      setEnvironment('mainnet');
+      if (expectedEnv !== 'mainnet') {
+        await setExpectedEnvironment('mainnet');
+      }
+      return 'mainnet';
+    }
+  } catch (error) {
+    void error;
+  }
+
+  if (expectedEnv) {
+    setEnvironment(expectedEnv);
+    return expectedEnv;
+  }
+
+  setEnvironment('mainnet');
+  return 'mainnet';
+};
+
+const getJsonRpcProvider = async () => {
+  const environment = await resolveEnvironment();
   const rpcUrl =
-    expectedEnv === 'testnet'
+    environment === 'testnet'
       ? 'https://testnet.coti.io/rpc'
       : 'https://mainnet.coti.io/rpc';
   return new ethers.JsonRpcProvider(rpcUrl);
@@ -478,6 +520,7 @@ const isCtUint256Shape = (value: any): boolean => {
 const probeConfidentialVersion256 = async (
   address: string,
   provider: ethers.AbstractProvider,
+  accountAddress?: string,
 ): Promise<256 | undefined> => {
   try {
     const contract = new ethers.Contract(
@@ -485,7 +528,16 @@ const probeConfidentialVersion256 = async (
       erc20Confidential256Abi,
       provider,
     );
-    const balance = await contract.balanceOf(ZeroAddress);
+    const targetAddress =
+      accountAddress && ethers.isAddress(accountAddress)
+        ? accountAddress
+        : ZeroAddress;
+    const balanceOfMethod =
+      (contract as any)['balanceOf(address)'] ?? (contract as any).balanceOf;
+    if (!balanceOfMethod) {
+      return undefined;
+    }
+    const balance = await balanceOfMethod(targetAddress);
     if (isCtUint256Shape(balance)) {
       return 256;
     }
@@ -572,8 +624,38 @@ export const checkChainId = async (): Promise<boolean> => {
     const expectedEnv = await getExpectedEnvironment();
 
     if (expectedEnv) {
-      setEnvironment(expectedEnv);
-      return true;
+      try {
+        const chainIdHex = (await ethereum.request({
+          method: 'eth_chainId',
+        })) as string;
+        const currentChainId = parseInt(chainIdHex, 16).toString();
+
+        if (currentChainId === COTI_TESTNET_CHAIN_ID) {
+          if (expectedEnv !== 'testnet') {
+            setEnvironment('testnet');
+            await setExpectedEnvironment('testnet');
+          } else {
+            setEnvironment(expectedEnv);
+          }
+          return true;
+        }
+
+        if (currentChainId === COTI_MAINNET_CHAIN_ID) {
+          if (expectedEnv !== 'mainnet') {
+            setEnvironment('mainnet');
+            await setExpectedEnvironment('mainnet');
+          } else {
+            setEnvironment(expectedEnv);
+          }
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        void error;
+        setEnvironment(expectedEnv);
+        return true;
+      }
     }
 
     const chainIdHex = (await ethereum.request({
@@ -632,23 +714,32 @@ export const recalculateBalances = async (): Promise<{
   tokenBalances: Tokens;
 }> => {
   // IMPORTANT: BrowserProvider(ethereum) does NOT sync when MetaMask changes networks
-  // So we must use JsonRpcProvider with the correct RPC URL based on expectedEnvironment
-  const expectedEnv = await getExpectedEnvironment();
+  // So we must use JsonRpcProvider with the correct RPC URL based on the current chain.
+  const environment = await resolveEnvironment();
   const rpcUrl =
-    expectedEnv === 'testnet'
+    environment === 'testnet'
       ? 'https://testnet.coti.io/rpc'
       : 'https://mainnet.coti.io/rpc';
 
-  const state = await getStateByChainIdAndAddress();
+  const state = await getStateByChainIdAndAddress(undefined, true);
   const tokens = state.tokenBalances || [];
 
   // Use JsonRpcProvider with direct RPC URL instead of BrowserProvider
   const provider = new ethers.JsonRpcProvider(rpcUrl);
 
   try {
-    const accounts = (await ethereum.request({
+    let accounts = (await ethereum.request({
       method: 'eth_accounts',
     })) as string[];
+    if (!accounts.length) {
+      try {
+        accounts = (await ethereum.request({
+          method: 'eth_requestAccounts',
+        })) as string[];
+      } catch (error) {
+        void error;
+      }
+    }
     const signerAddress = accounts.length > 0 ? accounts[0] : null;
 
     if (!signerAddress) {
@@ -660,110 +751,181 @@ export const recalculateBalances = async (): Promise<{
       '[SNAP] recalculateBalances - balance for',
       signerAddress,
       'on',
-      expectedEnv,
+      environment,
       ':',
       balance.toString(),
     );
 
     const tokenBalances: Tokens = await Promise.all(
       tokens.map(async (token) => {
-        if (token.type === TokenViewSelector.ERC20) {
-          let confidentialVersion = token.confidentialVersion ?? 64;
-          if (token.confidential && token.confidentialVersion === undefined) {
-            try {
-              const detected = await getTokenType(token.address);
-              if (detected.confidentialVersion) {
-                confidentialVersion = detected.confidentialVersion;
+        try {
+          if (token.type === TokenViewSelector.ERC20) {
+            let tokenConfidential = token.confidential;
+            let tokenConfidentialVersion = token.confidentialVersion;
+
+            if (!tokenConfidential || tokenConfidentialVersion === undefined) {
+              try {
+                const detected = await getTokenType(token.address);
+                if (detected.type === TokenViewSelector.ERC20) {
+                  tokenConfidential = detected.confidential;
+                  if (detected.confidentialVersion) {
+                    tokenConfidentialVersion = detected.confidentialVersion;
+                  }
+                }
+              } catch (error) {
+                console.warn(
+                  '[SNAP] recalculateBalances confidential detection failed',
+                  error,
+                );
               }
-            } catch (error) {
-              console.warn(
-                '[SNAP] recalculateBalances confidentialVersion detection failed',
-                error,
-              );
-              // keep default
             }
-          }
-          if (
-            token.confidential &&
-            token.confidentialVersion === undefined &&
-            confidentialVersion === 64
-          ) {
-            try {
-              const probed = await probeConfidentialVersion256(
-                token.address,
-                provider,
-              );
-              if (probed) {
-                confidentialVersion = probed;
+
+            let confidentialVersion = tokenConfidentialVersion ?? 64;
+            if (tokenConfidential && confidentialVersion === 64) {
+              try {
+                const probed = await probeConfidentialVersion256(
+                  token.address,
+                  provider,
+                  signerAddress,
+                );
+                if (probed) {
+                  confidentialVersion = probed;
+                }
+              } catch (error) {
+                void error;
               }
-            } catch (error) {
-              void error;
             }
+
+            const callBalance = async (abi: any) => {
+              const tokenContract = new Contract(token.address, abi, provider);
+              const balanceOfMethod =
+                (tokenContract as any)['balanceOf(address)'] ??
+                (tokenContract as any).balanceOf;
+              if (!balanceOfMethod) {
+                throw new Error('balanceOf not available');
+              }
+              return balanceOfMethod(signerAddress);
+            };
+
+            let tokenBalance: ctUint | CtUint256 | bigint | string | null = null;
+            let resolvedConfidential = tokenConfidential;
+            let resolvedVersion = confidentialVersion;
+
+            try {
+              const erc20ReadAbi =
+                tokenConfidential && confidentialVersion === 256
+                  ? erc20Confidential256Abi
+                  : tokenConfidential
+                    ? erc20ConfidentialAbi
+                    : erc20Abi;
+              tokenBalance = await callBalance(erc20ReadAbi);
+            } catch (error) {
+              if (tokenConfidential) {
+                try {
+                  const fallbackAbi =
+                    confidentialVersion === 256
+                      ? erc20ConfidentialAbi
+                      : erc20Confidential256Abi;
+                  tokenBalance = await callBalance(fallbackAbi);
+                  resolvedVersion = confidentialVersion === 256 ? 64 : 256;
+                } catch (fallbackError) {
+                  void fallbackError;
+                }
+              } else {
+                try {
+                  tokenBalance = await callBalance(erc20ConfidentialAbi);
+                  resolvedConfidential = true;
+                  resolvedVersion = 64;
+                } catch (fallbackError) {
+                  void fallbackError;
+                }
+                if (tokenBalance === null) {
+                  try {
+                    tokenBalance = await callBalance(
+                      erc20Confidential256Abi,
+                    );
+                    resolvedConfidential = true;
+                    resolvedVersion = 256;
+                  } catch (fallbackError) {
+                    void fallbackError;
+                  }
+                }
+              }
+            }
+
+            if (
+              resolvedConfidential &&
+              tokenBalance !== null &&
+              tokenBalance !== undefined &&
+              state.aesKey
+            ) {
+              const decrypted = decryptBalance(
+                tokenBalance as ctUint | CtUint256,
+                state.aesKey,
+                resolvedVersion ?? 64,
+                token.decimals,
+              );
+              tokenBalance = decrypted;
+            } else if (resolvedConfidential && !state.aesKey) {
+              tokenBalance = null;
+            }
+
+            return {
+              ...token,
+              confidential: resolvedConfidential,
+              ...(resolvedConfidential
+                ? { confidentialVersion: resolvedVersion }
+                : tokenConfidentialVersion !== undefined
+                  ? { confidentialVersion: tokenConfidentialVersion }
+                  : {}),
+              balance:
+                tokenBalance !== null && tokenBalance !== undefined
+                  ? tokenBalance.toString()
+                  : null,
+            };
           }
-          const erc20ReadAbi =
-            token.confidential && confidentialVersion === 256
-              ? erc20Confidential256Abi
-              : token.confidential
-                ? erc20ConfidentialAbi
-                : erc20Abi;
-          // Use provider instead of signer for read-only operations
-          const tokenContract = new Contract(
-            token.address,
-            erc20ReadAbi,
-            provider,
-          );
-          let tokenBalance = tokenContract.balanceOf
-            ? await tokenContract.balanceOf(signerAddress)
-            : null;
-          if (token.confidential && state.aesKey && tokenBalance) {
-            tokenBalance = decryptBalance(
-              tokenBalance,
-              state.aesKey,
-              confidentialVersion,
-              token.decimals,
+
+          if (token.type === TokenViewSelector.NFT) {
+            // Use provider instead of signer for read-only operations
+            const tokenContract = new Contract(
+              token.address,
+              erc721ConfidentialAbi,
+              provider,
             );
-          } else if (token.confidential && !state.aesKey) {
-            tokenBalance = null;
+            const balanceOfMethod =
+              (tokenContract as any)['balanceOf(address)'] ??
+              (tokenContract as any).balanceOf;
+            const tokenBalance = balanceOfMethod
+              ? await balanceOfMethod(signerAddress)
+              : null;
+            let tokenUri: string | null = token.uri ?? null;
+            if (token.confidential && token.tokenId && state.aesKey) {
+              tokenUri =
+                (await getTokenURI(
+                  token.address,
+                  token.tokenId,
+                  state.aesKey,
+                )) ?? tokenUri;
+            } else if (!token.confidential && token.tokenId) {
+              tokenUri =
+                (await getPublicTokenURI(token.address, token.tokenId)) ??
+                tokenUri;
+            }
+            return {
+              ...token,
+              balance: tokenBalance?.toString() ?? null,
+              uri: tokenUri,
+            };
           }
-
-          return {
-            ...token,
-            ...(token.confidential
-              ? { confidentialVersion }
-              : token.confidentialVersion !== undefined
-                ? { confidentialVersion: token.confidentialVersion }
-                : {}),
-            balance: tokenBalance?.toString() ?? null,
-          };
-        }
-
-        if (token.type === TokenViewSelector.NFT) {
-          // Use provider instead of signer for read-only operations
-          const tokenContract = new Contract(
+          return { ...token, balance: null };
+        } catch (tokenError) {
+          console.warn(
+            '[SNAP] recalculateBalances token failed',
             token.address,
-            erc721ConfidentialAbi,
-            provider,
+            tokenError,
           );
-          const tokenBalance = tokenContract.balanceOf
-            ? await tokenContract.balanceOf(signerAddress)
-            : null;
-          let tokenUri: string | null = token.uri ?? null;
-          if (token.confidential && token.tokenId && state.aesKey) {
-            tokenUri =
-              (await getTokenURI(token.address, token.tokenId, state.aesKey)) ??
-              tokenUri;
-          } else if (!token.confidential && token.tokenId) {
-            tokenUri =
-              (await getPublicTokenURI(token.address, token.tokenId)) ??
-              tokenUri;
-          }
-          return {
-            ...token,
-            balance: tokenBalance?.toString() ?? null,
-            uri: tokenUri,
-          };
+          return { ...token, balance: null };
         }
-        return { ...token, balance: null };
       }),
     );
 
@@ -775,9 +937,16 @@ export const recalculateBalances = async (): Promise<{
     return { balance, tokenBalances };
   } catch (error) {
     console.warn('[SNAP] recalculateBalances failed', error);
+    const fallbackBalance =
+      state.balance && state.balance !== '0'
+        ? BigInt(state.balance)
+        : BigInt(0);
     return {
-      balance: BigInt(0),
-      tokenBalances: tokens.map((token) => ({ ...token, balance: null })),
+      balance: fallbackBalance,
+      tokenBalances: tokens.map((token) => ({
+        ...token,
+        balance: token.balance ?? null,
+      })),
     };
   }
 };
