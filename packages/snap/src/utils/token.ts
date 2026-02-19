@@ -343,7 +343,13 @@ export async function getTokenType(address: string): Promise<{
         throw new Error('accountEncryptionAddress method not available');
       }
       await accountEncryptionMethod(address);
-      const confidentialVersion = await getPrivateErc20Version();
+      let confidentialVersion = await getPrivateErc20Version();
+      if (confidentialVersion === undefined) {
+        const probed = await probeConfidentialVersion256(address, provider);
+        if (probed) {
+          confidentialVersion = probed;
+        }
+      }
       return {
         type: TokenViewSelector.ERC20,
         confidential: true,
@@ -376,10 +382,124 @@ type CtUint256 =
       low: { high: bigint; low: bigint };
     };
 
+const INSANE_BALANCE_BASE = 1000000000000n;
+
+const normalizeDecimals = (
+  decimals?: string | number | null,
+): number => {
+  if (decimals === undefined || decimals === null) {
+    return 18;
+  }
+  const parsed =
+    typeof decimals === 'string' ? parseInt(decimals, 10) : decimals;
+  if (!Number.isFinite(parsed)) {
+    return 18;
+  }
+  if (parsed < 0) {
+    return 0;
+  }
+  if (parsed > 36) {
+    return 36;
+  }
+  return Math.floor(parsed);
+};
+
+const isZeroValue = (value: unknown): boolean => {
+  if (typeof value === 'bigint') {
+    return value === 0n;
+  }
+  if (typeof value === 'number') {
+    return value === 0;
+  }
+  if (typeof value === 'string') {
+    return value === '0';
+  }
+  return false;
+};
+
+const isZeroCtUint256 = (ciphertext: any): boolean => {
+  if (!ciphertext) {
+    return false;
+  }
+  if (isZeroValue(ciphertext)) {
+    return true;
+  }
+  if (
+    ciphertext?.high?.high !== undefined &&
+    ciphertext?.high?.low !== undefined &&
+    ciphertext?.low?.high !== undefined &&
+    ciphertext?.low?.low !== undefined
+  ) {
+    return (
+      isZeroValue(ciphertext.high.high) &&
+      isZeroValue(ciphertext.high.low) &&
+      isZeroValue(ciphertext.low.high) &&
+      isZeroValue(ciphertext.low.low)
+    );
+  }
+
+  if (
+    ciphertext?.ciphertextHigh !== undefined &&
+    ciphertext?.ciphertextLow !== undefined
+  ) {
+    return (
+      isZeroValue(ciphertext.ciphertextHigh) &&
+      isZeroValue(ciphertext.ciphertextLow)
+    );
+  }
+
+  return false;
+};
+
+const isInsaneDecryptedValue = (
+  value: bigint,
+  decimals?: string | number | null,
+): boolean => {
+  const safeDecimals = normalizeDecimals(decimals);
+  const threshold = INSANE_BALANCE_BASE * 10n ** BigInt(safeDecimals);
+  return value > threshold;
+};
+
+const isCtUint256Shape = (value: any): boolean => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const hasNested =
+    value?.high?.high !== undefined &&
+    value?.high?.low !== undefined &&
+    value?.low?.high !== undefined &&
+    value?.low?.low !== undefined;
+  const hasFlat =
+    value?.ciphertextHigh !== undefined &&
+    value?.ciphertextLow !== undefined;
+  return hasNested || hasFlat;
+};
+
+const probeConfidentialVersion256 = async (
+  address: string,
+  provider: ethers.AbstractProvider,
+): Promise<256 | undefined> => {
+  try {
+    const contract = new ethers.Contract(
+      address,
+      erc20Confidential256Abi,
+      provider,
+    );
+    const balance = await contract.balanceOf(ZeroAddress);
+    if (isCtUint256Shape(balance)) {
+      return 256;
+    }
+  } catch (error) {
+    void error;
+  }
+  return undefined;
+};
+
 export const decryptBalance = (
   balance: ctUint | CtUint256,
   aesKey: string,
   variant: 64 | 256 = 64,
+  decimals?: string | number | null,
 ): bigint | null => {
   try {
     if (variant === 256) {
@@ -393,19 +513,51 @@ export const decryptBalance = (
         nested?.low?.high !== undefined &&
         nested?.low?.low !== undefined
       ) {
+        if (isZeroCtUint256(balance)) {
+          return 0n;
+        }
         const d1 = decryptUint(nested.high.high, aesKey);
         const d2 = decryptUint(nested.high.low, aesKey);
         const d3 = decryptUint(nested.low.high, aesKey);
         const d4 = decryptUint(nested.low.low, aesKey);
-        return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
+        const decrypted = (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
+        if (isInsaneDecryptedValue(decrypted, decimals)) {
+          console.warn(
+            '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
+          );
+          return null;
+        }
+        return decrypted;
       }
 
       if (decryptUint256) {
-        return decryptUint256(balance, aesKey);
+        if (isZeroCtUint256(balance)) {
+          return 0n;
+        }
+        const decrypted = decryptUint256(balance, aesKey);
+        if (isInsaneDecryptedValue(decrypted, decimals)) {
+          console.warn(
+            '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
+          );
+          return null;
+        }
+        return decrypted;
       }
       return null;
     }
-    return decryptUint(balance as ctUint, aesKey);
+    if (isZeroValue(balance)) {
+      return 0n;
+    }
+    const rawDecrypted = decryptUint(balance as ctUint, aesKey);
+    const decrypted =
+      typeof rawDecrypted === 'bigint' ? rawDecrypted : BigInt(rawDecrypted);
+    if (isInsaneDecryptedValue(decrypted, decimals)) {
+      console.warn(
+        '[SNAP] decryptBalance suspicious value. Possible AES key mismatch.',
+      );
+      return null;
+    }
+    return decrypted;
   } catch (error) {
     console.warn('[SNAP] decryptBalance failed', error);
     return null;
@@ -531,6 +683,23 @@ export const recalculateBalances = async (): Promise<{
               // keep default
             }
           }
+          if (
+            token.confidential &&
+            token.confidentialVersion === undefined &&
+            confidentialVersion === 64
+          ) {
+            try {
+              const probed = await probeConfidentialVersion256(
+                token.address,
+                provider,
+              );
+              if (probed) {
+                confidentialVersion = probed;
+              }
+            } catch (error) {
+              void error;
+            }
+          }
           const erc20ReadAbi =
             token.confidential && confidentialVersion === 256
               ? erc20Confidential256Abi
@@ -551,6 +720,7 @@ export const recalculateBalances = async (): Promise<{
               tokenBalance,
               state.aesKey,
               confidentialVersion,
+              token.decimals,
             );
           } else if (token.confidential && !state.aesKey) {
             tokenBalance = null;
@@ -644,6 +814,13 @@ export const importToken = async (
       knownTokenType === 'ERC20'
         ? TokenViewSelector.ERC20
         : TokenViewSelector.NFT;
+    try {
+      const detected = await getTokenType(address);
+      confidential = detected.confidential;
+      confidentialVersion = detected.confidentialVersion;
+    } catch (error) {
+      void error;
+    }
   } else {
     const detected = await getTokenType(address);
     if (detected.type === TokenViewSelector.UNKNOWN) {

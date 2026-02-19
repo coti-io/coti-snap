@@ -60,6 +60,7 @@ export const useTokenBalances = ({
               const balance = await decryptERC20Balance(
                 token.address,
                 aesKey || undefined,
+                token.decimals,
               );
               return { address: token.address, balance: balance.toString() };
             } catch (error) {

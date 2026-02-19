@@ -1436,11 +1436,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@coti-io/coti-sdk-typescript@npm:^1.0.6":
+  version: 1.0.6
+  resolution: "@coti-io/coti-sdk-typescript@npm:1.0.6"
+  dependencies:
+    node-forge: ^1.3.1
+  checksum: 90468e62c63516b987cba0aa41380a764c0a105d345ecf73f47eaf1a338ba18f3a84457e688979f65765cd2f48965cccfda44971156a9a9984800096a66520c7
+  languageName: node
+  linkType: hard
+
 "@coti-io/coti-snap@workspace:packages/snap":
   version: 0.0.0-use.local
   resolution: "@coti-io/coti-snap@workspace:packages/snap"
   dependencies:
-    "@coti-io/coti-sdk-typescript": ^1.0.4
+    "@coti-io/coti-sdk-typescript": ^1.0.6
     "@jest/globals": ^29.5.0
     "@metamask/auto-changelog": ^3.4.4
     "@metamask/eslint-config": ^13.0.0
@@ -14295,7 +14304,7 @@ __metadata:
   resolution: "site@workspace:packages/site"
   dependencies:
     "@coti-io/coti-ethers": ^1.0.3
-    "@coti-io/coti-sdk-typescript": ^1.0.4
+    "@coti-io/coti-sdk-typescript": ^1.0.6
     "@eslint/js": ^9.17.0
     "@metamask/providers": ^19.0.0
     "@tanstack/react-query": ^5.65.1

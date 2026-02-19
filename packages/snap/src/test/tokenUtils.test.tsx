@@ -171,12 +171,12 @@ describe('Token Utilities', () => {
 
   describe('decryptBalance', () => {
     it('should return decrypted balance when valid', () => {
-      (decryptUint as jest.Mock).mockReturnValue(12345);
+      (decryptUint as jest.Mock).mockReturnValue(12345n);
 
       const result = tokenUtils.decryptBalance(1337n, 'mockAESKey');
 
       expect(decryptUint).toHaveBeenCalledWith(1337n, 'mockAESKey');
-      expect(result).toBe(12345);
+      expect(result).toBe(12345n);
     });
 
     it('should return null when an error occurs', () => {
