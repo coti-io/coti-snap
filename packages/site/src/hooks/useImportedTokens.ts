@@ -16,6 +16,10 @@ import {
   getNFTTokensByAccount,
 } from '../utils/localStorage';
 import { parseNFTAddress } from '../utils/tokenValidation';
+import {
+  getEnvironmentForChain,
+  isSupportedChainId,
+} from '../config/networks';
 
 export const useImportedTokens = () => {
   const { address, chain } = useAccount();
@@ -152,17 +156,69 @@ export const useImportedTokens = () => {
             snapTokenId = parsed.tokenId || undefined;
           }
 
-          await invokeSnap({
-            method: 'import-token',
-            params: {
-              address: snapAddress,
-              name: token.name,
-              symbol: token.symbol,
-              decimals: isNFT ? '0' : token.decimals?.toString() || '18',
-              tokenType: token.type,
-              ...(snapTokenId ? { tokenId: snapTokenId } : {}),
-            },
-          });
+          const params = {
+            address: snapAddress,
+            name: token.name,
+            symbol: token.symbol,
+            decimals: isNFT ? '0' : token.decimals?.toString() || '18',
+            tokenType: token.type,
+            ...(snapTokenId ? { tokenId: snapTokenId } : {}),
+          };
+
+          const tryImport = async () => {
+            const result = (await invokeSnap({
+              method: 'import-token',
+              params,
+            })) as { success?: boolean; error?: string } | null;
+
+            if (result && typeof result === 'object' && result.success === false) {
+              throw new Error(result.error || 'import-token failed');
+            }
+          };
+
+          try {
+            await invokeSnap({ method: 'connect-to-wallet' });
+          } catch (error) {
+            void error;
+          }
+
+          if (isSupportedChainId(chainId)) {
+            const environment = getEnvironmentForChain(chainId);
+            try {
+              await invokeSnap({
+                method: 'set-environment',
+                params: { environment },
+              });
+            } catch (error) {
+              void error;
+            }
+          }
+
+          try {
+            await tryImport();
+          } catch (snapError) {
+            const msg =
+              snapError instanceof Error
+                ? snapError.message
+                : String(snapError);
+            const needsConnection =
+              msg.includes('No account connected') ||
+              msg.includes('account') ||
+              msg.toLowerCase().includes('permission');
+
+            if (needsConnection) {
+              try {
+                await invokeSnap({ method: 'connect-to-wallet' });
+                await tryImport();
+                return;
+              } catch (retryError) {
+                console.warn('Failed to sync token to snap:', retryError);
+                return;
+              }
+            }
+
+            console.warn('Failed to sync token to snap:', snapError);
+          }
         } catch (snapError) {
           console.warn('Failed to sync token to snap:', snapError);
         }

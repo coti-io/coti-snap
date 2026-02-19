@@ -755,6 +755,55 @@ export const SnapProvider: React.FC<SnapProviderProps> = ({ children }) => {
     }
   }, [invokeSnap, chainIdForStorage]);
 
+  const syncAesKeyAttemptRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const maybeSyncAesKey = async (): Promise<void> => {
+      if (!installedSnap || !userAESKey || chainIdForStorage === null) {
+        return;
+      }
+
+      const syncKey = `${chainIdForStorage}:${userAESKey}`;
+      if (syncAesKeyAttemptRef.current === syncKey) {
+        return;
+      }
+      syncAesKeyAttemptRef.current = syncKey;
+
+      try {
+        const hasKey = await checkSnapHasAESKey();
+        if (hasKey) {
+          return;
+        }
+
+        try {
+          await connectSnapToWallet();
+        } catch (error) {
+          void error;
+        }
+
+        await invokeSnap({
+          method: 'set-aes-key',
+          params: {
+            newUserAesKey: userAESKey,
+            chainId: chainIdForStorage.toString(),
+          },
+        });
+        setUserHasAesKEY(true);
+      } catch (error) {
+        void error;
+      }
+    };
+
+    void maybeSyncAesKey();
+  }, [
+    installedSnap,
+    userAESKey,
+    chainIdForStorage,
+    checkSnapHasAESKey,
+    connectSnapToWallet,
+    invokeSnap,
+  ]);
+
   const handlePermissionCheck = useCallback(async (): Promise<void> => {
     if (
       !address ||
