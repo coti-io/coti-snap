@@ -571,7 +571,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           .id('transfer(address,(uint256,bytes))')
           .slice(2);
         const selector256 = ethers
-          .id('transfer(address,((uint256,uint256),bytes))')
+          .id(
+            'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))',
+          )
           .slice(2);
 
         if (
@@ -632,7 +634,8 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
         const { confidential, version } =
           await getTokenConfidentialStatus(tokenAddress);
-        const signer = await getBrowserProvider().getSigner();
+        const browserProvider = getBrowserProvider();
+        const signer = await browserProvider.getSigner();
         let tx;
 
         if (confidential) {
@@ -640,23 +643,62 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             throw new Error('AES key is required for private ERC20 transfer');
           }
           signer.setAesKey(aesKey);
-          const abi = version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
-          const selector =
-            version === 256
-              ? 'transfer(address,((uint256,uint256),bytes))'
-              : 'transfer(address,(uint256,bytes))';
-          const contract = new Contract(tokenAddress, abi, signer);
-          let encryptedAmount = (await signer.encryptValue(
-            ethers.toBigInt(amount),
-            tokenAddress,
-            getSelector(selector),
-          )) as itUint;
-          if (version === 256) {
-            encryptedAmount = normalizeItUint256ForAbi(encryptedAmount);
+
+          let confidentialVersion = version;
+          if (confidentialVersion !== 256) {
+            const probed = await probeConfidentialVersion256(
+              tokenAddress,
+              browserProvider,
+            );
+            if (probed) {
+              confidentialVersion = probed;
+            }
           }
-          tx = await (contract as any)[selector](to, encryptedAmount, {
-            gasLimit: 12000000,
-          });
+
+          if (confidentialVersion === 256) {
+            const SELECTOR_256 =
+              'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))';
+            const selectorHex = getSelector(SELECTOR_256);
+            const amountBigInt = ethers.toBigInt(amount);
+            const mask64 = (1n << 64n) - 1n;
+
+            const d1 = (amountBigInt >> 192n) & mask64; 
+            const d2 = (amountBigInt >> 128n) & mask64; 
+            const d3 = (amountBigInt >> 64n) & mask64; 
+            const d4 = amountBigInt & mask64; 
+
+            const it1 = (await signer.encryptValue(d1, tokenAddress, selectorHex)) as itUint;
+            const it2 = (await signer.encryptValue(d2, tokenAddress, selectorHex)) as itUint;
+            const it3 = (await signer.encryptValue(d3, tokenAddress, selectorHex)) as itUint;
+            const it4 = (await signer.encryptValue(d4, tokenAddress, selectorHex)) as itUint;
+
+            const encryptedAmount256 = {
+              ciphertext: {
+                high: { high: it1.ciphertext, low: it2.ciphertext },
+                low:  { high: it3.ciphertext, low: it4.ciphertext },
+              },
+              signature: [
+                [it1.signature, it2.signature],
+                [it3.signature, it4.signature],
+              ],
+            };
+
+            const contract = new Contract(tokenAddress, PRIVATE_ERC20_256_ABI, signer);
+            tx = await (contract as any)[SELECTOR_256](to, encryptedAmount256, {
+              gasLimit: 12000000,
+            });
+          } else {
+            const selector = 'transfer(address,(uint256,bytes))';
+            const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
+            const encryptedAmount = (await signer.encryptValue(
+              ethers.toBigInt(amount),
+              tokenAddress,
+              getSelector(selector),
+            )) as itUint;
+            tx = await (contract as any)[selector](to, encryptedAmount, {
+              gasLimit: 12000000,
+            });
+          }
         } else {
           const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
           tx = await (contract as any)['transfer(address,uint256)'](
