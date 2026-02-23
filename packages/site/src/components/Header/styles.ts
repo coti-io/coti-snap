@@ -204,6 +204,20 @@ export const MobileMenuDropdown = styled.div<{ $isVisible: boolean }>`
     top: 60px;
   }
 
+  @media screen and (min-width: 771px) {
+    left: auto;
+    right: 48px;
+    transform: ${(props) =>
+      props.$isVisible
+        ? 'translateY(0) scale(1)'
+        : 'translateY(-12px) scale(0.95)'};
+    transform-origin: top right;
+  }
+
+  @media screen and (min-width: 771px) and (max-width: 992px) {
+    right: 32px;
+  }
+
   @media screen and (min-width: 771px) and (min-height: 821px) {
     display: none;
   }
