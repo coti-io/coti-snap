@@ -260,6 +260,7 @@ export type TransferParams = {
   amount?: string;
   tokenId?: string;
   aesKey?: string;
+  publicTransfer?: boolean;
 };
 
 export type ImportTokenParams = {
@@ -529,6 +530,14 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         let detectedVersion: 64 | 256 | undefined;
         let isConfidential = false;
 
+        const probed256 = await probeConfidentialVersion256(
+          tokenAddress,
+          browserProvider,
+        );
+        if (probed256) {
+          return { confidential: true, version: probed256 };
+        }
+
         if (typeof erc165.supportsInterface === 'function') {
           try {
             const supports256 = await erc165.supportsInterface(
@@ -623,6 +632,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       to,
       amount,
       aesKey,
+      publicTransfer,
     }: TransferParams & { amount: string; aesKey?: string }) => {
       return withLoading(async () => {
         if (!amount) {
@@ -638,7 +648,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         const signer = await browserProvider.getSigner();
         let tx;
 
-        if (confidential) {
+        if (confidential && publicTransfer) {
+          const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+          tx = await (contract as any)['transfer(address,uint256)'](
+            to,
+            ethers.toBigInt(amount),
+          );
+        } else if (confidential) {
           if (!aesKey) {
             throw new Error('AES key is required for private ERC20 transfer');
           }
@@ -684,9 +700,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             };
 
             const contract = new Contract(tokenAddress, PRIVATE_ERC20_256_ABI, signer);
-            tx = await (contract as any)[SELECTOR_256](to, encryptedAmount256, {
-              gasLimit: 12000000,
-            });
+            tx = await (contract as any)[SELECTOR_256](to, encryptedAmount256);
           } else {
             const selector = 'transfer(address,(uint256,bytes))';
             const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
@@ -695,16 +709,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               tokenAddress,
               getSelector(selector),
             )) as itUint;
-            tx = await (contract as any)[selector](to, encryptedAmount, {
-              gasLimit: 12000000,
-            });
+            tx = await (contract as any)[selector](to, encryptedAmount);
           }
         } else {
           const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
           tx = await (contract as any)['transfer(address,uint256)'](
             to,
             ethers.toBigInt(amount),
-            { gasLimit: 12000000 },
           );
         }
 
@@ -1039,7 +1050,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           tokenId,
           amount,
           '0x',
-          { gasLimit: 12000000 },
         );
         if (!tx) {
           throw new Error('Transaction could not be initiated');
@@ -1354,5 +1364,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     addTokenToMetaMask,
     addNFTToMetaMask,
     addERC1155ToMetaMask,
+    getTokenConfidentialStatus,
   };
 };
