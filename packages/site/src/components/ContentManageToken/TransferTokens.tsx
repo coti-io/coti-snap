@@ -105,6 +105,7 @@ type TransactionStatus = 'idle' | 'loading' | 'success' | 'error';
 
 const ADDRESS_VALIDATION_DELAY = 800;
 
+
 const validateAddress = (address: string): boolean => {
   if (address.toLowerCase().endsWith('.coti')) {
     return true;
@@ -605,6 +606,9 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         decimals: 18,
       };
 
+    const isErc20Token = Boolean(currentToken?.address && !currentToken?.tokenId);
+    const usePublicTransfer = isErc20Token;
+
     const balanceNum = useMemo(() => {
       if (!currentBalance || currentBalance === '0') {
         return 0;
@@ -1058,6 +1062,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             to: targetAddress,
             amount: amountInWei.toString(),
             aesKey: aesKey || '',
+            publicTransfer: usePublicTransfer,
           });
         }
 
@@ -1088,6 +1093,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
       addressInput,
       resolvedAddress,
       amount,
+      usePublicTransfer,
       currentToken,
       fetchTokenBalance,
       onBack,
@@ -1217,6 +1223,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
                   </MaxButton>
                 ))}
             </BalanceRow>
+
           </>
         )}
 
