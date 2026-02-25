@@ -1,7 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useRequest } from './useRequest';
 import { defaultSnapOrigin } from '../config';
+import type { GetSnapsResponse } from '../types';
+import { resolveSnapId } from '../utils/snap';
 
 export type InvokeSnapParams = {
   method: string;
@@ -17,6 +19,30 @@ export type InvokeSnapParams = {
  */
 export const useInvokeSnap = (snapId = defaultSnapOrigin) => {
   const request = useRequest();
+  const resolvedSnapIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    resolvedSnapIdRef.current = null;
+  }, [snapId]);
+
+  const getResolvedSnapId = useCallback(async (): Promise<string> => {
+    if (resolvedSnapIdRef.current) {
+      return resolvedSnapIdRef.current;
+    }
+
+    try {
+      const snaps = (await request({
+        method: 'wallet_getSnaps',
+      })) as GetSnapsResponse;
+      const resolved = resolveSnapId(snaps, snapId);
+      resolvedSnapIdRef.current = resolved;
+      return resolved;
+    } catch (error) {
+      void error;
+      resolvedSnapIdRef.current = snapId;
+      return snapId;
+    }
+  }, [request, snapId]);
 
   /**
    * Invoke the requested Snap method.
@@ -27,15 +53,20 @@ export const useInvokeSnap = (snapId = defaultSnapOrigin) => {
    * @returns The Snap response.
    */
   const invokeSnap = useCallback(
-    async ({ method, params }: InvokeSnapParams) =>
-      request({
+    async ({ method, params }: InvokeSnapParams) => {
+      const resolvedSnapId = await getResolvedSnapId();
+      if (import.meta.env.DEV) {
+        console.info('[snap] invoke', { method, snapId: resolvedSnapId });
+      }
+      return request({
         method: 'wallet_invokeSnap',
         params: {
-          snapId,
+          snapId: resolvedSnapId,
           request: params ? { method, params } : { method },
         },
-      }),
-    [request, snapId],
+      });
+    },
+    [request, getResolvedSnapId],
   );
 
   return invokeSnap;

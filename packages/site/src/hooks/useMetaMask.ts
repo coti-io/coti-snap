@@ -4,6 +4,7 @@ import { useMetaMaskContext } from './MetamaskContext';
 import { useRequest } from './useRequest';
 import { defaultSnapOrigin } from '../config';
 import type { GetSnapsResponse } from '../types';
+import { resolveSnapId } from '../utils/snap';
 
 /**
  * A Hook to retrieve useful data from MetaMask.
@@ -50,7 +51,8 @@ export const useMetaMask = () => {
       method: 'wallet_getSnaps',
     })) as GetSnapsResponse;
 
-    setInstalledSnap(snaps[defaultSnapOrigin] ?? null);
+    const resolvedSnapId = resolveSnapId(snaps, defaultSnapOrigin);
+    setInstalledSnap(snaps[resolvedSnapId] ?? null);
   };
 
   useEffect(() => {
