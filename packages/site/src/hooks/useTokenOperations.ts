@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import type { Eip1193Provider } from 'ethers';
 import { useState, useCallback } from 'react';
 
+import { useInvokeSnap } from './useInvokeSnap';
 import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { abi as PRIVATE_ERC20_ABI } from '../abis/ERC20Confidential.json';
@@ -310,6 +311,28 @@ const decodePotentialString = (raw: unknown): string => {
   return '';
 };
 
+const describeError = (error: unknown) => {
+  if (!error || typeof error !== 'object') {
+    return { error };
+  }
+  const err = error as {
+    code?: unknown;
+    message?: unknown;
+    reason?: unknown;
+    shortMessage?: unknown;
+    data?: unknown;
+    error?: unknown;
+  };
+  return {
+    code: err.code,
+    message: err.message,
+    reason: err.reason,
+    shortMessage: err.shortMessage,
+    data: err.data ?? (err.error as any)?.data,
+    nestedMessage: (err.error as any)?.message,
+  };
+};
+
 const imageDataUriCache = new Map<string, string>();
 
 const getCachedImageDataUri = async (
@@ -461,6 +484,7 @@ export class TokenOperationError extends Error {
  * @returns An object containing loading state, error state, and functions for token operations.
  */
 export const useTokenOperations = (provider: BrowserProvider) => {
+  const invokeSnap = useInvokeSnap();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -625,6 +649,66 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     [getBrowserProvider],
   );
 
+  const getSnapChainId = useCallback(async (): Promise<string | undefined> => {
+    try {
+      const network = await getBrowserProvider().getNetwork();
+      return network.chainId.toString();
+    } catch (error) {
+      void error;
+      return undefined;
+    }
+  }, [getBrowserProvider]);
+
+  const tryBuildSnapItUint256 = useCallback(
+    async (
+      value: bigint,
+      tokenAddress: string,
+      selector: string,
+      aesKey?: string,
+    ) => {
+      try {
+        const chainId = await getSnapChainId();
+        if (import.meta.env.DEV) {
+          try {
+            const hasKey = await invokeSnap({
+              method: 'has-aes-key',
+              params: chainId ? { chainId } : undefined,
+            });
+            console.info('[snap] has-aes-key', { chainId, hasKey });
+            const debug = await invokeSnap({ method: 'debug-state' });
+            const sanitized = {
+              currentChainId: (debug as any)?.currentChainId,
+              currentChainIdHex: (debug as any)?.currentChainIdHex,
+              expectedEnvironment: (debug as any)?.expectedEnvironment,
+              storedChainIds: (debug as any)?.storedChainIds,
+            };
+            console.info('[snap] debug-state', sanitized);
+          } catch (debugError) {
+            console.warn('[snap] debug-state failed', debugError);
+          }
+        }
+        const result = await invokeSnap({
+          method: 'build-it-uint256',
+          params: {
+            value: value.toString(),
+            tokenAddress,
+            functionSelector: selector,
+            ...(aesKey ? { aesKey } : {}),
+            ...(chainId ? { chainId } : {}),
+          },
+        });
+        if (import.meta.env.DEV) {
+          console.info('[snap] build-it-uint256 result', result);
+        }
+        return result as { value: any } | null | undefined;
+      } catch (error) {
+        console.error('[snap] build-it-uint256 failed', error);
+        return null;
+      }
+    },
+    [getSnapChainId, invokeSnap],
+  );
+
   // ERC20 Operations
   const transferERC20 = useCallback(
     async ({
@@ -676,31 +760,81 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))';
             const selectorHex = getSelector(SELECTOR_256);
             const amountBigInt = ethers.toBigInt(amount);
-            const mask64 = (1n << 64n) - 1n;
+            if (import.meta.env.DEV) {
+              try {
+                const code = await browserProvider.getCode(tokenAddress);
+                const selectorNested = ethers
+                  .id(
+                    'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))',
+                  )
+                  .slice(2);
+                const selectorFlat = ethers
+                  .id('transfer(address,((uint256,uint256),bytes))')
+                  .slice(2);
+                const selector64 = ethers
+                  .id('transfer(address,(uint256,bytes))')
+                  .slice(2);
+                console.info('[private-transfer] selectors', {
+                  hasNested: code.includes(selectorNested),
+                  hasFlat: code.includes(selectorFlat),
+                  has64: code.includes(selector64),
+                });
+              } catch (selectorError) {
+                console.warn(
+                  '[private-transfer] selector probe failed',
+                  selectorError,
+                );
+              }
+              try {
+                const signerAddress = await signer.getAddress();
+                const contract = new Contract(
+                  tokenAddress,
+                  PRIVATE_ERC20_256_ABI,
+                  browserProvider,
+                );
+                const accountEncryption =
+                  (contract as any).accountEncryptionAddress;
+                if (accountEncryption) {
+                  const encAddress = await accountEncryption(signerAddress);
+                  console.info('[private-transfer] accountEncryptionAddress', {
+                    signerAddress,
+                    encAddress,
+                  });
+                }
+              } catch (encryptionError) {
+                console.warn(
+                  '[private-transfer] accountEncryptionAddress probe failed',
+                  encryptionError,
+                );
+              }
+            }
+            const snapResult = await tryBuildSnapItUint256(
+              amountBigInt,
+              tokenAddress,
+              selectorHex,
+              aesKey,
+            );
 
-            const d1 = (amountBigInt >> 192n) & mask64; 
-            const d2 = (amountBigInt >> 128n) & mask64; 
-            const d3 = (amountBigInt >> 64n) & mask64; 
-            const d4 = amountBigInt & mask64; 
+            if (!snapResult?.value) {
+              throw new Error(
+                'Snap encryption unavailable. Please ensure the updated COTI Snap is connected and your AES key is unlocked.',
+              );
+            }
 
-            const it1 = (await signer.encryptValue(d1, tokenAddress, selectorHex)) as itUint;
-            const it2 = (await signer.encryptValue(d2, tokenAddress, selectorHex)) as itUint;
-            const it3 = (await signer.encryptValue(d3, tokenAddress, selectorHex)) as itUint;
-            const it4 = (await signer.encryptValue(d4, tokenAddress, selectorHex)) as itUint;
-
-            const encryptedAmount256 = {
-              ciphertext: {
-                high: { high: it1.ciphertext, low: it2.ciphertext },
-                low:  { high: it3.ciphertext, low: it4.ciphertext },
-              },
-              signature: [
-                [it1.signature, it2.signature],
-                [it3.signature, it4.signature],
-              ],
-            };
-
-            const contract = new Contract(tokenAddress, PRIVATE_ERC20_256_ABI, signer);
-            tx = await (contract as any)[SELECTOR_256](to, encryptedAmount256);
+            const contract = new Contract(
+              tokenAddress,
+              PRIVATE_ERC20_256_ABI,
+              signer,
+            );
+            try {
+              tx = await (contract as any)[SELECTOR_256](to, snapResult.value);
+            } catch (sendError) {
+              console.error(
+                '[private-transfer] tx failed',
+                describeError(sendError),
+              );
+              throw sendError;
+            }
           } else {
             const selector = 'transfer(address,(uint256,bytes))';
             const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
@@ -727,7 +861,12 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         return tx.hash ?? '';
       });
     },
-    [withLoading, getBrowserProvider, getTokenConfidentialStatus],
+    [
+      withLoading,
+      getBrowserProvider,
+      getTokenConfidentialStatus,
+      tryBuildSnapItUint256,
+    ],
   );
 
   const getERC20Details = useCallback(

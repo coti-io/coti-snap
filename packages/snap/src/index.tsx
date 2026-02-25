@@ -33,6 +33,7 @@ import {
   setStateByChainIdAndAddress,
   setExpectedEnvironment,
   getExpectedEnvironment,
+  getStateIdentifier,
 } from './utils/snap';
 import {
   checkChainId,
@@ -46,6 +47,7 @@ import {
   checkIfERC721Unique,
   checkERC721Ownership,
 } from './utils/token';
+import { buildItUint256, deriveSnapWallet } from './utils/itUint';
 
 export const returnToHomePage = async (id: string) => {
   const { balance, tokenBalances, tokenView, aesKey } =
@@ -569,6 +571,62 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         );
       }
       return null;
+
+    case 'build-it-uint256': {
+      try {
+        const params = request.params as
+          | {
+              value?: string;
+              tokenAddress?: string;
+              functionSelector?: string;
+              chainId?: string;
+              aesKey?: string;
+            }
+          | undefined;
+        if (!params?.value || !params?.tokenAddress || !params?.functionSelector) {
+          console.error('[snap] build-it-uint256: missing params', params);
+          return null;
+        }
+
+        const state = await getStateByChainIdAndAddress(params.chainId);
+        const aesKey = state.aesKey ?? params.aesKey ?? null;
+        if (!aesKey) {
+          console.error('[snap] build-it-uint256: AES key not found', {
+            hasStateKey: Boolean(state.aesKey),
+            hasParamKey: Boolean(params.aesKey),
+            chainId: params.chainId,
+          });
+          return null;
+        }
+
+        const identifier = await getStateIdentifier({ requestAccounts: true });
+        const chainId = params.chainId ?? identifier.chainId;
+        const wallet = deriveSnapWallet(aesKey, identifier.address, chainId);
+
+        console.info('[snap] build-it-uint256', {
+          account: identifier.address,
+          derivedSigner: wallet.address,
+          chainId,
+          token: params.tokenAddress,
+          selector: params.functionSelector,
+        });
+
+        const itUint256 = buildItUint256(
+          BigInt(params.value),
+          aesKey,
+          wallet,
+          params.tokenAddress,
+          params.functionSelector,
+        );
+
+        return {
+          value: itUint256,
+        };
+      } catch (error) {
+        console.error('[snap] build-it-uint256 failed', error);
+        throw error;
+      }
+    }
 
     case 'debug-state':
       const allState = await snap.request({

@@ -606,8 +606,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         decimals: 18,
       };
 
-    const isErc20Token = Boolean(currentToken?.address && !currentToken?.tokenId);
-    const usePublicTransfer = isErc20Token;
+    const usePublicTransfer = false;
 
     const balanceNum = useMemo(() => {
       if (!currentBalance || currentBalance === '0') {
