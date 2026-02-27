@@ -672,7 +672,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           try {
             const hasKey = await invokeSnap({
               method: 'has-aes-key',
-              params: chainId ? { chainId } : undefined,
+              ...(chainId ? { params: { chainId } } : {}),
             });
             console.info('[snap] has-aes-key', { chainId, hasKey });
             const debug = await invokeSnap({ method: 'debug-state' });
