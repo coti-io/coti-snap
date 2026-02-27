@@ -10,7 +10,7 @@ import React, {
   useTransition,
 } from 'react';
 
-import { Alert } from './Alert';
+import { Alert, type AlertType } from './Alert';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useSnap } from '../../hooks/SnapContext';
 import { JazziconComponent } from '../common';
@@ -67,6 +67,7 @@ import { CotiLogo } from '../../assets/icons';
 import SearchIcon from '../../assets/icons/search.svg';
 import XIcon from '../../assets/x.svg';
 import { useMetaMaskContext } from '../../hooks/MetamaskContext';
+import { useModal } from '../../hooks/useModal';
 import { useTokenOperations } from '../../hooks/useTokenOperations';
 import { useZNSResolver } from '../../hooks/useZNSResolver';
 import { truncateString } from '../../utils';
@@ -77,6 +78,162 @@ import {
 } from '../../utils/formatters';
 import { normalizeAddress } from '../../utils/normalizeAddress';
 import { ContentTitle } from '../styles';
+import styled from 'styled-components';
+
+const EthSignHelpCard = styled.div`
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 16px 28px;
+  border-radius: 18px;
+  background: #f4f8ff;
+  border: 1px solid rgba(30, 41, 246, 0.18);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    background: #1e29f6;
+    border-radius: 18px 0 0 18px;
+  }
+`;
+
+const EthSignHelpHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const EthSignHelpTitle = styled.div`
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: #000000 !important;
+`;
+
+const EthSignHelpBadge = styled.span`
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #1e29f6 !important;
+  background: rgba(30, 41, 246, 0.08);
+  border: 1px solid rgba(30, 41, 246, 0.25);
+`;
+
+const EthSignHelpSteps = styled.div`
+  display: grid;
+  gap: 6px;
+  font-size: 1.4rem;
+  color: #000000 !important;
+
+  span {
+    color: #000000 !important;
+  }
+`;
+
+const EthSignHelpStep = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`;
+
+const EthSignHelpIndex = styled.span`
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #1e29f6 !important;
+  background: rgba(30, 41, 246, 0.12);
+  border: 1px solid rgba(30, 41, 246, 0.3);
+`;
+
+const EthSignHelpDivider = styled.div`
+  height: 1px;
+  background: rgba(30, 41, 246, 0.18);
+`;
+
+const EthSignHelpNote = styled.div`
+  font-size: 1.3rem;
+  color: #000000 !important;
+  opacity: 0.75;
+`;
+
+const EthSignHelpPath = styled.span`
+  font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+  font-size: 1.25rem;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(30, 41, 246, 0.2);
+  color: #000000 !important;
+`;
+
+const EthSignModalContainer = styled(TokenModalContainer)`
+  width: 520px;
+  max-width: 92vw;
+  max-height: 80vh;
+  padding: 0;
+  color: #000000 !important;
+`;
+
+const EthSignModalHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 26px 28px 0 28px;
+`;
+
+const EthSignModalTitleWrap = styled.div`
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+`;
+
+const EthSignModalAccent = styled.span`
+  width: 10px;
+  height: 52px;
+  border-radius: 999px;
+  background: #1e29f6;
+  flex-shrink: 0;
+`;
+
+const EthSignModalTitle = styled.div`
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: #000000 !important;
+`;
+
+const EthSignModalSubtitle = styled.div`
+  font-size: 1.3rem;
+  color: #000000 !important;
+  opacity: 0.7;
+  margin-top: 4px;
+`;
+
+const EthSignModalBody = styled.div`
+  padding: 18px 28px 28px;
+  display: grid;
+  gap: 14px;
+  color: #000000 !important;
+  overflow-y: auto;
+`;
+
+const EthSignModalIntro = styled.div`
+  font-size: 1.4rem;
+  color: #000000 !important;
+  opacity: 0.85;
+`;
+
 
 type TransferTokensProps = {
   onBack: () => void;
@@ -443,6 +600,91 @@ const TokenModal: React.FC<{
 
 TokenModal.displayName = 'TokenModal';
 
+const EthSignModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = React.memo(({ isOpen, onClose }) => {
+  const { handleBackdropClick, handleKeyDown } = useModal({
+    isOpen,
+    onClose,
+  });
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <TokenModalBackdrop onClick={handleBackdropClick}>
+      <EthSignModalContainer
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="eth-sign-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
+        tabIndex={-1}
+      >
+        <EthSignModalHeader>
+          <EthSignModalTitleWrap>
+            <EthSignModalAccent />
+            <div>
+              <EthSignModalTitle id="eth-sign-modal-title">
+                Raw signing via COTI Snap
+              </EthSignModalTitle>
+              <EthSignModalSubtitle>
+                Private 256-bit transfers need a raw 32-byte signature.
+              </EthSignModalSubtitle>
+            </div>
+          </EthSignModalTitleWrap>
+          <TokenModalClose onClick={onClose} aria-label="Close">
+            ×
+          </TokenModalClose>
+        </EthSignModalHeader>
+        <EthSignModalBody>
+          <EthSignModalIntro>
+            MetaMask removed eth_sign, so raw signing now happens inside the
+            COTI Snap. You will be prompted to approve key access the first
+            time you send a private 256-bit transfer.
+          </EthSignModalIntro>
+          <EthSignHelpCard>
+            <EthSignHelpHeader>
+              <EthSignHelpTitle>How to enable</EthSignHelpTitle>
+              <EthSignHelpBadge>Snap Required</EthSignHelpBadge>
+            </EthSignHelpHeader>
+            <EthSignHelpDivider />
+            <EthSignHelpSteps>
+              <EthSignHelpStep>
+                <EthSignHelpIndex>1</EthSignHelpIndex>
+                <span>
+                  Install and enable the COTI Snap in MetaMask.
+                </span>
+              </EthSignHelpStep>
+              <EthSignHelpStep>
+                <EthSignHelpIndex>2</EthSignHelpIndex>
+                <span>
+                  Approve the key access permission prompt when asked.
+                </span>
+              </EthSignHelpStep>
+              <EthSignHelpStep>
+                <EthSignHelpIndex>3</EthSignHelpIndex>
+                <span>
+                  Retry the transfer.
+                </span>
+              </EthSignHelpStep>
+            </EthSignHelpSteps>
+            <EthSignHelpDivider />
+            <EthSignHelpNote>
+              The signature is produced inside MetaMask; no private keys leave
+              the wallet.
+            </EthSignHelpNote>
+          </EthSignHelpCard>
+        </EthSignModalBody>
+      </EthSignModalContainer>
+    </TokenModalBackdrop>
+  );
+});
+
+EthSignModal.displayName = 'EthSignModal';
+
 export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
   ({ onBack, address, balance, aesKey, initialToken, onTransferSuccess }) => {
     const [, startTransition] = useTransition();
@@ -493,6 +735,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
       {},
     );
     const [txStatus, setTxStatus] = useState<TransactionStatus>('idle');
+    const [txError, setTxError] = useState<string>('');
+    const [txErrorType, setTxErrorType] = useState<AlertType>('error');
+    const [isEthSignError, setIsEthSignError] = useState(false);
+    const [showEthSignModal, setShowEthSignModal] = useState(false);
     const { getERC20TokensList, importedTokens, removeToken } =
       useImportedTokens();
     const { getAESKey, userHasAESKey } = useSnap();
@@ -1019,6 +1265,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         return;
       }
 
+      setTxError('');
+      setTxErrorType('error');
+      setIsEthSignError(false);
+      setShowEthSignModal(false);
       setTxStatus('loading');
 
       try {
@@ -1067,6 +1317,9 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
 
         if (txHash) {
           setTxStatus('success');
+          setTxError('');
+          setTxErrorType('error');
+          setIsEthSignError(false);
 
           if (currentToken.type === 'ERC721' && currentToken.address) {
             removeToken(currentToken.address);
@@ -1084,6 +1337,24 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         }
       } catch (error: any) {
         setTxStatus('error');
+        const message =
+          error?.message?.toString() ||
+          'Transfer failed. Please check your wallet and try again.';
+        const isRawSigning =
+          typeof message === 'string' &&
+          (message.toLowerCase().includes('eth_sign') ||
+            message.toLowerCase().includes('raw signing') ||
+            message.toLowerCase().includes('coti snap'));
+        if (isRawSigning) {
+          setIsEthSignError(true);
+          setTxErrorType('info');
+          setTxError('');
+          setShowEthSignModal(true);
+          return;
+        }
+        setTxErrorType('error');
+        setIsEthSignError(false);
+        setTxError(message);
       }
     }, [
       provider,
@@ -1323,6 +1594,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             </Alert>
           )}
 
+        {txStatus === 'error' && txError && !isEthSignError && (
+          <Alert type={txErrorType}>{txError}</Alert>
+        )}
+
         <BottomActions>
           <SendButton
             onClick={handleCancel}
@@ -1342,6 +1617,11 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             {txStatus === 'loading' ? 'Sending...' : 'Send'}
           </SendButton>
         </BottomActions>
+
+        <EthSignModal
+          isOpen={showEthSignModal}
+          onClose={() => setShowEthSignModal(false)}
+        />
 
         <TokenModal
           isOpen={showTokenModal}

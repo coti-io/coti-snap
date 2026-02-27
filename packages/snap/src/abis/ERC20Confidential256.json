@@ -5,27 +5,6 @@
     "type": "constructor"
   },
   {
-    "inputs": [],
-    "name": "AccessControlBadConfirmation",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "neededRole",
-        "type": "bytes32"
-      }
-    ],
-    "name": "AccessControlUnauthorizedAccount",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -87,38 +66,14 @@
       {
         "components": [
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "high",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextHigh",
+            "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextLow",
+            "type": "uint256"
           }
         ],
         "indexed": false,
@@ -129,38 +84,14 @@
       {
         "components": [
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "high",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextHigh",
+            "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextLow",
+            "type": "uint256"
           }
         ],
         "indexed": false,
@@ -265,38 +196,14 @@
       {
         "components": [
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "high",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextHigh",
+            "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextLow",
+            "type": "uint256"
           }
         ],
         "indexed": false,
@@ -307,38 +214,14 @@
       {
         "components": [
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "high",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextHigh",
+            "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextLow",
+            "type": "uint256"
           }
         ],
         "indexed": false,
@@ -411,45 +294,9 @@
     "name": "allowance",
     "outputs": [
       {
-        "components": [
-          {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "high",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "low",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct gtUint256",
+        "internalType": "gtUint256",
         "name": "",
-        "type": "tuple"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -475,38 +322,14 @@
           {
             "components": [
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
               },
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ctUint256",
@@ -516,38 +339,14 @@
           {
             "components": [
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
               },
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ctUint256",
@@ -557,38 +356,14 @@
           {
             "components": [
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
               },
               {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
               }
             ],
             "internalType": "struct ctUint256",
@@ -612,57 +387,9 @@
         "type": "address"
       },
       {
-        "components": [
-          {
-            "components": [
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
-              }
-            ],
-            "internalType": "struct ctUint256",
-            "name": "ciphertext",
-            "type": "tuple"
-          },
-          {
-            "internalType": "bytes[2][2]",
-            "name": "signature",
-            "type": "bytes[2][2]"
-          }
-        ],
-        "internalType": "struct itUint256",
+        "internalType": "gtUint256",
         "name": "value",
-        "type": "tuple"
+        "type": "uint256"
       }
     ],
     "name": "approve",
@@ -688,39 +415,27 @@
           {
             "components": [
               {
-                "internalType": "gtUint64",
-                "name": "high",
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
                 "type": "uint256"
               },
               {
-                "internalType": "gtUint64",
-                "name": "low",
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
                 "type": "uint256"
               }
             ],
-            "internalType": "struct gtUint128",
-            "name": "high",
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
             "type": "tuple"
           },
           {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
           }
         ],
-        "internalType": "struct gtUint256",
+        "internalType": "struct itUint256",
         "name": "value",
         "type": "tuple"
       }
@@ -749,38 +464,14 @@
       {
         "components": [
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "high",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextHigh",
+            "type": "uint256"
           },
           {
-            "components": [
-              {
-                "internalType": "ctUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "ctUint128",
+            "name": "ciphertextLow",
+            "type": "uint256"
           }
         ],
         "internalType": "struct ctUint256",
@@ -796,45 +487,9 @@
     "name": "balanceOf",
     "outputs": [
       {
-        "components": [
-          {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "high",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "low",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct gtUint256",
+        "internalType": "gtUint256",
         "name": "",
-        "type": "tuple"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -1009,7 +664,7 @@
       },
       {
         "internalType": "address",
-        "name": "callerConfirmation",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -1108,126 +763,18 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
         "components": [
           {
             "components": [
               {
-                "internalType": "gtUint64",
-                "name": "high",
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
                 "type": "uint256"
               },
               {
-                "internalType": "gtUint64",
-                "name": "low",
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
                 "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "high",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "low",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct gtUint256",
-        "name": "value",
-        "type": "tuple"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "internalType": "gtBool",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "components": [
-          {
-            "components": [
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
               }
             ],
             "internalType": "struct ctUint256",
@@ -1235,9 +782,9 @@
             "type": "tuple"
           },
           {
-            "internalType": "bytes[2][2]",
+            "internalType": "bytes",
             "name": "signature",
-            "type": "bytes[2][2]"
+            "type": "bytes"
           }
         ],
         "internalType": "struct itUint256",
@@ -1251,6 +798,30 @@
         "internalType": "gtBool",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -1298,57 +869,9 @@
         "type": "address"
       },
       {
-        "components": [
-          {
-            "components": [
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "high",
-                "type": "tuple"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "ctUint64",
-                    "name": "high",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "ctUint64",
-                    "name": "low",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct ctUint128",
-                "name": "low",
-                "type": "tuple"
-              }
-            ],
-            "internalType": "struct ctUint256",
-            "name": "ciphertext",
-            "type": "tuple"
-          },
-          {
-            "internalType": "bytes[2][2]",
-            "name": "signature",
-            "type": "bytes[2][2]"
-          }
-        ],
-        "internalType": "struct itUint256",
+        "internalType": "gtUint256",
         "name": "value",
-        "type": "tuple"
+        "type": "uint256"
       }
     ],
     "name": "transferFrom",
@@ -1379,44 +902,80 @@
           {
             "components": [
               {
-                "internalType": "gtUint64",
-                "name": "high",
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
                 "type": "uint256"
               },
               {
-                "internalType": "gtUint64",
-                "name": "low",
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
                 "type": "uint256"
               }
             ],
-            "internalType": "struct gtUint128",
-            "name": "high",
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
             "type": "tuple"
           },
           {
-            "components": [
-              {
-                "internalType": "gtUint64",
-                "name": "high",
-                "type": "uint256"
-              },
-              {
-                "internalType": "gtUint64",
-                "name": "low",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct gtUint128",
-            "name": "low",
-            "type": "tuple"
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
           }
         ],
-        "internalType": "struct gtUint256",
+        "internalType": "struct itUint256",
         "name": "value",
         "type": "tuple"
       }
     ],
     "name": "transferFrom",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IPrivateERC20.ItUint256SingleSig",
+        "name": "value",
+        "type": "tuple"
+      }
+    ],
+    "name": "transferSingleSig",
     "outputs": [
       {
         "internalType": "gtBool",

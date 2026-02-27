@@ -5,7 +5,6 @@ import { ethers } from 'ethers';
 import type { Eip1193Provider } from 'ethers';
 import { useState, useCallback } from 'react';
 
-import { useInvokeSnap } from './useInvokeSnap';
 import { abi as ERC1155_ABI } from '../abis/ERC1155.json';
 import { abi as ERC20_ABI } from '../abis/ERC20.json';
 import { abi as PRIVATE_ERC20_ABI } from '../abis/ERC20Confidential.json';
@@ -24,13 +23,176 @@ import {
   fetchImageAsDataUri,
   fetchJsonWithIpfsFallback,
 } from '../utils/nftMetadata';
+import { useInvokeSnap } from './useInvokeSnap';
 
-const { decryptUint, decryptString } = CotiSDK;
+const { decryptUint, decryptString, encodeKey, encrypt } = CotiSDK;
 const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 as
   | ((ciphertext: unknown, userKey: string) => bigint)
   | undefined;
 
 const INSANE_BALANCE_BASE = 1000000000000n;
+const BLOCK_SIZE = 16;
+const CT_SIZE = 32;
+const MAX_UINT256 = (1n << 256n) - 1n;
+
+const PRIVATE_ERC20_TRANSFER_64 = 'transfer(address,(uint256,bytes))';
+const PRIVATE_ERC20_TRANSFER_256 = 'transfer(address,((uint256,uint256),bytes))';
+const ETH_SIGN_DISABLED_MESSAGE =
+  'Raw signing is unavailable for this wallet. Use the COTI Snap or another signer that supports raw signatures.';
+const SNAP_RAW_SIGN_MESSAGE =
+  'Raw signing requires the COTI Snap. Install/enable the Snap and approve the signing permission.';
+
+type ItUint256 = {
+  ciphertext: {
+    ciphertextHigh: bigint;
+    ciphertextLow: bigint;
+  };
+  signature: string;
+};
+
+const normalizeAesKey = (aesKey?: string): string | undefined => {
+  if (!aesKey) {
+    return undefined;
+  }
+  const trimmed = aesKey.startsWith('0x') ? aesKey.slice(2) : aesKey;
+  if (!/^[0-9a-fA-F]{32}$/.test(trimmed)) {
+    throw new Error('AES key must be a 32-hex-character string.');
+  }
+  return trimmed.toLowerCase();
+};
+
+const toBigInt = (value: unknown): bigint => {
+  if (typeof value === 'bigint') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return BigInt(value);
+  }
+  if (typeof value === 'string') {
+    return BigInt(value);
+  }
+  if (value && typeof value === 'object' && 'toString' in value) {
+    const stringValue = (value as { toString: () => string }).toString();
+    if (stringValue) {
+      return BigInt(stringValue);
+    }
+  }
+  return 0n;
+};
+
+const isEthSignUnavailable = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const err = error as { code?: number; message?: string; data?: unknown };
+  const code =
+    err.code ??
+    (err.data && typeof err.data === 'object'
+      ? (err.data as { code?: number }).code
+      : undefined);
+  const message = err.message ?? '';
+  return (
+    code === -32601 &&
+    typeof message === 'string' &&
+    message.toLowerCase().includes('eth_sign')
+  );
+};
+
+const toFixedBytes = (value: bigint, length: number): Uint8Array => {
+  const bytes = new Uint8Array(length);
+  let remaining = value;
+  for (let i = length - 1; i >= 0; i -= 1) {
+    bytes[i] = Number(remaining & 0xffn);
+    remaining >>= 8n;
+  }
+  return bytes;
+};
+
+const bytesToBigInt = (bytes: Uint8Array): bigint => {
+  let hex = '';
+  for (const byte of bytes) {
+    hex += byte.toString(16).padStart(2, '0');
+  }
+  return BigInt(`0x${hex}`);
+};
+
+const buildCiphertext128 = (plaintext: bigint, aesKey: string): Uint8Array => {
+  const keyBytes = encodeKey(aesKey);
+  const plaintextBytes = toFixedBytes(plaintext, BLOCK_SIZE);
+  const zeroBytes = new Uint8Array(BLOCK_SIZE);
+  const high = encrypt(keyBytes, zeroBytes);
+  const low = encrypt(keyBytes, plaintextBytes);
+  return new Uint8Array([
+    ...high.ciphertext,
+    ...high.r,
+    ...low.ciphertext,
+    ...low.r,
+  ]);
+};
+
+const buildCiphertext256 = (plaintext: bigint, aesKey: string): Uint8Array => {
+  const keyBytes = encodeKey(aesKey);
+  const plaintextBytes = toFixedBytes(plaintext, CT_SIZE);
+  const high = encrypt(keyBytes, plaintextBytes.slice(0, BLOCK_SIZE));
+  const low = encrypt(keyBytes, plaintextBytes.slice(BLOCK_SIZE));
+  return new Uint8Array([
+    ...high.ciphertext,
+    ...high.r,
+    ...low.ciphertext,
+    ...low.r,
+  ]);
+};
+
+const normalizeSignature = (signature: string): string => {
+  const sig = ethers.Signature.from(signature);
+  const vByte = sig.v === 27 ? 0 : sig.v === 28 ? 1 : sig.v;
+  return ethers.hexlify(
+    ethers.concat([sig.r, sig.s, new Uint8Array([vByte])]),
+  );
+};
+
+const buildItUint256 = async ({
+  value,
+  aesKey,
+  tokenAddress,
+  selector,
+  signerAddress,
+  signDigest,
+}: {
+  value: bigint;
+  aesKey: string;
+  tokenAddress: string;
+  selector: string;
+  signerAddress: string;
+  signDigest: (digest: string) => Promise<string>;
+}): Promise<ItUint256> => {
+  if (value < 0n || value > MAX_UINT256) {
+    throw new RangeError('Amount must fit within 256 bits.');
+  }
+  const bitSize = value === 0n ? 0 : value.toString(2).length;
+  const ciphertextBytes =
+    bitSize <= 128
+      ? buildCiphertext128(value, aesKey)
+      : buildCiphertext256(value, aesKey);
+  const ciphertextHigh = bytesToBigInt(ciphertextBytes.slice(0, CT_SIZE));
+  const ciphertextLow = bytesToBigInt(ciphertextBytes.slice(CT_SIZE));
+
+  const digest = ethers.solidityPackedKeccak256(
+    ['bytes', 'bytes', 'bytes4', 'bytes'],
+    [
+      ethers.getBytes(signerAddress),
+      ethers.getBytes(tokenAddress),
+      ethers.getBytes(selector),
+      ciphertextBytes,
+    ],
+  );
+  const signature = await signDigest(digest);
+
+  return {
+    ciphertext: { ciphertextHigh, ciphertextLow },
+    signature: normalizeSignature(signature),
+  };
+};
 
 const normalizeDecimals = (decimals?: number): number => {
   if (decimals === undefined || decimals === null) {
@@ -57,6 +219,13 @@ const isZeroValue = (value: unknown): boolean => {
   }
   if (typeof value === 'string') {
     return value === '0';
+  }
+  if (value && typeof value === 'object' && 'toString' in value) {
+    try {
+      return BigInt((value as { toString: () => string }).toString()) === 0n;
+    } catch (error) {
+      void error;
+    }
   }
   return false;
 };
@@ -129,10 +298,10 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
     ciphertext?.low?.high !== undefined &&
     ciphertext?.low?.low !== undefined
   ) {
-    const d1 = decryptUint(ciphertext.high.high, aesKey);
-    const d2 = decryptUint(ciphertext.high.low, aesKey);
-    const d3 = decryptUint(ciphertext.low.high, aesKey);
-    const d4 = decryptUint(ciphertext.low.low, aesKey);
+    const d1 = decryptUint(toBigInt(ciphertext.high.high), aesKey);
+    const d2 = decryptUint(toBigInt(ciphertext.high.low), aesKey);
+    const d3 = decryptUint(toBigInt(ciphertext.low.high), aesKey);
+    const d4 = decryptUint(toBigInt(ciphertext.low.low), aesKey);
     return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
   }
 
@@ -141,7 +310,13 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
     ciphertext?.ciphertextHigh !== undefined &&
     ciphertext?.ciphertextLow !== undefined
   ) {
-    return decryptUint256(ciphertext, aesKey);
+    return decryptUint256(
+      {
+        ciphertextHigh: toBigInt(ciphertext.ciphertextHigh),
+        ciphertextLow: toBigInt(ciphertext.ciphertextLow),
+      },
+      aesKey,
+    );
   }
 
   return 0n;
@@ -534,6 +709,76 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     [getBrowserProvider],
   );
 
+  const signDigestWithSnap = useCallback(
+    async (digest: string, signerAddress: string): Promise<string | null> => {
+      try {
+        const result = await invokeSnap({
+          method: 'sign-raw-256',
+          params: {
+            messageHex: digest,
+            signerAddress,
+          },
+        });
+        if (result === null) {
+          throw new Error('User rejected signature');
+        }
+        if (typeof result === 'string') {
+          return result;
+        }
+        if (result && typeof result === 'object' && 'signature' in result) {
+          const signature = (result as { signature?: string }).signature;
+          return typeof signature === 'string' ? signature : null;
+        }
+        return null;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          /user rejected|action_rejected|denied/i.test(error.message)
+        ) {
+          throw error;
+        }
+        throw new Error(SNAP_RAW_SIGN_MESSAGE);
+      }
+    },
+    [invokeSnap],
+  );
+
+  const getRawSignature = useCallback(
+    async ({
+      digest,
+      signerAddress,
+      provider: browserProvider,
+    }: {
+      digest: string;
+      signerAddress: string;
+      provider: BrowserProvider;
+    }): Promise<string> => {
+      const isMetaMask = Boolean(
+        (window.ethereum as any)?.isMetaMask ?? false,
+      );
+      if (isMetaMask) {
+        const snapSignature = await signDigestWithSnap(
+          digest,
+          signerAddress,
+        );
+        if (!snapSignature) {
+          throw new Error(SNAP_RAW_SIGN_MESSAGE);
+        }
+        return snapSignature;
+      }
+
+      try {
+        return await browserProvider.send('eth_sign', [signerAddress, digest]);
+      } catch (error) {
+        if (isEthSignUnavailable(error)) {
+          throw new Error(ETH_SIGN_DISABLED_MESSAGE);
+        }
+        throw error;
+      }
+    },
+    [signDigestWithSnap],
+  );
+
   const getTokenConfidentialStatus = useCallback(
     async (
       tokenAddress: string,
@@ -601,12 +846,10 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           .id('accountEncryptionAddress(address)')
           .slice(2);
         const selector64 = ethers
-          .id('transfer(address,(uint256,bytes))')
+          .id(PRIVATE_ERC20_TRANSFER_64)
           .slice(2);
         const selector256 = ethers
-          .id(
-            'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))',
-          )
+          .id(PRIVATE_ERC20_TRANSFER_256)
           .slice(2);
 
         if (
@@ -649,66 +892,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     [getBrowserProvider],
   );
 
-  const getSnapChainId = useCallback(async (): Promise<string | undefined> => {
-    try {
-      const network = await getBrowserProvider().getNetwork();
-      return network.chainId.toString();
-    } catch (error) {
-      void error;
-      return undefined;
-    }
-  }, [getBrowserProvider]);
-
-  const tryBuildSnapItUint256 = useCallback(
-    async (
-      value: bigint,
-      tokenAddress: string,
-      selector: string,
-      aesKey?: string,
-    ) => {
-      try {
-        const chainId = await getSnapChainId();
-        if (import.meta.env.DEV) {
-          try {
-            const hasKey = await invokeSnap({
-              method: 'has-aes-key',
-              params: chainId ? { chainId } : undefined,
-            });
-            console.info('[snap] has-aes-key', { chainId, hasKey });
-            const debug = await invokeSnap({ method: 'debug-state' });
-            const sanitized = {
-              currentChainId: (debug as any)?.currentChainId,
-              currentChainIdHex: (debug as any)?.currentChainIdHex,
-              expectedEnvironment: (debug as any)?.expectedEnvironment,
-              storedChainIds: (debug as any)?.storedChainIds,
-            };
-            console.info('[snap] debug-state', sanitized);
-          } catch (debugError) {
-            console.warn('[snap] debug-state failed', debugError);
-          }
-        }
-        const result = await invokeSnap({
-          method: 'build-it-uint256',
-          params: {
-            value: value.toString(),
-            tokenAddress,
-            functionSelector: selector,
-            ...(aesKey ? { aesKey } : {}),
-            ...(chainId ? { chainId } : {}),
-          },
-        });
-        if (import.meta.env.DEV) {
-          console.info('[snap] build-it-uint256 result', result);
-        }
-        return result as { value: any } | null | undefined;
-      } catch (error) {
-        console.error('[snap] build-it-uint256 failed', error);
-        return null;
-      }
-    },
-    [getSnapChainId, invokeSnap],
-  );
-
   // ERC20 Operations
   const transferERC20 = useCallback(
     async ({
@@ -730,6 +913,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           await getTokenConfidentialStatus(tokenAddress);
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
+        const signerAddress = await signer.getAddress();
         let tx;
 
         if (confidential && publicTransfer) {
@@ -739,10 +923,11 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             ethers.toBigInt(amount),
           );
         } else if (confidential) {
-          if (!aesKey) {
+          const normalizedAesKey = normalizeAesKey(aesKey);
+          if (!normalizedAesKey) {
             throw new Error('AES key is required for private ERC20 transfer');
           }
-          signer.setAesKey(aesKey);
+          signer.setAesKey(normalizedAesKey);
 
           let confidentialVersion = version;
           if (confidentialVersion !== 256) {
@@ -756,78 +941,31 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           }
 
           if (confidentialVersion === 256) {
-            const SELECTOR_256 =
-              'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))';
-            const selectorHex = getSelector(SELECTOR_256);
+            const selectorHex = getSelector(PRIVATE_ERC20_TRANSFER_256);
             const amountBigInt = ethers.toBigInt(amount);
-            if (import.meta.env.DEV) {
-              try {
-                const code = await browserProvider.getCode(tokenAddress);
-                const selectorNested = ethers
-                  .id(
-                    'transfer(address,(((uint256,uint256),(uint256,uint256)),bytes[2][2]))',
-                  )
-                  .slice(2);
-                const selectorFlat = ethers
-                  .id('transfer(address,((uint256,uint256),bytes))')
-                  .slice(2);
-                const selector64 = ethers
-                  .id('transfer(address,(uint256,bytes))')
-                  .slice(2);
-                console.info('[private-transfer] selectors', {
-                  hasNested: code.includes(selectorNested),
-                  hasFlat: code.includes(selectorFlat),
-                  has64: code.includes(selector64),
-                });
-              } catch (selectorError) {
-                console.warn(
-                  '[private-transfer] selector probe failed',
-                  selectorError,
-                );
-              }
-              try {
-                const signerAddress = await signer.getAddress();
-                const contract = new Contract(
-                  tokenAddress,
-                  PRIVATE_ERC20_256_ABI,
-                  browserProvider,
-                );
-                const accountEncryption =
-                  (contract as any).accountEncryptionAddress;
-                if (accountEncryption) {
-                  const encAddress = await accountEncryption(signerAddress);
-                  console.info('[private-transfer] accountEncryptionAddress', {
-                    signerAddress,
-                    encAddress,
-                  });
-                }
-              } catch (encryptionError) {
-                console.warn(
-                  '[private-transfer] accountEncryptionAddress probe failed',
-                  encryptionError,
-                );
-              }
-            }
-            const snapResult = await tryBuildSnapItUint256(
-              amountBigInt,
+            const itUint256 = await buildItUint256({
+              value: amountBigInt,
+              aesKey: normalizedAesKey,
               tokenAddress,
-              selectorHex,
-              aesKey,
-            );
-
-            if (!snapResult?.value) {
-              throw new Error(
-                'Snap encryption unavailable. Please ensure the updated COTI Snap is connected and your AES key is unlocked.',
-              );
-            }
-
+              selector: selectorHex,
+              signerAddress,
+              signDigest: (digest) =>
+                getRawSignature({
+                  digest,
+                  signerAddress,
+                  provider: browserProvider,
+                }),
+            });
             const contract = new Contract(
               tokenAddress,
               PRIVATE_ERC20_256_ABI,
               signer,
             );
             try {
-              tx = await (contract as any)[SELECTOR_256](to, snapResult.value);
+              tx = await (contract as any)[PRIVATE_ERC20_TRANSFER_256](
+                to,
+                itUint256,
+              );
             } catch (sendError) {
               console.error(
                 '[private-transfer] tx failed',
@@ -836,7 +974,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               throw sendError;
             }
           } else {
-            const selector = 'transfer(address,(uint256,bytes))';
+            const selector = PRIVATE_ERC20_TRANSFER_64;
             const contract = new Contract(tokenAddress, PRIVATE_ERC20_ABI, signer);
             const encryptedAmount = (await signer.encryptValue(
               ethers.toBigInt(amount),
@@ -865,7 +1003,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       withLoading,
       getBrowserProvider,
       getTokenConfidentialStatus,
-      tryBuildSnapItUint256,
+      getRawSignature,
     ],
   );
 
@@ -904,6 +1042,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
         const signerAddress = await signer.getAddress();
+        const normalizedAesKey = normalizeAesKey(aesKey);
 
         if (confidential) {
           let confidentialVersion = version;
@@ -926,6 +1065,25 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             abi,
             signer,
           );
+          let encryptionAddress = signerAddress;
+          if (normalizedAesKey) {
+            const accountEncryptionMethod =
+              (tokenContract as any).accountEncryptionAddress;
+            if (typeof accountEncryptionMethod === 'function') {
+              try {
+                const encAddress = await accountEncryptionMethod(signerAddress);
+                if (encAddress && encAddress !== ethers.ZeroAddress) {
+                  encryptionAddress = encAddress;
+                }
+              } catch (error) {
+                void error;
+              }
+            }
+          }
+          const signerLower = signerAddress.toLowerCase();
+          const encryptionLower = encryptionAddress.toLowerCase();
+          const encryptionMismatch =
+            normalizedAesKey && encryptionLower !== signerLower;
           let tokenBalance = null;
           try {
             const balanceOfMethod = tokenContract['balanceOf(address)'];
@@ -936,12 +1094,20 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             tokenBalance = null;
           }
 
-          if (tokenBalance && aesKey) {
+          if (tokenBalance && normalizedAesKey) {
+            if (encryptionMismatch) {
+              throw new Error(
+                `Account encrypts balances to ${encryptionAddress}. Use that account's AES key or reset the encryption address to ${signerAddress}.`,
+              );
+            }
             if (confidentialVersion === 256) {
               if (isZeroCtUint256(tokenBalance)) {
                 return 0n;
               }
-              const decryptedValue = decryptCtUint256(tokenBalance, aesKey);
+              const decryptedValue = decryptCtUint256(
+                tokenBalance,
+                normalizedAesKey,
+              );
               if (isInsaneDecryptedValue(decryptedValue, decimals)) {
                 throw new Error(
                   'AES key mismatch: Decrypted value suspiciously high. Re-onboarding required.',
@@ -952,7 +1118,10 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             if (isZeroValue(tokenBalance)) {
               return 0n;
             }
-            const decryptedRaw = decryptUint(tokenBalance, aesKey);
+            const decryptedRaw = decryptUint(
+              toBigInt(tokenBalance),
+              normalizedAesKey,
+            );
             const decryptedValue =
               typeof decryptedRaw === 'bigint'
                 ? decryptedRaw
@@ -963,7 +1132,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               );
             }
             return decryptedValue;
-          } else if (tokenBalance && !aesKey) {
+          } else if (tokenBalance && !normalizedAesKey) {
             if (confidentialVersion === 256) {
               return 0n;
             }
@@ -986,6 +1155,59 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           tokenBalance = null;
         }
         return tokenBalance ? BigInt(tokenBalance.toString()) : 0n;
+      });
+    },
+    [withLoading, getBrowserProvider, getTokenConfidentialStatus],
+  );
+
+  const setAccountEncryptionAddress = useCallback(
+    async (
+      tokenAddress: string,
+      encryptionAddress?: string,
+    ): Promise<string> => {
+      return withLoading(async () => {
+        if (!ethers.isAddress(tokenAddress)) {
+          throw new Error(`Invalid token address: ${tokenAddress}`);
+        }
+
+        const { confidential, version } =
+          await getTokenConfidentialStatus(tokenAddress);
+        if (!confidential) {
+          throw new Error('Token does not support account encryption');
+        }
+
+        const browserProvider = getBrowserProvider();
+        const signer = await browserProvider.getSigner();
+        const signerAddress = await signer.getAddress();
+        const targetAddress = encryptionAddress ?? signerAddress;
+
+        if (!ethers.isAddress(targetAddress)) {
+          throw new Error(
+            `Invalid encryption address: ${targetAddress ?? 'missing'}`,
+          );
+        }
+        const abi = version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
+        const tokenContract = new ethers.Contract(
+          tokenAddress,
+          abi,
+          signer,
+        );
+
+        const setMethod = (tokenContract as any).setAccountEncryptionAddress;
+        if (typeof setMethod !== 'function') {
+          throw new Error('setAccountEncryptionAddress not available');
+        }
+
+        const tx = await setMethod(targetAddress);
+        await tx.wait();
+
+        const accountEncryptionMethod =
+          (tokenContract as any).accountEncryptionAddress;
+        if (typeof accountEncryptionMethod !== 'function') {
+          return encryptionAddress;
+        }
+        const updated = await accountEncryptionMethod(signerAddress);
+        return updated;
       });
     },
     [withLoading, getBrowserProvider, getTokenConfidentialStatus],
@@ -1487,6 +1709,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     transferERC20,
     getERC20Details,
     decryptERC20Balance,
+    setAccountEncryptionAddress,
     transferERC721,
     getERC721Balance,
     getERC721Details,
