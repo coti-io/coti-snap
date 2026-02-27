@@ -4,8 +4,9 @@ import styled, { css } from 'styled-components';
 import ErrorIcon from '../../assets/badges/error.svg';
 import LoadingIcon from '../../assets/badges/loading.svg';
 import SuccessIcon from '../../assets/badges/success.svg';
+import InfoIcon from '../../assets/info.svg';
 
-export type AlertType = 'error' | 'success' | 'loading';
+export type AlertType = 'error' | 'success' | 'loading' | 'info';
 
 type AlertProps = {
   type: AlertType;
@@ -33,20 +34,45 @@ const ALERT_STYLES = {
     color: #000000 !important;
     border-left: 5px solid #a9a224;
   `,
+  info: css`
+    position: relative;
+    background: #e9f2ff;
+    color: #000000 !important;
+    border: none;
+    padding-left: 22px;
+
+    &,
+    & * {
+      color: #000000 !important;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: #1e29f6;
+      border-radius: 12px 0 0 12px;
+    }
+  `,
 } as const;
 
 const ALERT_ICONS = {
   error: ErrorIcon,
   success: SuccessIcon,
   loading: LoadingIcon,
+  info: InfoIcon,
 } as const;
 
 const AlertContainer = styled.div<AlertContainerProps>`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 18px 16px;
-  border-radius: 5px;
+  gap: 14px;
+  padding: 18px 18px;
+  border-radius: 12px;
+  overflow: hidden;
   font-size: 1.6rem;
   width: auto;
   transition: all 0.2s ease-in-out;
@@ -59,17 +85,21 @@ const AlertContainer = styled.div<AlertContainerProps>`
   }
 `;
 
-const IconWrapper = styled.span`
+const IconWrapper = styled.span<{ $type: AlertType }>`
   display: flex;
   align-items: center;
   font-size: 1.5rem;
   flex-shrink: 0;
+  color: ${({ $type }) =>
+    $type === 'info' ? '#1e29f6 !important' : '#000000'};
 `;
 
 const AlertContent = styled.div`
   flex: 1;
-  line-height: 1;
+  line-height: 1.5;
+  font-weight: 500;
   color: #000000 !important;
+  white-space: pre-line;
 `;
 
 export const Alert: React.FC<AlertProps> = ({ type, children, className }) => {
@@ -84,7 +114,7 @@ export const Alert: React.FC<AlertProps> = ({ type, children, className }) => {
       role={alertRole}
       aria-live={alertAriaLive}
     >
-      <IconWrapper aria-hidden="true">
+      <IconWrapper $type={type} aria-hidden="true">
         <IconComponent />
       </IconWrapper>
       <AlertContent>{children}</AlertContent>

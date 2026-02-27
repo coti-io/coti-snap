@@ -17,6 +17,7 @@ import type {
   OnUserInputHandler,
 } from '@metamask/snaps-sdk';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
+import { ethers } from 'ethers';
 
 import { HideToken } from './components/HideToken';
 import { Home } from './components/Home';
@@ -66,6 +67,21 @@ export const returnToHomePage = async (id: string) => {
       ),
     },
   });
+};
+
+const isHex32 = (value: string): boolean =>
+  /^0x[0-9a-fA-F]{64}$/.test(value);
+
+const normalizeHex = (value: string): string =>
+  value.startsWith('0x') ? value : `0x${value}`;
+
+const buildRawSignature = (privateKey: string, digest: string): string => {
+  const key = new ethers.SigningKey(normalizeHex(privateKey));
+  const signature = key.sign(digest);
+  const vByte = signature.v === 27 ? 0 : signature.v === 28 ? 1 : signature.v;
+  return ethers.hexlify(
+    ethers.concat([signature.r, signature.s, new Uint8Array([vByte])]),
+  );
 };
 
 export const onUpdate: OnUpdateHandler = async () => {
@@ -626,6 +642,65 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         console.error('[snap] build-it-uint256 failed', error);
         throw error;
       }
+    }
+
+    case 'sign-raw-256': {
+      const params = request.params as
+        | {
+            messageHex?: string;
+            signerAddress?: string;
+          }
+        | undefined;
+
+      if (!params?.messageHex) {
+        console.error('[snap] sign-raw-256: missing messageHex', params);
+        return null;
+      }
+
+      const digest = normalizeHex(params.messageHex);
+      if (!isHex32(digest)) {
+        throw new Error('messageHex must be a 32-byte hex value.');
+      }
+
+      const identifier = await getStateIdentifier({ requestAccounts: true });
+      const signerAddress = params.signerAddress ?? identifier.address;
+
+      const confirm = await snap.request({
+        method: 'snap_dialog',
+        params: {
+          type: 'confirmation',
+          content: (
+            <Box>
+              <Heading>Sign raw 32-byte digest?</Heading>
+              <Text>Signer: {signerAddress}</Text>
+              <Text>Digest: {digest}</Text>
+              <Text>Request origin: {requestingOrigin}</Text>
+            </Box>
+          ),
+        },
+      });
+
+      if (!confirm) {
+        return null;
+      }
+
+      const state = await getStateByChainIdAndAddress(identifier.chainId);
+      const aesKey = state.aesKey;
+      if (!aesKey) {
+        throw new Error('AES key not found. Please complete onboarding.');
+      }
+
+      const wallet = deriveSnapWallet(
+        aesKey,
+        identifier.address,
+        identifier.chainId,
+      );
+
+      const signature = buildRawSignature(wallet.privateKey, digest);
+      return {
+        signature,
+        signerAddress: wallet.address,
+      };
     }
 
     case 'debug-state':
