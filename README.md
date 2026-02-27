@@ -23,6 +23,15 @@ To interact with COTI Snap, you will need to install [MetaMask Flask](https://me
 > [!IMPORTANT]  
 > You cannot have other versions of MetaMask installed
 
+### Private 256-bit Transfers (MetaMask)
+
+MetaMask no longer exposes `eth_sign`, so private 256-bit transfers are signed inside the COTI Snap. The first private transfer will prompt for key access (BIP-44 entropy) so the Snap can produce a raw 32-byte signature.
+
+Steps:
+1. Install/enable the COTI Snap.
+2. Approve the key access prompt when asked.
+3. Retry the transfer.
+
 ## 📋 Quick Setup
 
 ### For Development (Testnet)
