@@ -32,6 +32,36 @@ const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 
 
 const INSANE_BALANCE_BASE = 1000000000000n;
 
+const normalizeAesKey = (aesKey?: string): string | undefined => {
+  if (!aesKey) {
+    return undefined;
+  }
+  const trimmed = aesKey.startsWith('0x') ? aesKey.slice(2) : aesKey;
+  if (!/^[0-9a-fA-F]{32}$/.test(trimmed)) {
+    throw new Error('AES key must be a 32-hex-character string.');
+  }
+  return trimmed.toLowerCase();
+};
+
+const toBigInt = (value: unknown): bigint => {
+  if (typeof value === 'bigint') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return BigInt(value);
+  }
+  if (typeof value === 'string') {
+    return BigInt(value);
+  }
+  if (value && typeof value === 'object' && 'toString' in value) {
+    const stringValue = (value as { toString: () => string }).toString();
+    if (stringValue) {
+      return BigInt(stringValue);
+    }
+  }
+  return 0n;
+};
+
 const normalizeDecimals = (decimals?: number): number => {
   if (decimals === undefined || decimals === null) {
     return 18;
@@ -57,6 +87,13 @@ const isZeroValue = (value: unknown): boolean => {
   }
   if (typeof value === 'string') {
     return value === '0';
+  }
+  if (value && typeof value === 'object' && 'toString' in value) {
+    try {
+      return BigInt((value as { toString: () => string }).toString()) === 0n;
+    } catch (error) {
+      void error;
+    }
   }
   return false;
 };
@@ -129,10 +166,10 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
     ciphertext?.low?.high !== undefined &&
     ciphertext?.low?.low !== undefined
   ) {
-    const d1 = decryptUint(ciphertext.high.high, aesKey);
-    const d2 = decryptUint(ciphertext.high.low, aesKey);
-    const d3 = decryptUint(ciphertext.low.high, aesKey);
-    const d4 = decryptUint(ciphertext.low.low, aesKey);
+    const d1 = decryptUint(toBigInt(ciphertext.high.high), aesKey);
+    const d2 = decryptUint(toBigInt(ciphertext.high.low), aesKey);
+    const d3 = decryptUint(toBigInt(ciphertext.low.high), aesKey);
+    const d4 = decryptUint(toBigInt(ciphertext.low.low), aesKey);
     return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
   }
 
@@ -141,7 +178,13 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
     ciphertext?.ciphertextHigh !== undefined &&
     ciphertext?.ciphertextLow !== undefined
   ) {
-    return decryptUint256(ciphertext, aesKey);
+    return decryptUint256(
+      {
+        ciphertextHigh: toBigInt(ciphertext.ciphertextHigh),
+        ciphertextLow: toBigInt(ciphertext.ciphertextLow),
+      },
+      aesKey,
+    );
   }
 
   return 0n;
@@ -904,6 +947,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
         const signerAddress = await signer.getAddress();
+        const normalizedAesKey = normalizeAesKey(aesKey);
 
         if (confidential) {
           let confidentialVersion = version;
@@ -926,6 +970,25 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             abi,
             signer,
           );
+          let encryptionAddress = signerAddress;
+          if (normalizedAesKey) {
+            const accountEncryptionMethod =
+              (tokenContract as any).accountEncryptionAddress;
+            if (typeof accountEncryptionMethod === 'function') {
+              try {
+                const encAddress = await accountEncryptionMethod(signerAddress);
+                if (encAddress && encAddress !== ethers.ZeroAddress) {
+                  encryptionAddress = encAddress;
+                }
+              } catch (error) {
+                void error;
+              }
+            }
+          }
+          const signerLower = signerAddress.toLowerCase();
+          const encryptionLower = encryptionAddress.toLowerCase();
+          const encryptionMismatch =
+            normalizedAesKey && encryptionLower !== signerLower;
           let tokenBalance = null;
           try {
             const balanceOfMethod = tokenContract['balanceOf(address)'];
@@ -936,12 +999,20 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             tokenBalance = null;
           }
 
-          if (tokenBalance && aesKey) {
+          if (tokenBalance && normalizedAesKey) {
+            if (encryptionMismatch) {
+              throw new Error(
+                `Account encrypts balances to ${encryptionAddress}. Use that account's AES key or reset the encryption address to ${signerAddress}.`,
+              );
+            }
             if (confidentialVersion === 256) {
               if (isZeroCtUint256(tokenBalance)) {
                 return 0n;
               }
-              const decryptedValue = decryptCtUint256(tokenBalance, aesKey);
+              const decryptedValue = decryptCtUint256(
+                tokenBalance,
+                normalizedAesKey,
+              );
               if (isInsaneDecryptedValue(decryptedValue, decimals)) {
                 throw new Error(
                   'AES key mismatch: Decrypted value suspiciously high. Re-onboarding required.',
@@ -952,7 +1023,10 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             if (isZeroValue(tokenBalance)) {
               return 0n;
             }
-            const decryptedRaw = decryptUint(tokenBalance, aesKey);
+            const decryptedRaw = decryptUint(
+              toBigInt(tokenBalance),
+              normalizedAesKey,
+            );
             const decryptedValue =
               typeof decryptedRaw === 'bigint'
                 ? decryptedRaw
@@ -963,7 +1037,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               );
             }
             return decryptedValue;
-          } else if (tokenBalance && !aesKey) {
+          } else if (tokenBalance && !normalizedAesKey) {
             if (confidentialVersion === 256) {
               return 0n;
             }
@@ -986,6 +1060,59 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           tokenBalance = null;
         }
         return tokenBalance ? BigInt(tokenBalance.toString()) : 0n;
+      });
+    },
+    [withLoading, getBrowserProvider, getTokenConfidentialStatus],
+  );
+
+  const setAccountEncryptionAddress = useCallback(
+    async (
+      tokenAddress: string,
+      encryptionAddress?: string,
+    ): Promise<string> => {
+      return withLoading(async () => {
+        if (!ethers.isAddress(tokenAddress)) {
+          throw new Error(`Invalid token address: ${tokenAddress}`);
+        }
+
+        const { confidential, version } =
+          await getTokenConfidentialStatus(tokenAddress);
+        if (!confidential) {
+          throw new Error('Token does not support account encryption');
+        }
+
+        const browserProvider = getBrowserProvider();
+        const signer = await browserProvider.getSigner();
+        const signerAddress = await signer.getAddress();
+        const targetAddress = encryptionAddress ?? signerAddress;
+
+        if (!ethers.isAddress(targetAddress)) {
+          throw new Error(
+            `Invalid encryption address: ${targetAddress ?? 'missing'}`,
+          );
+        }
+        const abi = version === 256 ? PRIVATE_ERC20_256_ABI : PRIVATE_ERC20_ABI;
+        const tokenContract = new ethers.Contract(
+          tokenAddress,
+          abi,
+          signer,
+        );
+
+        const setMethod = (tokenContract as any).setAccountEncryptionAddress;
+        if (typeof setMethod !== 'function') {
+          throw new Error('setAccountEncryptionAddress not available');
+        }
+
+        const tx = await setMethod(targetAddress);
+        await tx.wait();
+
+        const accountEncryptionMethod =
+          (tokenContract as any).accountEncryptionAddress;
+        if (typeof accountEncryptionMethod !== 'function') {
+          return encryptionAddress;
+        }
+        const updated = await accountEncryptionMethod(signerAddress);
+        return updated;
       });
     },
     [withLoading, getBrowserProvider, getTokenConfidentialStatus],
@@ -1487,6 +1614,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
     transferERC20,
     getERC20Details,
     decryptERC20Balance,
+    setAccountEncryptionAddress,
     transferERC721,
     getERC721Balance,
     getERC721Details,

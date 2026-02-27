@@ -47,6 +47,8 @@ const MESSAGES = {
   LOADING_BALANCE: 'Loading balance...',
   VALIDATING: 'Validating...',
   IMPORTING: 'Importing...',
+  SYNCING_ENCRYPTION: 'Resetting encryption address...',
+  SYNC_ENCRYPTION: 'Reset encryption address',
   CONFIRM_IMPORT: 'Would you like to import this token?',
 } as const;
 
@@ -134,11 +136,17 @@ const useImportTokenModal = () => {
 
 export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(
   ({ open, onClose, provider, onImport }) => {
-    const { getTokenInfo, decryptERC20Balance, addTokenToMetaMask } =
-      useTokenOperations(provider);
+    const {
+      getTokenInfo,
+      decryptERC20Balance,
+      addTokenToMetaMask,
+      setAccountEncryptionAddress,
+    } = useTokenOperations(provider);
     const { userAESKey, userHasAESKey } = useSnap();
     const { addToken, hasToken } = useImportedTokens();
     const { state, updateState, resetState } = useImportTokenModal();
+    const [syncingEncryptionAddress, setSyncingEncryptionAddress] =
+      useState(false);
     const { handleClose, handleBackdropClick, handleKeyDown } = useModal({
       isOpen: open,
       onClose,
@@ -162,6 +170,13 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(
     const isImportButtonDisabled = useMemo(() => {
       return state.importLoading || !state.tokenInfo;
     }, [state.importLoading, state.tokenInfo]);
+
+    const showSyncEncryptionAddress = useMemo(() => {
+      return (
+        Boolean(state.tokenInfoError) &&
+        state.tokenInfoError?.includes('Account encrypts balances to')
+      );
+    }, [state.tokenInfoError]);
 
     const handleAddressChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,6 +346,41 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(
       handleClose,
     ]);
 
+    const handleSyncEncryptionAddress = useCallback(async () => {
+      if (!state.address || !state.isAddressValid) {
+        return;
+      }
+      const normalized = normalizeAddress(state.address);
+      if (!normalized) {
+        updateState({
+          tokenInfoError: ERROR_MESSAGES.INVALID_ADDRESS,
+        });
+        return;
+      }
+
+      setSyncingEncryptionAddress(true);
+      updateState({ tokenInfoError: null });
+
+      try {
+        await setAccountEncryptionAddress(normalized);
+        await handleNext();
+      } catch (error) {
+        if (error instanceof Error) {
+          updateState({ tokenInfoError: error.message });
+        } else {
+          updateState({ tokenInfoError: MESSAGES.IMPORT_ERROR });
+        }
+      } finally {
+        setSyncingEncryptionAddress(false);
+      }
+    }, [
+      state.address,
+      state.isAddressValid,
+      setAccountEncryptionAddress,
+      handleNext,
+      updateState,
+    ]);
+
     if (!open) {
       return null;
     }
@@ -384,6 +434,22 @@ export const ImportTokenModal: React.FC<ImportTokenModalProps> = React.memo(
 
                 {state.tokenInfoError && !state.tokenInfoLoading && (
                   <ErrorText message={state.tokenInfoError} />
+                )}
+
+                {showSyncEncryptionAddress && (
+                  <SendButton
+                    disabled={syncingEncryptionAddress || state.tokenInfoLoading}
+                    onClick={handleSyncEncryptionAddress}
+                    type="button"
+                    backgroundColor="#fff"
+                    textColor="#1E29F6"
+                  >
+                    {syncingEncryptionAddress ? (
+                      <LoadingSpinner text={MESSAGES.SYNCING_ENCRYPTION} />
+                    ) : (
+                      MESSAGES.SYNC_ENCRYPTION
+                    )}
+                  </SendButton>
                 )}
 
                 <SendButton
