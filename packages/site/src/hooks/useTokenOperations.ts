@@ -157,14 +157,14 @@ const buildItUint256 = async ({
   tokenAddress,
   selector,
   signerAddress,
-  signDigest,
+  signMessage,
 }: {
   value: bigint;
   aesKey: string;
   tokenAddress: string;
   selector: string;
   signerAddress: string;
-  signDigest: (digest: string) => Promise<string>;
+  signMessage: (message: Uint8Array) => Promise<string>;
 }): Promise<ItUint256> => {
   if (value < 0n || value > MAX_UINT256) {
     throw new RangeError('Amount must fit within 256 bits.');
@@ -177,20 +177,20 @@ const buildItUint256 = async ({
   const ciphertextHigh = bytesToBigInt(ciphertextBytes.slice(0, CT_SIZE));
   const ciphertextLow = bytesToBigInt(ciphertextBytes.slice(CT_SIZE));
 
-  const digest = ethers.solidityPackedKeccak256(
-    ['bytes', 'bytes', 'bytes4', 'bytes'],
-    [
-      ethers.getBytes(signerAddress),
-      ethers.getBytes(tokenAddress),
-      ethers.getBytes(selector),
-      ciphertextBytes,
-    ],
+  // Build raw message matching COTI SDK pattern: solidityPacked(address, address, bytes4, ciphertext)
+  // The MPC precompile expects signMessage() style signatures (with Ethereum prefix)
+  const message = ethers.solidityPacked(
+    ['address', 'address', 'bytes4', 'uint256', 'uint256'],
+    [signerAddress, tokenAddress, selector, ciphertextHigh, ciphertextLow],
   );
-  const signature = await signDigest(digest);
+  const messageBytes = ethers.getBytes(message);
+
+  // Sign with personal_sign via signer.signMessage() - same as COTI SDK
+  const signature = await signMessage(messageBytes);
 
   return {
     ciphertext: { ciphertextHigh, ciphertextLow },
-    signature: normalizeSignature(signature),
+    signature,
   };
 };
 
@@ -949,12 +949,7 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               tokenAddress,
               selector: selectorHex,
               signerAddress,
-              signDigest: (digest) =>
-                getRawSignature({
-                  digest,
-                  signerAddress,
-                  provider: browserProvider,
-                }),
+              signMessage: (message) => signer.signMessage(message),
             });
             const contract = new Contract(
               tokenAddress,
@@ -1003,7 +998,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       withLoading,
       getBrowserProvider,
       getTokenConfidentialStatus,
-      getRawSignature,
     ],
   );
 
