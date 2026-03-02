@@ -36,7 +36,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Auto-increment version
         id: version
