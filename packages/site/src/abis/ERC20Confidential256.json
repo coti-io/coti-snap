@@ -1,10 +1,5 @@
 [
   {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -263,6 +258,59 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "gtUint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "TransferFromGT",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "gtUint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "TransferGT",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       }
@@ -387,7 +435,7 @@
         "type": "address"
       },
       {
-        "internalType": "gtUint256",
+        "internalType": "uint256",
         "name": "value",
         "type": "uint256"
       }
@@ -455,6 +503,30 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "internalType": "gtUint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "approveGT",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       }
@@ -504,25 +576,75 @@
       }
     ],
     "name": "burn",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct itUint256",
         "name": "amount",
-        "type": "uint256"
+        "type": "tuple"
       }
     ],
     "name": "burn",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "gtUint256",
+        "name": "gtAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "burnGt",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -614,7 +736,85 @@
       }
     ],
     "name": "mint",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct itUint256",
+        "name": "amount",
+        "type": "tuple"
+      }
+    ],
+    "name": "mint",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "gtUint256",
+        "name": "gtAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "mintGt",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -812,7 +1012,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -822,6 +1022,59 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextHigh",
+                "type": "uint256"
+              },
+              {
+                "internalType": "ctUint128",
+                "name": "ciphertextLow",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ctUint256",
+            "name": "ciphertext",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct itUint256",
+        "name": "amount",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "transferAndCall",
+    "outputs": [
+      {
+        "internalType": "gtBool",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -869,7 +1122,7 @@
         "type": "address"
       },
       {
-        "internalType": "gtUint256",
+        "internalType": "uint256",
         "name": "value",
         "type": "uint256"
       }
@@ -877,9 +1130,9 @@
     "name": "transferFrom",
     "outputs": [
       {
-        "internalType": "gtBool",
+        "internalType": "bool",
         "name": "",
-        "type": "uint256"
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -928,54 +1181,6 @@
       }
     ],
     "name": "transferFrom",
-    "outputs": [
-      {
-        "internalType": "gtBool",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "components": [
-          {
-            "components": [
-              {
-                "internalType": "ctUint128",
-                "name": "ciphertextHigh",
-                "type": "uint256"
-              },
-              {
-                "internalType": "ctUint128",
-                "name": "ciphertextLow",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ctUint256",
-            "name": "ciphertext",
-            "type": "tuple"
-          },
-          {
-            "internalType": "bytes",
-            "name": "signature",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct IPrivateERC20.ItUint256SingleSig",
-        "name": "value",
-        "type": "tuple"
-      }
-    ],
-    "name": "transferSingleSig",
     "outputs": [
       {
         "internalType": "gtBool",
