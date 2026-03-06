@@ -844,13 +844,13 @@ export const useTokenOperations = (provider: BrowserProvider) => {
 
         const selectorAccount = ethers
           .id('accountEncryptionAddress(address)')
-          .slice(2);
+          .slice(2, 10);
         const selector64 = ethers
           .id(PRIVATE_ERC20_TRANSFER_64)
-          .slice(2);
+          .slice(2, 10);
         const selector256 = ethers
           .id(PRIVATE_ERC20_TRANSFER_256)
-          .slice(2);
+          .slice(2, 10);
 
         if (
           isConfidential ||

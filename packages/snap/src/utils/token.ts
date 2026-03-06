@@ -328,13 +328,13 @@ export async function getTokenType(address: string): Promise<{
       if (code && code !== '0x') {
         const selector256 = ethers
           .id('transfer(address,((uint256,uint256),bytes))')
-          .slice(2);
+          .slice(2, 10);
         if (code.includes(selector256)) {
           return 256;
         }
         const selector64 = ethers
           .id('transfer(address,(uint256,bytes))')
-          .slice(2);
+          .slice(2, 10);
         if (code.includes(selector64)) {
           return 64;
         }
@@ -571,6 +571,38 @@ export const decryptBalance = (
           return null;
         }
         return decrypted;
+      }
+
+      const flat = balance as {
+        ciphertextHigh?: bigint;
+        ciphertextLow?: bigint;
+      };
+      if (
+        flat?.ciphertextHigh !== undefined &&
+        flat?.ciphertextLow !== undefined
+      ) {
+        if (isZeroCtUint256(balance)) {
+          return 0n;
+        }
+        if (decryptUint256) {
+          const decrypted = decryptUint256(
+            {
+              ciphertextHigh:
+                typeof flat.ciphertextHigh === 'bigint'
+                  ? flat.ciphertextHigh
+                  : BigInt(flat.ciphertextHigh),
+              ciphertextLow:
+                typeof flat.ciphertextLow === 'bigint'
+                  ? flat.ciphertextLow
+                  : BigInt(flat.ciphertextLow),
+            },
+            aesKey,
+          );
+          if (isInsaneDecryptedValue(decrypted, decimals)) {
+            return null;
+          }
+          return decrypted;
+        }
       }
 
       if (decryptUint256) {
