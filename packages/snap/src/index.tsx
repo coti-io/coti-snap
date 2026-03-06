@@ -871,7 +871,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             },
           ],
         });
-        return permissions ?? [];
+        // Sanitize permissions to ensure JSON-serializable response
+        return JSON.parse(JSON.stringify(permissions ?? []));
       } catch (error) {
         return [];
       }
@@ -1051,7 +1052,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             symbol: t.symbol,
             decimals: t.decimals,
             type: t.type === TokenViewSelector.NFT ? 'ERC721' : 'ERC20',
-            tokenId: t.tokenId ?? undefined,
+            ...(t.tokenId ? { tokenId: t.tokenId } : {}),
           })),
         };
       } catch (error) {

@@ -1031,12 +1031,15 @@ export const useTokenOperations = (provider: BrowserProvider) => {
   const decryptERC20Balance = useCallback(
     async (tokenAddress: string, aesKey?: string, decimals?: number) => {
       return withLoading(async () => {
+        console.log(`[decryptERC20Balance] token=${tokenAddress}, hasAesKey=${!!aesKey}, decimals=${decimals}`);
         const { confidential, version } =
           await getTokenConfidentialStatus(tokenAddress);
+        console.log(`[decryptERC20Balance] token=${tokenAddress}, confidential=${confidential}, version=${version}`);
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
         const signerAddress = await signer.getAddress();
         const normalizedAesKey = normalizeAesKey(aesKey);
+        console.log(`[decryptERC20Balance] signer=${signerAddress}, hasNormalizedAesKey=${!!normalizedAesKey}`);
 
         if (confidential) {
           let confidentialVersion = version;
@@ -1084,7 +1087,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             if (balanceOfMethod) {
               tokenBalance = await balanceOfMethod(signerAddress);
             }
+            console.log(`[decryptERC20Balance] confidential balanceOf result for ${tokenAddress}:`, tokenBalance);
           } catch (error) {
+            console.error(`[decryptERC20Balance] confidential balanceOf FAILED for ${tokenAddress}:`, error);
             tokenBalance = null;
           }
 
@@ -1145,7 +1150,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           if (balanceOfMethod) {
             tokenBalance = await balanceOfMethod(signerAddress);
           }
+          console.log(`[decryptERC20Balance] non-confidential balanceOf result for ${tokenAddress}:`, tokenBalance);
         } catch (error) {
+          console.error(`[decryptERC20Balance] non-confidential balanceOf FAILED for ${tokenAddress}:`, error);
           tokenBalance = null;
         }
         return tokenBalance ? BigInt(tokenBalance.toString()) : 0n;

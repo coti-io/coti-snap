@@ -64,7 +64,7 @@ export const useTokenBalances = ({
               );
               return { address: token.address, balance: balance.toString() };
             } catch (error) {
-              void error;
+              console.error(`[TokenBalances] Error fetching balance for ${token.address} (${token.symbol}):`, error);
               return { address: token.address, balance: '0' };
             }
           }
@@ -88,7 +88,7 @@ export const useTokenBalances = ({
       }
     } catch (error) {
       if (!signal.aborted) {
-        void error;
+        console.error('[TokenBalances] Unexpected error in fetchBalances:', error);
       }
     } finally {
       if (!signal.aborted) {
