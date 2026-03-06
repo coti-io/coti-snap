@@ -474,14 +474,12 @@ const isZeroCtUint256 = (ciphertext: any): boolean => {
     );
   }
 
-  if (
-    ciphertext?.ciphertextHigh !== undefined &&
-    ciphertext?.ciphertextLow !== undefined
-  ) {
-    return (
-      isZeroValue(ciphertext.ciphertextHigh) &&
-      isZeroValue(ciphertext.ciphertextLow)
-    );
+  // Support named properties or positional access from ethers.js Result tuples
+  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
+  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
+
+  if (high !== undefined && low !== undefined) {
+    return isZeroValue(high) && isZeroValue(low);
   }
 
   return false;
@@ -508,7 +506,10 @@ const isCtUint256Shape = (value: any): boolean => {
   const hasFlat =
     value?.ciphertextHigh !== undefined &&
     value?.ciphertextLow !== undefined;
-  return hasNested || hasFlat;
+  // Support positional access from ethers.js Result tuples
+  const hasPositional =
+    value?.[0] !== undefined && value?.[1] !== undefined;
+  return hasNested || hasFlat || hasPositional;
 };
 
 const probeConfidentialVersion256 = async (
@@ -573,14 +574,12 @@ export const decryptBalance = (
         return decrypted;
       }
 
-      const flat = balance as {
-        ciphertextHigh?: bigint;
-        ciphertextLow?: bigint;
-      };
-      if (
-        flat?.ciphertextHigh !== undefined &&
-        flat?.ciphertextLow !== undefined
-      ) {
+      // Support named properties (ciphertextHigh/ciphertextLow) or
+      // positional access ([0]/[1]) from ethers.js Result tuples
+      const high = (balance as any)?.ciphertextHigh ?? (balance as any)?.[0];
+      const low = (balance as any)?.ciphertextLow ?? (balance as any)?.[1];
+
+      if (high !== undefined && low !== undefined) {
         if (isZeroCtUint256(balance)) {
           return 0n;
         }
@@ -588,13 +587,9 @@ export const decryptBalance = (
           const decrypted = decryptUint256(
             {
               ciphertextHigh:
-                typeof flat.ciphertextHigh === 'bigint'
-                  ? flat.ciphertextHigh
-                  : BigInt(flat.ciphertextHigh),
+                typeof high === 'bigint' ? high : BigInt(high),
               ciphertextLow:
-                typeof flat.ciphertextLow === 'bigint'
-                  ? flat.ciphertextLow
-                  : BigInt(flat.ciphertextLow),
+                typeof low === 'bigint' ? low : BigInt(low),
             },
             aesKey,
           );
