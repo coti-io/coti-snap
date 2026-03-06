@@ -305,15 +305,16 @@ const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
     return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
   }
 
-  if (
-    decryptUint256 &&
-    ciphertext?.ciphertextHigh !== undefined &&
-    ciphertext?.ciphertextLow !== undefined
-  ) {
+  // Support named properties (ciphertextHigh/ciphertextLow) or
+  // positional access ([0]/[1]) from ethers.js Result tuples
+  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
+  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
+
+  if (decryptUint256 && high !== undefined && low !== undefined) {
     return decryptUint256(
       {
-        ciphertextHigh: toBigInt(ciphertext.ciphertextHigh),
-        ciphertextLow: toBigInt(ciphertext.ciphertextLow),
+        ciphertextHigh: toBigInt(high),
+        ciphertextLow: toBigInt(low),
       },
       aesKey,
     );
@@ -343,14 +344,12 @@ const isZeroCtUint256 = (ciphertext: any): boolean => {
     );
   }
 
-  if (
-    ciphertext?.ciphertextHigh !== undefined &&
-    ciphertext?.ciphertextLow !== undefined
-  ) {
-    return (
-      isZeroValue(ciphertext.ciphertextHigh) &&
-      isZeroValue(ciphertext.ciphertextLow)
-    );
+  // Support named properties or positional access from ethers.js Result tuples
+  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
+  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
+
+  if (high !== undefined && low !== undefined) {
+    return isZeroValue(high) && isZeroValue(low);
   }
 
   return false;
