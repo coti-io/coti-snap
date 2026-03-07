@@ -600,32 +600,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             }
           | undefined;
         if (!params?.value || !params?.tokenAddress || !params?.functionSelector) {
-          console.error('[snap] build-it-uint256: missing params', params);
           return null;
         }
 
         const state = await getStateByChainIdAndAddress(params.chainId);
         const aesKey = state.aesKey ?? params.aesKey ?? null;
         if (!aesKey) {
-          console.error('[snap] build-it-uint256: AES key not found', {
-            hasStateKey: Boolean(state.aesKey),
-            hasParamKey: Boolean(params.aesKey),
-            chainId: params.chainId,
-          });
           return null;
         }
 
         const identifier = await getStateIdentifier({ requestAccounts: true });
         const chainId = params.chainId ?? identifier.chainId;
         const wallet = deriveSnapWallet(aesKey, identifier.address, chainId);
-
-        console.info('[snap] build-it-uint256', {
-          account: identifier.address,
-          derivedSigner: wallet.address,
-          chainId,
-          token: params.tokenAddress,
-          selector: params.functionSelector,
-        });
 
         const itUint256 = buildItUint256(
           BigInt(params.value),
@@ -639,7 +625,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           value: itUint256,
         };
       } catch (error) {
-        console.error('[snap] build-it-uint256 failed', error);
         throw error;
       }
     }
@@ -653,7 +638,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         | undefined;
 
       if (!params?.messageHex) {
-        console.error('[snap] sign-raw-256: missing messageHex', params);
         return null;
       }
 

@@ -10,12 +10,13 @@ const FETCH_TIMEOUT_MS = 8000;
 /**
  * Converts an ipfs:// URI to an HTTP gateway URL.
  * If the URI is already HTTP(S), returns it unchanged.
- * @param uri
- * @param gateway
+ * @param uri - IPFS or HTTP(S) URI.
+ * @param gateway - IPFS gateway base URL.
+ * @returns Resolved HTTP URL.
  */
 const resolveIpfsUrl = (
   uri: string,
-  gateway: string = IPFS_GATEWAYS[0]!,
+  gateway: string = IPFS_GATEWAYS[0] ?? '',
 ): string => {
   if (uri.startsWith('ipfs://')) {
     const cid = uri.slice('ipfs://'.length);
@@ -26,8 +27,9 @@ const resolveIpfsUrl = (
 
 /**
  * Fetch with a timeout using AbortController.
- * @param url
- * @param timeoutMs
+ * @param url - URL to fetch.
+ * @param timeoutMs - Timeout in milliseconds.
+ * @returns Fetch Response.
  */
 const fetchWithTimeout = async (
   url: string,
@@ -46,7 +48,8 @@ const fetchWithTimeout = async (
 /**
  * Tries to fetch a URL, falling back through IPFS gateways if the URI is ipfs://.
  * For non-IPFS URLs, just fetches directly with timeout.
- * @param uri
+ * @param uri - IPFS or HTTP(S) URI to fetch.
+ * @returns Fetch Response.
  */
 const fetchWithGatewayFallback = async (uri: string): Promise<Response> => {
   if (!uri.startsWith('ipfs://')) {
@@ -64,8 +67,9 @@ const fetchWithGatewayFallback = async (uri: string): Promise<Response> => {
       if (response.ok) {
         return response;
       }
-    } catch {
+    } catch (_err) {
       // try next gateway
+      void _err;
     }
   }
   throw new Error(`All IPFS gateways failed for: ${uri}`);
@@ -79,7 +83,7 @@ export const getSVGfromMetadata = async (
     const responseJson = await metadataResponse.json();
 
     const imageUri: string | undefined =
-      responseJson.image || responseJson.image_url;
+      responseJson.image ?? responseJson.image_url;
     if (!imageUri) {
       throw new Error('No image found in metadata');
     }
@@ -94,7 +98,8 @@ export const getSVGfromMetadata = async (
         <image href="data:${mimeType};base64,${base64}" width="200" height="200"/>
       </svg>
     `;
-  } catch {
+  } catch (_err) {
+    void _err;
     return null;
   }
 };

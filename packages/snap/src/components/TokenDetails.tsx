@@ -17,7 +17,7 @@ import type { Token } from 'src/types';
 import defaultToken from '../../images/default.svg';
 import { TokenViewSelector } from '../types';
 import { generateTokenAvatar } from '../utils/image';
-import { formatTokenBalance, truncateAddress } from '../utils/token';
+import { formatTokenBalance } from '../utils/token';
 
 export const TokenDetails = ({ token }: { token: Token }) => {
   const renderNFTDetails = () => (

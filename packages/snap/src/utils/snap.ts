@@ -30,6 +30,44 @@ export async function setStateData<StateType>(data: StateType): Promise<void> {
   });
 }
 
+type GlobalSettings = {
+  expectedEnvironment?: 'testnet' | 'mainnet' | null;
+};
+
+const GLOBAL_SETTINGS_KEY = '__global_settings__';
+
+export const getGlobalSettings = async (): Promise<GlobalSettings> => {
+  const state = (await getStateData<Record<string, unknown>>()) || {};
+  return (state[GLOBAL_SETTINGS_KEY] as GlobalSettings) || {};
+};
+
+export const setGlobalSettings = async (
+  settings: GlobalSettings,
+): Promise<void> => {
+  const state = (await getStateData<Record<string, unknown>>()) || {};
+  await setStateData({
+    ...state,
+    [GLOBAL_SETTINGS_KEY]: settings,
+  });
+};
+
+export const getExpectedEnvironment = async (): Promise<
+  'testnet' | 'mainnet' | null
+> => {
+  const settings = await getGlobalSettings();
+  return settings.expectedEnvironment ?? null;
+};
+
+export const setExpectedEnvironment = async (
+  environment: 'testnet' | 'mainnet',
+): Promise<void> => {
+  const settings = await getGlobalSettings();
+  await setGlobalSettings({
+    ...settings,
+    expectedEnvironment: environment,
+  });
+};
+
 export const getStateIdentifier = async (
   options: { requestAccounts?: boolean } = {},
 ): Promise<StateIdentifier> => {
@@ -71,6 +109,8 @@ export const getStateIdentifier = async (
 /**
  * Normalize chainId to a canonical decimal string for use as state key.
  * Handles number, decimal string, or hex string from dapp/snap.
+ * @param chainId - Chain ID as number, decimal string, or hex string.
+ * @returns Canonical decimal string for use as state key.
  */
 function normalizeChainIdForState(
   chainId: string | number | null | undefined,
@@ -122,42 +162,4 @@ export const setStateByChainIdAndAddress = async (
     },
   };
   await setStateData<GeneralState>(newState);
-};
-
-type GlobalSettings = {
-  expectedEnvironment?: 'testnet' | 'mainnet' | null;
-};
-
-const GLOBAL_SETTINGS_KEY = '__global_settings__';
-
-export const getGlobalSettings = async (): Promise<GlobalSettings> => {
-  const state = (await getStateData<Record<string, unknown>>()) || {};
-  return (state[GLOBAL_SETTINGS_KEY] as GlobalSettings) || {};
-};
-
-export const setGlobalSettings = async (
-  settings: GlobalSettings,
-): Promise<void> => {
-  const state = (await getStateData<Record<string, unknown>>()) || {};
-  await setStateData({
-    ...state,
-    [GLOBAL_SETTINGS_KEY]: settings,
-  });
-};
-
-export const setExpectedEnvironment = async (
-  environment: 'testnet' | 'mainnet',
-): Promise<void> => {
-  const settings = await getGlobalSettings();
-  await setGlobalSettings({
-    ...settings,
-    expectedEnvironment: environment,
-  });
-};
-
-export const getExpectedEnvironment = async (): Promise<
-  'testnet' | 'mainnet' | null
-> => {
-  const settings = await getGlobalSettings();
-  return settings.expectedEnvironment ?? null;
 };

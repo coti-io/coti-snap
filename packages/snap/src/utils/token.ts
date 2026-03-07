@@ -21,7 +21,6 @@ import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
 
-const { decryptUint, decryptString } = CotiSDK;
 const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 as
   | ((ciphertext: unknown, userKey: string) => bigint)
   | undefined;
@@ -74,7 +73,7 @@ const resolveEnvironment = async (): Promise<'testnet' | 'mainnet'> => {
   return 'mainnet';
 };
 
-const getJsonRpcProvider = async () => {
+const getJsonRpcProvider = async (): Promise<ethers.JsonRpcProvider> => {
   const environment = await resolveEnvironment();
   const rpcUrl =
     environment === 'testnet'
@@ -100,7 +99,7 @@ export const getTokenURI = async (
       throw new Error('tokenURI method not available');
     }
     const encryptedTokenURI = await tokenURIMethod(BigInt(tokenId));
-    const decryptedURI = decryptString(encryptedTokenURI, aesKey)
+    const decryptedURI = CotiSDK.decryptString(encryptedTokenURI, aesKey)
       .replace(/\0/g, '')
       .trim();
     if (!decryptedURI) {
@@ -125,7 +124,7 @@ export const getPublicTokenURI = async (
       provider,
     );
     const uri = await contract.getFunction('tokenURI')(BigInt(tokenId));
-    return uri || null;
+    return uri ?? null;
   } catch (error) {
     void error;
     return null;
@@ -453,30 +452,34 @@ const isZeroValue = (value: unknown): boolean => {
   return false;
 };
 
-const isZeroCtUint256 = (ciphertext: any): boolean => {
+type CtUint256Like = Record<string, unknown> & Record<number, unknown>;
+
+const isZeroCtUint256 = (ciphertext: unknown): boolean => {
   if (!ciphertext) {
     return false;
   }
   if (isZeroValue(ciphertext)) {
     return true;
   }
+  const c = ciphertext as CtUint256Like;
+  const highObj = c?.high as Record<string, unknown> | undefined;
+  const lowObj = c?.low as Record<string, unknown> | undefined;
   if (
-    ciphertext?.high?.high !== undefined &&
-    ciphertext?.high?.low !== undefined &&
-    ciphertext?.low?.high !== undefined &&
-    ciphertext?.low?.low !== undefined
+    highObj?.high !== undefined &&
+    highObj?.low !== undefined &&
+    lowObj?.high !== undefined &&
+    lowObj?.low !== undefined
   ) {
     return (
-      isZeroValue(ciphertext.high.high) &&
-      isZeroValue(ciphertext.high.low) &&
-      isZeroValue(ciphertext.low.high) &&
-      isZeroValue(ciphertext.low.low)
+      isZeroValue(highObj.high) &&
+      isZeroValue(highObj.low) &&
+      isZeroValue(lowObj.high) &&
+      isZeroValue(lowObj.low)
     );
   }
 
-  // Support named properties or positional access from ethers.js Result tuples
-  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
-  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
+  const high = c?.ciphertextHigh ?? c?.[0];
+  const low = c?.ciphertextLow ?? c?.[1];
 
   if (high !== undefined && low !== undefined) {
     return isZeroValue(high) && isZeroValue(low);
@@ -494,29 +497,40 @@ const isInsaneDecryptedValue = (
   return value > threshold;
 };
 
-const isCtUint256Shape = (value: any): boolean => {
+const isCtUint256Shape = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') {
     return false;
   }
+  const v = value as Record<string, unknown> & Record<number, unknown>;
   const hasNested =
-    value?.high?.high !== undefined &&
-    value?.high?.low !== undefined &&
-    value?.low?.high !== undefined &&
-    value?.low?.low !== undefined;
+    v?.high !== undefined &&
+    v?.low !== undefined &&
+    typeof v.high === 'object' &&
+    v.high !== null &&
+    typeof v.low === 'object' &&
+    v.low !== null &&
+    (v.high as Record<string, unknown>)?.high !== undefined &&
+    (v.high as Record<string, unknown>)?.low !== undefined &&
+    (v.low as Record<string, unknown>)?.high !== undefined &&
+    (v.low as Record<string, unknown>)?.low !== undefined;
   const hasFlat =
-    value?.ciphertextHigh !== undefined &&
-    value?.ciphertextLow !== undefined;
-  // Support positional access from ethers.js Result tuples
-  const hasPositional =
-    value?.[0] !== undefined && value?.[1] !== undefined;
+    v?.ciphertextHigh !== undefined && v?.ciphertextLow !== undefined;
+  const hasPositional = v?.[0] !== undefined && v?.[1] !== undefined;
   return hasNested || hasFlat || hasPositional;
 };
 
-const probeConfidentialVersion256 = async (
+/**
+ * Probes whether the token contract supports 256-bit confidential balance.
+ * @param address - Token contract address.
+ * @param provider - Ethers provider.
+ * @param accountAddress - Optional account for balanceOf check.
+ * @returns 256 if supported, undefined otherwise.
+ */
+async function probeConfidentialVersion256(
   address: string,
   provider: ethers.AbstractProvider,
   accountAddress?: string,
-): Promise<256 | undefined> => {
+): Promise<256 | undefined> {
   try {
     const contract = new ethers.Contract(
       address,
@@ -540,7 +554,7 @@ const probeConfidentialVersion256 = async (
     void error;
   }
   return undefined;
-};
+}
 
 export const decryptBalance = (
   balance: ctUint | CtUint256,
@@ -563,10 +577,10 @@ export const decryptBalance = (
         if (isZeroCtUint256(balance)) {
           return 0n;
         }
-        const d1 = decryptUint(nested.high.high, aesKey);
-        const d2 = decryptUint(nested.high.low, aesKey);
-        const d3 = decryptUint(nested.low.high, aesKey);
-        const d4 = decryptUint(nested.low.low, aesKey);
+        const d1 = CotiSDK.decryptUint(nested.high.high, aesKey);
+        const d2 = CotiSDK.decryptUint(nested.high.low, aesKey);
+        const d3 = CotiSDK.decryptUint(nested.low.high, aesKey);
+        const d4 = CotiSDK.decryptUint(nested.low.low, aesKey);
         const decrypted = (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
         if (isInsaneDecryptedValue(decrypted, decimals)) {
           return null;
@@ -615,7 +629,7 @@ export const decryptBalance = (
     if (isZeroValue(balance)) {
       return 0n;
     }
-    const rawDecrypted = decryptUint(balance as ctUint, aesKey);
+    const rawDecrypted = CotiSDK.decryptUint(balance as ctUint, aesKey);
     const decrypted =
       typeof rawDecrypted === 'bigint' ? rawDecrypted : BigInt(rawDecrypted);
     if (isInsaneDecryptedValue(decrypted, decimals)) {
@@ -630,9 +644,6 @@ export const decryptBalance = (
 
 export const checkChainId = async (): Promise<boolean> => {
   try {
-    const { COTI_TESTNET_CHAIN_ID, COTI_MAINNET_CHAIN_ID, setEnvironment } =
-      await import('../config');
-
     const expectedEnv = await getExpectedEnvironment();
 
     if (expectedEnv) {
@@ -697,7 +708,6 @@ export const checkChainId = async (): Promise<boolean> => {
     void error;
     const expectedEnv = await getExpectedEnvironment();
     if (expectedEnv) {
-      const { setEnvironment } = await import('../config');
       setEnvironment(expectedEnv);
       return true;
     }
@@ -803,7 +813,9 @@ export const recalculateBalances = async (): Promise<{
               }
             }
 
-            const callBalance = async (abi: any) => {
+            const callBalance = async (
+              abi: ethers.InterfaceAbi,
+            ): Promise<bigint | ctUint | CtUint256 | string> => {
               const tokenContract = new Contract(token.address, abi, provider);
               const balanceOfMethod =
                 (tokenContract as any)['balanceOf(address)'] ??
@@ -826,7 +838,7 @@ export const recalculateBalances = async (): Promise<{
                     ? erc20ConfidentialAbi
                     : erc20Abi;
               tokenBalance = await callBalance(erc20ReadAbi);
-            } catch (error) {
+            } catch {
               if (tokenConfidential) {
                 try {
                   const fallbackAbi =
@@ -887,7 +899,9 @@ export const recalculateBalances = async (): Promise<{
                   : {}),
               balance:
                 tokenBalance !== null && tokenBalance !== undefined
-                  ? tokenBalance.toString()
+                  ? typeof tokenBalance === 'object'
+                    ? JSON.stringify(tokenBalance)
+                    : String(tokenBalance)
                   : null,
             };
           }
@@ -920,7 +934,12 @@ export const recalculateBalances = async (): Promise<{
             }
             return {
               ...token,
-              balance: tokenBalance?.toString() ?? null,
+              balance:
+                tokenBalance != null
+                  ? typeof tokenBalance === 'object'
+                    ? JSON.stringify(tokenBalance)
+                    : String(tokenBalance)
+                  : null,
               uri: tokenUri,
             };
           }
