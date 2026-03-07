@@ -75,8 +75,11 @@ export const getStateByChainIdAndAddress = async (
   const identifier = await getStateIdentifier({ requestAccounts });
   const state = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
-  const { address } = identifier;
-  const result = state[chainId]?.[address] ?? ({} as State);
+  const addressKey = identifier.address.toLowerCase();
+  const result =
+    state[chainId]?.[addressKey] ??
+    state[chainId]?.[identifier.address] ??
+    ({} as State);
   return result;
 };
 
@@ -88,12 +91,12 @@ export const setStateByChainIdAndAddress = async (
   const identifier = await getStateIdentifier({ requestAccounts });
   const oldState = (await getStateData<GeneralState>()) || {};
   const chainId = overrideChainId ?? identifier.chainId;
-  const { address } = identifier;
+  const addressKey = identifier.address.toLowerCase();
   const newState = {
     ...oldState,
     [chainId]: {
       ...oldState[chainId],
-      [address]: state,
+      [addressKey]: state,
     },
   };
   await setStateData<GeneralState>(newState);
