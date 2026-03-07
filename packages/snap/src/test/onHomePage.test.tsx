@@ -77,6 +77,7 @@ describe('onHomePage', () => {
     (recalculateBalances as jest.Mock).mockResolvedValue({
       balance: mockBalance,
       tokenBalances: mockTokenBalances,
+      aesKey: null,
     });
     (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
     (setStateByChainIdAndAddress as jest.Mock).mockResolvedValue(undefined);

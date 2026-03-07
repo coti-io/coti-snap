@@ -68,17 +68,38 @@ export const getStateIdentifier = async (
   return { chainId, address: currentAddress };
 };
 
+/**
+ * Normalize chainId to a canonical decimal string for use as state key.
+ * Handles number, decimal string, or hex string from dapp/snap.
+ */
+function normalizeChainIdForState(
+  chainId: string | number | null | undefined,
+): string {
+  if (chainId == null || chainId === '') {
+    return '';
+  }
+  if (typeof chainId === 'number') {
+    return String(chainId);
+  }
+  const s = String(chainId).trim();
+  if (s.startsWith('0x') || s.startsWith('0X')) {
+    return parseInt(s, 16).toString();
+  }
+  return s;
+}
+
 export const getStateByChainIdAndAddress = async (
   overrideChainId?: string | null,
   requestAccounts = false,
 ): Promise<State> => {
   const identifier = await getStateIdentifier({ requestAccounts });
   const state = (await getStateData<GeneralState>()) || {};
-  const chainId = overrideChainId ?? identifier.chainId;
+  const rawChainId = overrideChainId ?? identifier.chainId;
+  const chainKey = normalizeChainIdForState(rawChainId);
   const addressKey = identifier.address.toLowerCase();
   const result =
-    state[chainId]?.[addressKey] ??
-    state[chainId]?.[identifier.address] ??
+    state[chainKey]?.[addressKey] ??
+    state[chainKey]?.[identifier.address] ??
     ({} as State);
   return result;
 };
@@ -90,12 +111,13 @@ export const setStateByChainIdAndAddress = async (
 ): Promise<void> => {
   const identifier = await getStateIdentifier({ requestAccounts });
   const oldState = (await getStateData<GeneralState>()) || {};
-  const chainId = overrideChainId ?? identifier.chainId;
+  const rawChainId = overrideChainId ?? identifier.chainId;
+  const chainKey = normalizeChainIdForState(rawChainId);
   const addressKey = identifier.address.toLowerCase();
   const newState = {
     ...oldState,
-    [chainId]: {
-      ...oldState[chainId],
+    [chainKey]: {
+      ...oldState[chainKey],
       [addressKey]: state,
     },
   };

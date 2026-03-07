@@ -156,6 +156,7 @@ describe('Snap Handlers', () => {
       (recalculateBalances as jest.Mock).mockResolvedValue({
         balance: mockBalance,
         tokenBalances: mockTokens,
+        aesKey: 'test-key',
       });
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue(mockState);
       (setStateByChainIdAndAddress as jest.Mock).mockResolvedValue(undefined);
@@ -272,6 +273,7 @@ describe('Snap Handlers', () => {
       (recalculateBalances as jest.Mock).mockResolvedValue({
         balance: BigInt(0),
         tokenBalances: [],
+        aesKey: null,
       });
       (getStateByChainIdAndAddress as jest.Mock).mockResolvedValue({
         balance: '0',

@@ -114,7 +114,7 @@ export const onHomePage: OnHomePageHandler = async () => {
   }
 
   try {
-    const { balance, tokenBalances } = await recalculateBalances();
+    const { balance, tokenBalances, aesKey } = await recalculateBalances();
     const state = await getStateByChainIdAndAddress();
     await setStateByChainIdAndAddress({
       ...state,
@@ -126,7 +126,7 @@ export const onHomePage: OnHomePageHandler = async () => {
           balance={balance}
           tokenBalances={tokenBalances}
           tokenView={TokenViewSelector.ERC20}
-          aesKey={state.aesKey}
+          aesKey={aesKey}
         />
       ),
     };

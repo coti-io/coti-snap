@@ -729,6 +729,7 @@ export const checkIfERC721Unique = async (
 export const recalculateBalances = async (): Promise<{
   balance: bigint;
   tokenBalances: Tokens;
+  aesKey: string | null;
 }> => {
   // IMPORTANT: BrowserProvider(ethereum) does NOT sync when MetaMask changes networks
   // So we must use JsonRpcProvider with the correct RPC URL based on the current chain.
@@ -936,7 +937,7 @@ export const recalculateBalances = async (): Promise<{
       balance: balance.toString(),
       tokenBalances,
     });
-    return { balance, tokenBalances };
+    return { balance, tokenBalances, aesKey: state.aesKey };
   } catch (error) {
     void error;
     const fallbackBalance =
@@ -949,6 +950,7 @@ export const recalculateBalances = async (): Promise<{
         ...token,
         balance: token.balance ?? null,
       })),
+      aesKey: state.aesKey,
     };
   }
 };
