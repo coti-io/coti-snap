@@ -25,6 +25,11 @@ const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 
   | ((ciphertext: unknown, userKey: string) => bigint)
   | undefined;
 
+const normalizeAesKey = (aesKey: string): string => {
+  const trimmed = aesKey.startsWith('0x') ? aesKey.slice(2) : aesKey;
+  return trimmed.toLowerCase();
+};
+
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
 ];
@@ -562,6 +567,7 @@ export const decryptBalance = (
   variant: 64 | 256 = 64,
   decimals?: string | number | null,
 ): bigint | null => {
+  const normalizedKey = normalizeAesKey(aesKey);
   try {
     if (variant === 256) {
       const nested = balance as {
@@ -577,10 +583,10 @@ export const decryptBalance = (
         if (isZeroCtUint256(balance)) {
           return 0n;
         }
-        const d1 = CotiSDK.decryptUint(nested.high.high, aesKey);
-        const d2 = CotiSDK.decryptUint(nested.high.low, aesKey);
-        const d3 = CotiSDK.decryptUint(nested.low.high, aesKey);
-        const d4 = CotiSDK.decryptUint(nested.low.low, aesKey);
+        const d1 = CotiSDK.decryptUint(nested.high.high, normalizedKey);
+        const d2 = CotiSDK.decryptUint(nested.high.low, normalizedKey);
+        const d3 = CotiSDK.decryptUint(nested.low.high, normalizedKey);
+        const d4 = CotiSDK.decryptUint(nested.low.low, normalizedKey);
         const decrypted = (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
         if (isInsaneDecryptedValue(decrypted, decimals)) {
           return null;
@@ -605,7 +611,7 @@ export const decryptBalance = (
               ciphertextLow:
                 typeof low === 'bigint' ? low : BigInt(low),
             },
-            aesKey,
+            normalizedKey,
           );
           if (isInsaneDecryptedValue(decrypted, decimals)) {
             return null;
@@ -618,7 +624,7 @@ export const decryptBalance = (
         if (isZeroCtUint256(balance)) {
           return 0n;
         }
-        const decrypted = decryptUint256(balance, aesKey);
+        const decrypted = decryptUint256(balance, normalizedKey);
         if (isInsaneDecryptedValue(decrypted, decimals)) {
           return null;
         }
@@ -629,7 +635,7 @@ export const decryptBalance = (
     if (isZeroValue(balance)) {
       return 0n;
     }
-    const rawDecrypted = CotiSDK.decryptUint(balance as ctUint, aesKey);
+    const rawDecrypted = CotiSDK.decryptUint(balance as ctUint, normalizedKey);
     const decrypted =
       typeof rawDecrypted === 'bigint' ? rawDecrypted : BigInt(rawDecrypted);
     if (isInsaneDecryptedValue(decrypted, decimals)) {
@@ -637,7 +643,10 @@ export const decryptBalance = (
     }
     return decrypted;
   } catch (error) {
-    void error;
+    console.error(
+      `[decryptBalance] variant=${variant} failed:`,
+      error instanceof Error ? error.message : error,
+    );
     return null;
   }
 };
@@ -872,18 +881,68 @@ export const recalculateBalances = async (): Promise<{
               }
             }
 
+            // Safety net: if balance looks like raw ciphertext (insanely
+            // large bigint) and token was NOT detected as confidential,
+            // re-try with the 256-bit confidential ABI.
+            if (
+              !resolvedConfidential &&
+              tokenBalance !== null &&
+              typeof tokenBalance === 'bigint' &&
+              isInsaneDecryptedValue(tokenBalance, token.decimals) &&
+              state.aesKey
+            ) {
+              try {
+                const confBalance = await callBalance(
+                  erc20Confidential256Abi,
+                );
+                if (isCtUint256Shape(confBalance)) {
+                  tokenBalance = confBalance;
+                  resolvedConfidential = true;
+                  resolvedVersion = 256;
+                }
+              } catch {
+                // 256-bit ABI also failed; leave as-is
+              }
+            }
+
             if (
               resolvedConfidential &&
               tokenBalance !== null &&
               tokenBalance !== undefined &&
               state.aesKey
             ) {
-              const decrypted = decryptBalance(
+              let decrypted = decryptBalance(
                 tokenBalance as ctUint | CtUint256,
                 state.aesKey,
                 resolvedVersion ?? 64,
                 token.decimals,
               );
+              // If 64-bit decryption failed, try 256-bit as fallback
+              if (decrypted === null && resolvedVersion !== 256) {
+                try {
+                  const confBalance = await callBalance(
+                    erc20Confidential256Abi,
+                  );
+                  if (isCtUint256Shape(confBalance)) {
+                    decrypted = decryptBalance(
+                      confBalance as CtUint256,
+                      state.aesKey,
+                      256,
+                      token.decimals,
+                    );
+                    if (decrypted !== null) {
+                      resolvedVersion = 256;
+                    }
+                  }
+                } catch {
+                  // 256-bit fallback failed
+                }
+              }
+              if (decrypted === null) {
+                console.error(
+                  `[recalculateBalances] decryptBalance returned null for ${token.address} (version=${resolvedVersion})`,
+                );
+              }
               tokenBalance = decrypted;
             } else if (resolvedConfidential && !state.aesKey) {
               tokenBalance = null;
