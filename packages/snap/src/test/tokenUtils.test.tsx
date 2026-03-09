@@ -175,7 +175,7 @@ describe('Token Utilities', () => {
 
       const result = tokenUtils.decryptBalance(1337n, 'mockAESKey');
 
-      expect(decryptUint).toHaveBeenCalledWith(1337n, 'mockAESKey');
+      expect(decryptUint).toHaveBeenCalledWith(1337n, 'mockaeskey');
       expect(result).toBe(12345n);
     });
 
