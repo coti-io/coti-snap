@@ -41,6 +41,10 @@ export const AccountBox = styled.div.withConfig({
     background: ${colors.background.hover};
   }
 
+  &:focus-within {
+    outline: 1.5px solid ${colors.primary};
+  }
+
   @media (max-width: 600px) {
     padding: 6px 14px;
     gap: 10px;
@@ -129,6 +133,7 @@ export const AmountInput = styled.input`
   text-align: right;
   padding: 0 4px;
   appearance: textfield;
+  caret-color: ${colors.primary};
 
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
@@ -139,6 +144,10 @@ export const AmountInput = styled.input`
   &:focus {
     outline: none;
     box-shadow: none;
+  }
+
+  &::placeholder {
+    color: #1f2d6766;
   }
 
   @media (max-width: 600px) {

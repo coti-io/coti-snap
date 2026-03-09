@@ -744,6 +744,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
     const { getAESKey, userHasAESKey } = useSnap();
 
     const accountBoxRef = useRef<HTMLDivElement>(null);
+    const amountInputRef = useRef<HTMLInputElement>(null);
 
     const { provider } = useMetaMaskContext();
     const addressValidation = useAddressValidation();
@@ -1401,7 +1402,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
 
         {addressValidation.isValid && (
           <>
-            <AccountBox ref={accountBoxRef}>
+            <AccountBox ref={accountBoxRef} onClick={() => amountInputRef.current?.focus()}>
               <TokenRowFlex>
                 <TokenInfo onClick={handleOpenTokenModal}>
                   <TokenLogos>
@@ -1429,12 +1430,14 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
                   ) : (
                     <>
                       <AmountInput
+                        ref={amountInputRef}
                         type="number"
                         min="0"
                         step="any"
                         placeholder="0"
                         value={amount}
                         onChange={handleAmountChange}
+                        autoFocus
                       />
                       {currentToken.tokenId && currentToken.type === 'ERC1155'
                         ? 'NFT'
