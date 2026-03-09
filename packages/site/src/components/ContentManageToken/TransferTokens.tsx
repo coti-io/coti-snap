@@ -333,23 +333,29 @@ const TokenBalanceDisplay: React.FC<{
 }> = React.memo(({ token, getTokenBalance }) => {
   const [balance, setBalance] = useState<string>(token.amount);
   const [loading, setLoading] = useState<boolean>(false);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (token.amount === '0' && !loading) {
-      setLoading(true);
-      getTokenBalance(token)
-        .then((result) => {
-          setBalance(result);
-          setLoading(false);
-        })
-        .catch(() => {
-          setBalance('0');
-          setLoading(false);
-        });
-    } else {
+    if (token.amount !== '0') {
       setBalance(token.amount);
+      return;
     }
-  }, [token, getTokenBalance, loading]);
+    if (fetchedRef.current) {
+      return;
+    }
+    fetchedRef.current = true;
+    setLoading(true);
+    getTokenBalance(token)
+      .then((result) => {
+        setBalance(result);
+      })
+      .catch(() => {
+        setBalance('0');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [token, getTokenBalance]);
 
   if (loading) {
     return <TokenListValue>Loading...</TokenListValue>;
@@ -745,6 +751,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
 
     const accountBoxRef = useRef<HTMLDivElement>(null);
     const amountInputRef = useRef<HTMLInputElement>(null);
+    const tokenBalancesRef = useRef<Record<string, string>>({});
 
     const { provider } = useMetaMaskContext();
     const addressValidation = useAddressValidation();
@@ -1069,6 +1076,9 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
       setShowTokenModal(false);
     }, []);
 
+    // Keep ref in sync with state so getTokenBalance can read cache without re-creating
+    tokenBalancesRef.current = tokenBalances;
+
     // Function to get balance for a specific token (for modal display)
     const getTokenBalance = useCallback(
       async (token: Token): Promise<string> => {
@@ -1078,8 +1088,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
 
         const tokenKey = `${token.symbol}-${token.address || ''}`;
 
-        if (tokenBalances[tokenKey]) {
-          return tokenBalances[tokenKey];
+        if (tokenBalancesRef.current[tokenKey]) {
+          return tokenBalancesRef.current[tokenKey];
         }
 
         try {
@@ -1106,7 +1116,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
           return '0';
         }
       },
-      [browserProvider, tokenOps, balance, aesKey, tokenBalances],
+      [browserProvider, tokenOps, balance, aesKey],
     );
 
     const fetchTokenBalance = useCallback(
@@ -1117,8 +1127,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
 
         // Check cache first before showing loading state
         const tokenKey = `${token.symbol}-${token.address || ''}`;
-        if (tokenBalances[tokenKey]) {
-          setCurrentBalance(tokenBalances[tokenKey]);
+        if (tokenBalancesRef.current[tokenKey]) {
+          setCurrentBalance(tokenBalancesRef.current[tokenKey]);
           return;
         }
 
@@ -1165,7 +1175,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
           setLoadingBalance(false);
         }
       },
-      [browserProvider, tokenOps, balance, aesKey, tokenBalances],
+      [browserProvider, tokenOps, balance, aesKey],
     );
 
     const handleTokenSelect = useCallback(
@@ -1188,8 +1198,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         loadedTokenAddress !== tokenKey
       ) {
         // Check cache first
-        if (tokenBalances[tokenKey]) {
-          setCurrentBalance(tokenBalances[tokenKey]);
+        if (tokenBalancesRef.current[tokenKey]) {
+          setCurrentBalance(tokenBalancesRef.current[tokenKey]);
           setLoadedTokenAddress(tokenKey);
           return;
         }
