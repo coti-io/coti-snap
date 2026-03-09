@@ -1,5 +1,5 @@
 import { BrowserProvider } from '@coti-io/coti-ethers';
-import { parseUnits, formatUnits } from 'ethers';
+import { parseUnits, formatUnits, Interface } from 'ethers';
 import React, {
   useState,
   useRef,
@@ -77,8 +77,60 @@ import {
   formatTokenBalance,
 } from '../../utils/formatters';
 import { normalizeAddress } from '../../utils/normalizeAddress';
+import { abi as ERC20_ABI } from '../../abis/ERC20.json';
+import { abi as PRIVATE_ERC20_ABI } from '../../abis/ERC20Confidential.json';
+import PRIVATE_ERC20_256_ABI from '../../abis/ERC20Confidential256.json';
+import { abi as ERC721_ABI } from '../../abis/ERC721.json';
+import { abi as PRIVATE_ERC721_ABI } from '../../abis/ERC721Confidential.json';
+import { abi as ERC1155_ABI } from '../../abis/ERC1155.json';
 import { ContentTitle } from '../styles';
 import styled from 'styled-components';
+
+const ALL_ABIS = [
+  ...ERC20_ABI,
+  ...PRIVATE_ERC20_ABI,
+  ...PRIVATE_ERC20_256_ABI,
+  ...ERC721_ABI,
+  ...PRIVATE_ERC721_ABI,
+  ...ERC1155_ABI,
+];
+
+const errorInterface = new Interface(ALL_ABIS);
+
+const parseContractError = (error: any): string => {
+  const data = error?.data ?? error?.error?.data ?? error?.revert?.data;
+  if (data && typeof data === 'string' && data.startsWith('0x') && data.length >= 10) {
+    try {
+      const decoded = errorInterface.parseError(data);
+      if (decoded) {
+        const args = decoded.args.length
+          ? ` (${decoded.args.map((a: any) => String(a)).join(', ')})`
+          : '';
+        return `${decoded.name}${args}`;
+      }
+    } catch {}
+  }
+
+  const reason = error?.reason;
+  if (reason && typeof reason === 'string') return reason;
+
+  const shortMessage = error?.shortMessage;
+  if (shortMessage && typeof shortMessage === 'string') return shortMessage;
+
+  const message = error?.message?.toString() || '';
+
+  const revertMatch = message.match(/reverted with reason string ['"](.+?)['"]/);
+  if (revertMatch) return revertMatch[1];
+
+  const customErrorMatch = message.match(/reverted with custom error ['"](\w+)\(([^)]*)\)['"]/);
+  if (customErrorMatch) return `${customErrorMatch[1]}(${customErrorMatch[2]})`;
+
+  if (message.toLowerCase().includes('user rejected') || message.toLowerCase().includes('user denied')) {
+    return 'Transaction was rejected';
+  }
+
+  return message || 'Transfer failed. Please check your wallet and try again.';
+};
 
 const EthSignHelpCard = styled.div`
   position: relative;
@@ -914,6 +966,12 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
       currentToken?.type,
     ]);
 
+    const isSameAddress = useMemo(() => {
+      const targetAddress = resolvedAddress || addressInput;
+      if (!targetAddress || !address) return false;
+      return targetAddress.toLowerCase() === address.toLowerCase();
+    }, [resolvedAddress, addressInput, address]);
+
     const canContinue = useMemo(() => {
       const addressIsValid = isZNSDomain(addressInput)
         ? resolvedAddress !== null && !znsError
@@ -923,7 +981,8 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         addressIsValid &&
         isAmountValid &&
         txStatus !== 'loading' &&
-        !isResolvingZNS
+        !isResolvingZNS &&
+        !isSameAddress
       );
     }, [
       addressValidation.isValid,
@@ -934,6 +993,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
       resolvedAddress,
       znsError,
       isResolvingZNS,
+      isSameAddress,
     ]);
 
     const handleAddressChange = useCallback(
@@ -1348,14 +1408,11 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         }
       } catch (error: any) {
         setTxStatus('error');
-        const message =
-          error?.message?.toString() ||
-          'Transfer failed. Please check your wallet and try again.';
+        const message = parseContractError(error);
         const isRawSigning =
-          typeof message === 'string' &&
-          (message.toLowerCase().includes('eth_sign') ||
-            message.toLowerCase().includes('raw signing') ||
-            message.toLowerCase().includes('coti snap'));
+          message.toLowerCase().includes('eth_sign') ||
+          message.toLowerCase().includes('raw signing') ||
+          message.toLowerCase().includes('coti snap');
         if (isRawSigning) {
           setIsEthSignError(true);
           setTxErrorType('info');
@@ -1606,6 +1663,10 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
               Domain resolved to: {truncateString(resolvedAddress)}
             </Alert>
           )}
+
+        {isSameAddress && addressValidation.isValid && (
+          <Alert type="error">Cannot send to your own address</Alert>
+        )}
 
         {txStatus === 'error' && txError && !isEthSignError && (
           <Alert type={txErrorType}>{txError}</Alert>
