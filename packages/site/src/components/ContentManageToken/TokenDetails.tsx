@@ -37,7 +37,9 @@ import CopySuccessIcon from '../../assets/copy-success.svg';
 import VerticalMenuIcon from '../../assets/icons/vertical-menu.svg';
 import { CotiLogo } from '../../assets/icons';
 import TrashIcon from '../../assets/icons/trash.svg';
+import { useChainId } from 'wagmi';
 import { useSnap } from '../../hooks/SnapContext';
+import { getNetworkConfig } from '../../config/networks';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useDropdown } from '../../hooks/useDropdown';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
@@ -72,6 +74,8 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
   aesKey,
   onSendClick,
 }) => {
+  const chainId = useChainId();
+  const networkName = getNetworkConfig(chainId).name;
   const { userAESKey } = useSnap();
   const { decryptERC20Balance } = useTokenOperations(provider);
   const { importedTokens } = useImportedTokens();
@@ -251,7 +255,7 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
                 <TokenCircle>
                   <CotiLogo />
                 </TokenCircle>
-                <TokenNameText>COTI</TokenNameText>
+                <TokenNameText>{networkName}</TokenNameText>
               </TokenNameRow>
             </TokenDetailsValue>
           </TokenDetailsRow>
