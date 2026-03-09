@@ -16,7 +16,7 @@ export const HeaderWrapper = styled.header`
   right: 0;
   padding: 16px 48px;
   z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: none;
   margin: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
@@ -37,7 +37,7 @@ export const HeaderWrapper = styled.header`
   /* Smooth scrolling effect */
   &.scrolled {
     background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none;
     padding: 12px 48px;
 
     @media screen and (max-width: 992px) {
