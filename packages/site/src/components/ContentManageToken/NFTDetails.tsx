@@ -34,10 +34,12 @@ import CopyIcon from '../../assets/copy.svg';
 import CopySuccessIcon from '../../assets/copy-success.svg';
 import VerticalMenuIcon from '../../assets/icons/vertical-menu.svg';
 import TrashIcon from '../../assets/icons/trash.svg';
+import { useChainId } from 'wagmi';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useDropdown } from '../../hooks/useDropdown';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useTokenOperations } from '../../hooks/useTokenOperations';
+import { getNetworkConfig } from '../../config/networks';
 import type { ImportedToken } from '../../types/token';
 import {
   parseNFTAddress,
@@ -98,6 +100,8 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({
   imageUrl,
   aesKey,
 }) => {
+  const chainId = useChainId();
+  const networkConfig = getNetworkConfig(chainId);
   const { copyToClipboard, copied } = useCopyToClipboard();
   const { removeToken } = useImportedTokens();
   const menuDropdown = useDropdown();
@@ -307,9 +311,15 @@ const NFTDetails: React.FC<NFTDetailModalProps> = ({
       <NFTDetailsContent>
         <NFTDetailsRow>
           <NFTDetailsLabel>Contract address</NFTDetailsLabel>
-          <AddressBadge onClick={() => handleCopy(contract)}>
-            <TokenDetailsLink>{shortAddress}</TokenDetailsLink>
-            <AddressCopyButton>
+          <AddressBadge>
+            <TokenDetailsLink
+              href={`${networkConfig.explorerUrl}/address/${contract}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {shortAddress}
+            </TokenDetailsLink>
+            <AddressCopyButton onClick={() => handleCopy(contract)}>
               {copied ? <CopySuccessIcon /> : <CopyIcon />}
             </AddressCopyButton>
           </AddressBadge>
