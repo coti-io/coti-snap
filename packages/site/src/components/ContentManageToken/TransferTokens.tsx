@@ -1678,6 +1678,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
             type="button"
             backgroundColor="#fff"
             textColor="#1E29F6"
+            disabled={txStatus === 'loading'}
           >
             Cancel
           </SendButton>
