@@ -75,7 +75,8 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
   onSendClick,
 }) => {
   const chainId = useChainId();
-  const networkName = getNetworkConfig(chainId).name;
+  const networkConfig = getNetworkConfig(chainId);
+  const networkName = networkConfig.name;
   const { userAESKey } = useSnap();
   const { decryptERC20Balance } = useTokenOperations(provider);
   const { importedTokens } = useImportedTokens();
@@ -262,9 +263,15 @@ const TokenDetails: React.FC<TokenDetailModalProps> = ({
           {token.symbol !== 'COTI' && (
             <TokenDetailsRow>
               <TokenDetailsLabel>Contract address</TokenDetailsLabel>
-              <AddressBadge onClick={() => handleCopy(tokenAddress)}>
-                <TokenDetailsLink>{shortAddress}</TokenDetailsLink>
-                <AddressCopyButton>
+              <AddressBadge>
+                <TokenDetailsLink
+                  href={`${networkConfig.explorerUrl}/address/${tokenAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {shortAddress}
+                </TokenDetailsLink>
+                <AddressCopyButton onClick={() => handleCopy(tokenAddress)}>
                   {copied ? <CopySuccessIcon /> : <CopyIcon />}
                 </AddressCopyButton>
               </AddressBadge>
