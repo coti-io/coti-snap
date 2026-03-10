@@ -17,17 +17,29 @@ import {
   QuickAccessItem,
   QuickAccessLabel,
   MainStack,
+  HeaderBar,
+  IconButton,
+  TokenDetailsContainer,
+  AddressBadge,
+  AddressCopyButton,
+  TokenDetailsLink,
 } from './styles';
+import { HeaderBarSlotLeft } from './styles/transfer';
 import TokenDetails from './TokenDetails';
 import { Tokens } from './Tokens';
 import { TransferTokens } from './TransferTokens';
+import ArrowBack from '../../assets/arrow-back.svg';
+import CopyIcon from '../../assets/copy.svg';
+import CopySuccessIcon from '../../assets/copy-success.svg';
 import ReceiveIcon from '../../assets/receive.svg';
 import SendIcon from '../../assets/send.svg';
 import { getNetworkConfig } from '../../config/networks';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useMetaMaskContext } from '../../hooks/MetamaskContext';
 import { useSnap } from '../../hooks/SnapContext';
 import type { ImportedToken } from '../../types/token';
 import { truncateString } from '../../utils';
+import { formatAddressForDisplay } from '../../utils/tokenValidation';
 import { ButtonAction } from '../Button';
 import { DeleteAESKey } from '../ContentManageAESKey/DeleteAESKey';
 import { Loading } from '../Loading';
@@ -124,62 +136,52 @@ const DepositModal = memo(
 
 DepositModal.displayName = 'DepositModal';
 
-const SuccessWrapper = styled.div`
+const SuccessCheckCircle = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e8f5e9;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  width: 100%;
-  min-height: 320px;
+  margin: 24px auto 0;
 `;
 
-const SuccessCard = styled.div`
-  max-width: 480px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 32px 28px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  align-items: center;
-  text-align: center;
+const SuccessCheckMark = styled.span`
+  font-size: 32px;
+  color: #4caf50;
+  line-height: 1;
 `;
 
-const SuccessText = styled.p`
+const SuccessTitle = styled.p`
   margin: 0;
   font-size: 1.6rem;
   line-height: 1.45;
-  color: #000000 !important;
+  color: #000000;
   font-weight: 600;
+  text-align: center;
 `;
 
-const SuccessHashRow = styled.div`
+const SuccessContent = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-`;
-
-const SuccessHashLabel = styled.span`
-  font-size: 1.4rem;
-  color: #000000 !important;
-  font-weight: 600;
-`;
-
-const SuccessHashLink = styled.a`
-  display: inline-block;
-  margin-top: 0;
-  font-size: 1.5rem;
-  color: #1e29f6 !important;
-  word-break: break-all;
-  text-decoration: underline;
-`;
-
-const SuccessActions = styled.div`
-  display: flex;
-  justify-content: center;
+  gap: 24px;
   width: 100%;
-  margin-top: 8px;
+  padding: 0 16px;
+`;
+
+const SuccessDetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+`;
+
+const SuccessDetailLabel = styled.span`
+  font-size: 1.4rem;
+  color: #6b7280;
+  font-weight: 500;
 `;
 
 type ContentManageTokenProps = {
@@ -192,6 +194,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(
     const { data: balance, refetch: refetchBalance } = useBalance({ address });
     const { provider } = useMetaMaskContext();
     const { getAESKey, userAESKey, userHasAESKey } = useSnap();
+    const { copied, copyToClipboard } = useCopyToClipboard();
 
     const currentAESKey = userAESKey || aesKey;
     const [isRequestingAESKey, setIsRequestingAESKey] = useState(false);
@@ -426,27 +429,51 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(
 
     if (transferSuccessHash) {
       const txLink = `${explorerBaseUrl}${transferSuccessHash}`;
+      const shortHash = formatAddressForDisplay(transferSuccessHash, 10, 8);
 
       return (
         <MainStack>
-          <SuccessWrapper>
-            <SuccessCard>
-              <SuccessText>Transaction sent successfully</SuccessText>
-              <SuccessHashRow>
-                <SuccessHashLabel>Transaction Hash:</SuccessHashLabel>
-                <SuccessHashLink
-                  href={txLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          <TokenDetailsContainer>
+            <HeaderBar>
+              <HeaderBarSlotLeft>
+                <IconButton
+                  onClick={handleGoToWallet}
+                  type="button"
+                  aria-label="Go back"
                 >
-                  {transferSuccessHash}
-                </SuccessHashLink>
-              </SuccessHashRow>
-              <SuccessActions>
-                <ButtonAction text="Back" onClick={handleGoToWallet} />
-              </SuccessActions>
-            </SuccessCard>
-          </SuccessWrapper>
+                  <ArrowBack />
+                </IconButton>
+              </HeaderBarSlotLeft>
+            </HeaderBar>
+
+            <SuccessCheckCircle>
+              <SuccessCheckMark>&#10003;</SuccessCheckMark>
+            </SuccessCheckCircle>
+
+            <SuccessTitle>Transaction sent successfully</SuccessTitle>
+
+            <SuccessContent>
+              <SuccessDetailRow>
+                <SuccessDetailLabel>Transaction Hash</SuccessDetailLabel>
+                <AddressBadge>
+                  <TokenDetailsLink
+                    href={txLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {shortHash}
+                  </TokenDetailsLink>
+                  <AddressCopyButton
+                    onClick={() => copyToClipboard(transferSuccessHash)}
+                  >
+                    {copied ? <CopySuccessIcon /> : <CopyIcon />}
+                  </AddressCopyButton>
+                </AddressBadge>
+              </SuccessDetailRow>
+            </SuccessContent>
+
+            <ButtonAction text="Back to wallet" onClick={handleGoToWallet} />
+          </TokenDetailsContainer>
         </MainStack>
       );
     }
