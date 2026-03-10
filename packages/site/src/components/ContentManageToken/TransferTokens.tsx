@@ -1463,7 +1463,7 @@ export const TransferTokens: React.FC<TransferTokensProps> = React.memo(
         <AccountBox>
           <JazziconComponent address={address} type="from" />
           <AccountDetails>
-            <AccountAddress>{address}</AccountAddress>
+            <AccountAddress>{truncateString(address)}</AccountAddress>
           </AccountDetails>
         </AccountBox>
 
