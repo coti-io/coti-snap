@@ -269,7 +269,6 @@ export const BalanceChange = styled.span`
 
 export const TabsWrapper = styled.div`
   display: flex;
-  border-bottom: 1px solid ${colors.border.primary};
   width: 100%;
   justify-content: center;
 `;

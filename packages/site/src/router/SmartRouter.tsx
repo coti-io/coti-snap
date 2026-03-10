@@ -6,7 +6,6 @@ import { useAccount } from 'wagmi';
 import { Header } from '../components';
 import { ButtonAction } from '../components/Button';
 import { Footer } from '../components/Footer';
-import { Chain } from '../components/Header/Chain';
 import { Loading } from '../components/Loading';
 import {
   ContentBorderWrapper,
@@ -48,19 +47,6 @@ const Container = styled.div`
 const InstallActions = styled.div`
   display: flex;
   justify-content: center;
-`;
-
-const ChainIndicator = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 900;
-
-  @media screen and (max-width: 770px) {
-    display: none;
-  }
 `;
 
 const MobileNoticeIcon = styled.div`
@@ -256,11 +242,6 @@ export function SmartRouter() {
   return (
     <Container>
       <Header />
-      {isConnected && (
-        <ChainIndicator>
-          <Chain />
-        </ChainIndicator>
-      )}
       <Outlet />
       <Footer />
     </Container>

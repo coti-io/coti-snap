@@ -38,7 +38,6 @@ import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useMetaMaskContext } from '../../hooks/MetamaskContext';
 import { useSnap } from '../../hooks/SnapContext';
 import type { ImportedToken } from '../../types/token';
-import { truncateString } from '../../utils';
 import { formatAddressForDisplay } from '../../utils/tokenValidation';
 import { ButtonAction } from '../Button';
 import { DeleteAESKey } from '../ContentManageAESKey/DeleteAESKey';
@@ -140,7 +139,7 @@ const SuccessCheckCircle = styled.div`
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #e8f5e9;
+  background: #d4edda;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,15 +148,15 @@ const SuccessCheckCircle = styled.div`
 
 const SuccessCheckMark = styled.span`
   font-size: 32px;
-  color: #4caf50;
+  color: #28a745 !important;
   line-height: 1;
 `;
 
 const SuccessTitle = styled.p`
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 2rem;
   line-height: 1.45;
-  color: #000000;
+  color: #04133d !important;
   font-weight: 600;
   text-align: center;
 `;
@@ -173,14 +172,14 @@ const SuccessContent = styled.div`
 
 const SuccessDetailRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  width: 100%;
+  gap: 8px;
 `;
 
 const SuccessDetailLabel = styled.span`
   font-size: 1.4rem;
-  color: #6b7280;
+  color: #6b7280 !important;
   font-weight: 500;
 `;
 
@@ -482,7 +481,7 @@ export const ContentManageToken: React.FC<ContentManageTokenProps> = memo(
       return (
         <TransferTokens
           onBack={handleCloseTransfer}
-          address={truncateString(address)}
+          address={address}
           balance={formattedBalance}
           aesKey={currentAESKey}
           initialToken={transferToken}

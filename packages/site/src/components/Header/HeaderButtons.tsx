@@ -1,5 +1,6 @@
 import { useAccount, useConnect } from 'wagmi';
 
+import { Chain } from './Chain';
 import { ConnectedContainer, Link } from './styles';
 import { WalletManager } from './WalletManager';
 import {
@@ -30,7 +31,10 @@ export const HeaderButtons = () => {
   return (
     <ConnectedContainer>
       {isConnected ? (
-        <WalletManager />
+        <>
+          <Chain />
+          <WalletManager />
+        </>
       ) : (
         <>
           {!snapsDetected ? (
