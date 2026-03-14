@@ -44,6 +44,10 @@ const getVersions = () => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    minify: false,
+    sourcemap: true,
+  },
   define: {
     'process.env.VITE_GIT_COMMIT': JSON.stringify(getVersions().gitCommit),
     'process.env.VITE_SNAP_VERSION': JSON.stringify(getVersions().snapVersion),
