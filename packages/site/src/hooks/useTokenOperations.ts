@@ -37,6 +37,10 @@ const MAX_UINT256 = (1n << 256n) - 1n;
 
 const PRIVATE_ERC20_TRANSFER_64 = 'transfer(address,(uint256,bytes))';
 const PRIVATE_ERC20_TRANSFER_256 = 'transfer(address,((uint256,uint256),bytes))';
+/** Fallback gas limit when estimation fails; MPC precompile chain can exceed default estimates. */
+const CONFIDENTIAL_TRANSFER_GAS_LIMIT = 2_000_000n;
+/** Safety buffer on estimated gas (e.g. 105 = 5% extra). */
+const GAS_ESTIMATE_BUFFER_PERCENT = 105n;
 const ETH_SIGN_DISABLED_MESSAGE =
   'Raw signing is unavailable for this wallet. Use the COTI Snap or another signer that supports raw signatures.';
 const SNAP_RAW_SIGN_MESSAGE =
@@ -955,10 +959,20 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               PRIVATE_ERC20_256_ABI,
               signer,
             );
+            let gasLimit: bigint;
+            try {
+              const estimated = await (contract as any)[
+                PRIVATE_ERC20_TRANSFER_256
+              ].estimateGas(to, itUint256);
+              gasLimit = (estimated * GAS_ESTIMATE_BUFFER_PERCENT) / 100n;
+            } catch {
+              gasLimit = CONFIDENTIAL_TRANSFER_GAS_LIMIT;
+            }
             try {
               tx = await (contract as any)[PRIVATE_ERC20_TRANSFER_256](
                 to,
                 itUint256,
+                { gasLimit },
               );
             } catch (sendError) {
               console.error(
@@ -975,7 +989,19 @@ export const useTokenOperations = (provider: BrowserProvider) => {
               tokenAddress,
               getSelector(selector),
             )) as itUint;
-            tx = await (contract as any)[selector](to, encryptedAmount);
+            let gasLimit: bigint;
+            try {
+              const estimated = await (contract as any)[selector].estimateGas(
+                to,
+                encryptedAmount,
+              );
+              gasLimit = (estimated * GAS_ESTIMATE_BUFFER_PERCENT) / 100n;
+            } catch {
+              gasLimit = CONFIDENTIAL_TRANSFER_GAS_LIMIT;
+            }
+            tx = await (contract as any)[selector](to, encryptedAmount, {
+              gasLimit,
+            });
           }
         } else {
           const contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
