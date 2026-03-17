@@ -613,6 +613,30 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         const chainId = params.chainId ?? identifier.chainId;
         const wallet = deriveSnapWallet(aesKey, identifier.address, chainId);
 
+        const confirm = await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'confirmation',
+            content: (
+              <Box>
+                <Heading>Build private amount transfer?</Heading>
+                <Text>
+                  This will use your AES security key to sign an encrypted amount
+                  for contract: {truncateAddress(params.tokenAddress)}
+                  </Text>
+                  <Text>Amount (wei): {String(params.value)}</Text>
+                  <Text>Function selector: {params.functionSelector}</Text>
+                  <Text>Request origin: {requestingOrigin}</Text>
+                  <Text>Wallet address: {truncateAddress(wallet.address)}</Text>
+              </Box>
+            ),
+          },
+        });
+
+        if (!confirm) {
+          return null;
+        }
+
         const itUint256 = buildItUint256(
           BigInt(params.value),
           aesKey,
