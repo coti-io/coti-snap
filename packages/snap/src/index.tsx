@@ -687,24 +687,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       };
     }
 
-    case 'debug-state':
-      const allState = await snap.request({
-        method: 'snap_manageState',
-        params: { operation: 'get' },
-      });
-      const debugChainIdHex = (await ethereum.request({
-        method: 'eth_chainId',
-      })) as string;
-      const debugChainId = parseInt(debugChainIdHex, 16).toString();
-      const debugExpectedEnv = await getExpectedEnvironment();
-      return {
-        currentChainId: debugChainId,
-        currentChainIdHex: debugChainIdHex,
-        expectedEnvironment: debugExpectedEnv,
-        storedChainIds: allState ? Object.keys(allState as object) : [],
-        fullState: allState,
-      };
-
     case 'has-aes-key':
       const hasKeyParams = request.params as { chainId?: string } | undefined;
       const requestedChainId = hasKeyParams?.chainId;
