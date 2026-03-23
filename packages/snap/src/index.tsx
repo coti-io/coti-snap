@@ -1042,6 +1042,28 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           tokenId,
         } = importParams;
 
+        const confirmImportToken = await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'confirmation',
+            content: (
+              <Box>
+                <Heading>Import token?</Heading>
+                <Text>Address: {tokenAddress}</Text>
+                <Text>Name: {tokenName}</Text>
+                <Text>Symbol: {tokenSymbol}</Text>
+                <Text>Type: {tokenType}</Text>
+                {tokenId ? <Text>Token ID: {tokenId}</Text> : null}
+                <Text>Request origin: {requestingOrigin}</Text>
+              </Box>
+            ),
+          },
+        });
+
+        if (!confirmImportToken) {
+          return { success: false, rejected: true };
+        }
+
         if (tokenType === 'ERC20') {
           const isUnique = await checkIfERC20Unique(tokenAddress);
           if (!isUnique) {
@@ -1082,6 +1104,37 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
         if (!hideParams || !hideParams.address) {
           return { success: false, error: 'Missing token address' };
+        }
+
+        const tokenToHide = getState.tokenBalances?.find(
+          (token) =>
+            token.address.toLowerCase() === hideParams.address.toLowerCase() &&
+            (hideParams.tokenId ? token.tokenId === hideParams.tokenId : true),
+        );
+        const hideTokenName = tokenToHide?.name || 'Unknown token';
+        const hideTokenSymbol = tokenToHide?.symbol || 'Unknown symbol';
+
+        const confirmHideToken = await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'confirmation',
+            content: (
+              <Box>
+                <Heading>Hide token?</Heading>
+                <Text>Address: {hideParams.address}</Text>
+                <Text>Name: {hideTokenName}</Text>
+                <Text>Symbol: {hideTokenSymbol}</Text>
+                {hideParams.tokenId ? (
+                  <Text>Token ID: {hideParams.tokenId}</Text>
+                ) : null}
+                <Text>Request origin: {requestingOrigin}</Text>
+              </Box>
+            ),
+          },
+        });
+
+        if (!confirmHideToken) {
+          return { success: false, rejected: true };
         }
 
         await hideToken(hideParams.address, hideParams.tokenId);
