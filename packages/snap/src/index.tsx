@@ -72,6 +72,14 @@ export const returnToHomePage = async (id: string) => {
 const isHex32 = (value: string): boolean =>
   /^0x[0-9a-fA-F]{64}$/.test(value);
 
+const isAes128HexKey = (value: string): boolean =>
+  /^[0-9a-fA-F]{32}$/.test(value);
+
+const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
+  'https://metamask.coti.io',
+  'https://dev.metamask.coti.io',
+]);
+
 const normalizeHex = (value: string): string =>
   value.startsWith('0x') ? value : `0x${value}`;
 
@@ -815,6 +823,25 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'set-aes-key':
+      if (!SET_AES_KEY_ALLOWED_ORIGINS.has(requestingOrigin)) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: (
+              <Box>
+                <Heading>Request Not Allowed</Heading>
+                <Text>
+                  This app is not authorized to update your AES key.
+                </Text>
+                <Text>Request origin: {requestingOrigin}</Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
       const { newUserAesKey, chainId: setChainId } = request.params as {
         newUserAesKey: string;
         chainId?: string;
@@ -832,6 +859,49 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             ),
           },
         });
+        return null;
+      }
+
+      if (!isAes128HexKey(newUserAesKey)) {
+        await snap.request({
+          method: 'snap_dialog',
+          params: {
+            type: 'alert',
+            content: (
+              <Box>
+                <Heading>Error</Heading>
+                <Text>Invalid AES key format.</Text>
+                <Text>
+                  The key must be exactly 32 hexadecimal characters (16 bytes).
+                </Text>
+              </Box>
+            ),
+          },
+        });
+        return null;
+      }
+
+      const confirmSetAesKey = await snap.request({
+        method: 'snap_dialog',
+        params: {
+          type: 'confirmation',
+          content: (
+            <Box>
+              <Heading>Replace AES Key</Heading>
+              <Text>
+                Approving this request will replace your current AES key.
+              </Text>
+              <Text>
+                This can make previously encrypted balances unreadable until the
+                original key is restored.
+              </Text>
+              <Text>Request origin: {requestingOrigin}</Text>
+            </Box>
+          ),
+        },
+      });
+
+      if (!confirmSetAesKey) {
         return null;
       }
 
