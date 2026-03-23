@@ -72,6 +72,9 @@ export const returnToHomePage = async (id: string) => {
 const isHex32 = (value: string): boolean =>
   /^0x[0-9a-fA-F]{64}$/.test(value);
 
+const isBytes4Hex = (value: string): boolean =>
+  /^0x[0-9a-fA-F]{8}$/.test(value);
+
 const isAes128HexKey = (value: string): boolean =>
   /^[0-9a-fA-F]{32}$/.test(value);
 
@@ -82,6 +85,14 @@ const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
 
 const normalizeHex = (value: string): string =>
   value.startsWith('0x') ? value : `0x${value}`;
+
+const ALLOWED_RAW_SIGN_FUNCTION_SELECTORS = new Set<string>([
+  ethers.id('transfer(address,(uint256,bytes))').slice(0, 10).toLowerCase(),
+  ethers
+    .id('transfer(address,((uint256,uint256),bytes))')
+    .slice(0, 10)
+    .toLowerCase(),
+]);
 
 const buildRawSignature = (privateKey: string, digest: string): string => {
   const key = new ethers.SigningKey(normalizeHex(privateKey));
@@ -666,10 +677,17 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         | {
             messageHex?: string;
             signerAddress?: string;
+            context?: {
+              operation?: string;
+              tokenAddress?: string;
+              functionSelector?: string;
+              chainId?: string;
+              purpose?: string;
+            };
           }
         | undefined;
 
-      if (!params?.messageHex) {
+      if (!params?.messageHex || !params.context) {
         return null;
       }
 
@@ -679,27 +697,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       }
 
       const identifier = await getStateIdentifier({ requestAccounts: true });
-      const signerAddress = params.signerAddress ?? identifier.address;
-
-      const confirm = await snap.request({
-        method: 'snap_dialog',
-        params: {
-          type: 'confirmation',
-          content: (
-            <Box>
-              <Heading>Sign raw 32-byte digest?</Heading>
-              <Text>Signer: {signerAddress}</Text>
-              <Text>Digest: {digest}</Text>
-              <Text>Request origin: {requestingOrigin}</Text>
-            </Box>
-          ),
-        },
-      });
-
-      if (!confirm) {
-        return null;
-      }
-
       const state = await getStateByChainIdAndAddress(identifier.chainId);
       const aesKey = state.aesKey;
       if (!aesKey) {
@@ -711,6 +708,58 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         identifier.address,
         identifier.chainId,
       );
+
+      if (
+        params.signerAddress &&
+        params.signerAddress.toLowerCase() !== wallet.address.toLowerCase()
+      ) {
+        throw new Error('signerAddress does not match snap-derived signer.');
+      }
+
+      const context = params.context;
+      const normalizedSelector = normalizeHex(
+        context.functionSelector ?? '',
+      ).toLowerCase();
+
+      if (context.operation !== 'confidential-erc20-transfer') {
+        throw new Error('Unsupported raw-sign operation.');
+      }
+      if (!context.tokenAddress || !ethers.isAddress(context.tokenAddress)) {
+        throw new Error('context.tokenAddress must be a valid address.');
+      }
+      if (!isBytes4Hex(normalizedSelector)) {
+        throw new Error('context.functionSelector must be a 4-byte hex value.');
+      }
+      if (!ALLOWED_RAW_SIGN_FUNCTION_SELECTORS.has(normalizedSelector)) {
+        throw new Error('context.functionSelector is not permitted.');
+      }
+      if (context.chainId && context.chainId !== identifier.chainId) {
+        throw new Error('context.chainId does not match active chainId.');
+      }
+
+      const confirm = await snap.request({
+        method: 'snap_dialog',
+        params: {
+          type: 'confirmation',
+          content: (
+            <Box>
+              <Heading>Approve confidential transfer signature?</Heading>
+              <Text>Operation: {context.operation}</Text>
+              <Text>Purpose: {context.purpose ?? 'Not provided'}</Text>
+              <Text>Token contract: {truncateAddress(context.tokenAddress)}</Text>
+              <Text>Function selector: {normalizedSelector}</Text>
+              <Text>Signer wallet: {truncateAddress(wallet.address)}</Text>
+              <Text>Chain ID: {identifier.chainId}</Text>
+              <Text>Digest (advanced): {digest}</Text>
+              <Text>Request origin: {requestingOrigin}</Text>
+            </Box>
+          ),
+        },
+      });
+
+      if (!confirm) {
+        return null;
+      }
 
       const signature = buildRawSignature(wallet.privateKey, digest);
       return {
