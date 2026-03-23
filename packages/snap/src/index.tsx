@@ -757,8 +757,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
             type: 'confirmation',
             content: (
               <Box>
-                <Heading>Unlock Security Key</Heading>
-                <Text>Approve to unlock your security key</Text>
+                <Heading>Share Raw AES Encryption Key</Heading>
+                <Text>
+                  This will share your raw AES encryption key with the
+                  requesting website.
+                </Text>
+                <Text>
+                  This key can decrypt all your confidential balances and
+                  transactions.
+                </Text>
                 <Text>Request origin: {requestingOrigin}</Text>
               </Box>
             ),
