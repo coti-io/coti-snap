@@ -86,6 +86,43 @@ const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
 const normalizeHex = (value: string): string =>
   value.startsWith('0x') ? value : `0x${value}`;
 
+type EncryptedPayload = {
+  ciphertext: Record<string, number>;
+  r: Record<string, number>;
+};
+
+const isByteRecord = (value: unknown): value is Record<string, number> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every(
+    (item) =>
+      typeof item === 'number' &&
+      Number.isInteger(item) &&
+      item >= 0 &&
+      item <= 255,
+  );
+};
+
+const parseEncryptedPayload = (encryptedValue: string): EncryptedPayload => {
+  try {
+    const parsed = JSON.parse(encryptedValue) as Partial<EncryptedPayload>;
+    if (!isByteRecord(parsed.ciphertext) || !isByteRecord(parsed.r)) {
+      throw new Error();
+    }
+
+    return {
+      ciphertext: parsed.ciphertext,
+      r: parsed.r,
+    };
+  } catch {
+    throw new Error(
+      'Invalid encrypted payload. Expected JSON with ciphertext and r byte maps.',
+    );
+  }
+};
+
 const ALLOWED_RAW_SIGN_FUNCTION_SELECTORS = new Set<string>([
   ethers.id('transfer(address,(uint256,bytes))').slice(0, 10).toLowerCase(),
   ethers
@@ -562,10 +599,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const { ciphertext, r } = JSON.parse(encryptedValue) as {
-        ciphertext: { [key: string]: number };
-        r: { [key: string]: number };
-      };
+      const { ciphertext, r } = parseEncryptedPayload(encryptedValue);
 
       if (!getState.aesKey) {
         await snap.request({
