@@ -396,7 +396,7 @@ export const onUserInput: OnUserInputHandler = async ({ id, event }) => {
           if (
             !erc20formState ||
             !erc20formState['erc20-address'] ||
-            erc20formState['erc20-address'].toString().length !== 42 ||
+            !ethers.isAddress(erc20formState['erc20-address'].toString()) ||
             !erc20formState['erc20-decimals'] ||
             !erc20formState['erc20-name'] ||
             !erc20formState['erc20-symbol']
