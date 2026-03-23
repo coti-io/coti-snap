@@ -1,18 +1,36 @@
-import { decrypt, encodeKey } from '@coti-io/coti-sdk-typescript';
+import {
+  decrypt,
+  encodeKey,
+  encrypt,
+  encodeString,
+} from '@coti-io/coti-sdk-typescript';
 import { installSnap } from '@metamask/snaps-jest';
 import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
 
+const AUTHORIZED_SET_KEY_ORIGIN = 'https://metamask.coti.io';
+const TEST_AES_KEY = '00112233445566778899aabbccddeeff';
+
+const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) => {
+  const response = request({
+    method: 'set-aes-key',
+    params: { newUserAesKey: aesKey },
+    origin: AUTHORIZED_SET_KEY_ORIGIN,
+  });
+
+  const ui = (await response.getInterface()) as SnapConfirmationInterface;
+  expect(ui.type).toBe('confirmation');
+  await ui.ok();
+  await response;
+};
+
 describe('onRpcRequest', () => {
   it('handles encryption with a valid AES key', async () => {
     const { request } = await installSnap();
-    const aesKey = 'test-aes-key';
+    const aesKey = TEST_AES_KEY;
     const origin = 'https://example-dapp.io';
 
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request, aesKey);
 
     const textToEncrypt = 'Hello, encrypt!';
     const response = request({
@@ -52,17 +70,14 @@ describe('onRpcRequest', () => {
 
   it('handles decryption with a valid AES key', async () => {
     const { request } = await installSnap();
-    const aesKey = 'test-aes-key';
+    const aesKey = TEST_AES_KEY;
     const origin = 'https://example-dapp.io';
 
-    // encrypted string of "Hello, encrypt!"
-    const encryptedValue = `{"ciphertext":{"0":200,"1":164,"2":9,"3":14,"4":128,"5":3,"6":140,"7":76,"8":179,"9":61,"10":14,"11":109,"12":166,"13":242,"14":167,"15":210},"r":{"0":255,"1":18,"2":79,"3":60,"4":244,"5":42,"6":201,"7":192,"8":146,"9":103,"10":201,"11":91,"12":51,"13":91,"14":169,"15":84}}`;
+    const encryptedValue = JSON.stringify(
+      encrypt(encodeKey(aesKey), encodeString('Hello, encrypt!')),
+    );
 
-    // Ensure the AES key is set
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request, aesKey);
 
     const response = request({
       method: 'decrypt',
@@ -119,13 +134,10 @@ describe('onRpcRequest', () => {
 
   it('handles fetching the AES key', async () => {
     const { request } = await installSnap();
-    const aesKey = 'test-aes-key';
+    const aesKey = TEST_AES_KEY;
     const origin = 'https://example-dapp.io';
 
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request, aesKey);
 
     const response = request({
       method: 'get-aes-key',
@@ -136,8 +148,14 @@ describe('onRpcRequest', () => {
     expect(ui.type).toBe('confirmation');
     expect(ui).toRender(
       <Box>
-        <Heading>Unlock Security Key</Heading>
-        <Text>Approve to unlock your security key</Text>
+        <Heading>Share Raw AES Encryption Key</Heading>
+        <Text>
+          This will share your raw AES encryption key with the requesting
+          website.
+        </Text>
+        <Text>
+          This key can decrypt all your confidential balances and transactions.
+        </Text>
         <Text>Request origin: {origin}</Text>
       </Box>,
     );
@@ -171,11 +189,7 @@ describe('onRpcRequest', () => {
 
     expect(responseWithoutKey).toRespondWith(false);
 
-    const aesKey = 'test-aes-key';
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request);
 
     const responseWithKey = await request({
       method: 'has-aes-key',
@@ -186,13 +200,10 @@ describe('onRpcRequest', () => {
 
   it('deletes AES key with user confirmation', async () => {
     const { request } = await installSnap();
-    const aesKey = 'my-aes-key';
+    const aesKey = TEST_AES_KEY;
     const origin = 'https://example-dapp.io';
 
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request, aesKey);
 
     const hasKeyBefore = await request({
       method: 'has-aes-key',
@@ -249,12 +260,7 @@ describe('onRpcRequest', () => {
 
   it('handles user rejection when deleting AES key', async () => {
     const { request } = await installSnap();
-    const aesKey = 'test-aes-key';
-
-    await request({
-      method: 'set-aes-key',
-      params: { newUserAesKey: aesKey },
-    });
+    await setAesKeyWithConfirmation(request);
 
     const deleteResponse = request({
       method: 'delete-aes-key',
