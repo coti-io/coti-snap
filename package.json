@@ -74,9 +74,13 @@
   "resolutions": {
     "h3": "^1.15.5",
     "fast-xml-parser": "^5.3.6",
+    "preact": "^10.29.0",
+    "flatted": "^3.4.2",
+    "minimatch": "^9.0.5",
+    "serialize-javascript": "^7.0.4",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@lavamoat/allow-scripts/@npmcli/run-script": "9.0.2",
-    "tar": "7.5.7"
+    "tar": "7.5.13"
   }
 }
