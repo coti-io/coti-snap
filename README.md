@@ -4,11 +4,6 @@
 [![image](https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white)](https://twitter.coti.io)
 [![image](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.coti.io)
 
-<p align="center">
-    <img src="packages/snap/images/logo.svg" alt="COTI Snap" height="140">
-    <br>
-</p>
-
 # COTI Snap
 
 [![MetaMask Snap](https://img.shields.io/badge/MetaMask-Snap-orange?style=for-the-badge&logo=metamask&logoColor=white)](https://snaps.metamask.io/)
