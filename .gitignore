@@ -78,3 +78,8 @@ node_modules/
 .pnp.*
 
 .idea/
+
+# Local overrides
+packages/site/src/hooks/SnapContext.tsx
+packages/site/src/router/SmartRouter.tsx
+packages/snap/snap.config.ts
