@@ -1,0 +1,9 @@
+Changed files compared to main HEAD
+=====================================
+
+Modified:
+  packages/site/src/hooks/SnapContext.tsx
+  packages/snap/snap.config.ts
+
+Untracked:
+  packages/site/src/assets/icons/tokens/

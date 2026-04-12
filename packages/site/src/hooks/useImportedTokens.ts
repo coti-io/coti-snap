@@ -20,8 +20,10 @@ import {
   getEnvironmentForChain,
   isSupportedChainId,
 } from '../config/networks';
+import { PRELOADED_TOKENS } from '../constants/preloadedTokens';
+import type { PreloadedToken } from '../constants/preloadedTokens';;
 
-export const useImportedTokens = () => {
+export const useImportedTokens = (preloadedTokens?: PreloadedToken[]) => {
   const { address, chain } = useAccount();
   const chainId = chain?.id;
   const [importedTokens, setImportedTokensState] = useState<ImportedToken[]>(
@@ -34,8 +36,16 @@ export const useImportedTokens = () => {
   const loadTokens = useCallback(() => {
     try {
       if (address && chainId) {
-        const tokens = getImportedTokensByAccount(address, chainId);
-        setImportedTokensState(tokens);
+        const userTokens = getImportedTokensByAccount(address, chainId);
+        const preloaded = preloadedTokens ?? PRELOADED_TOKENS[chainId] ?? [];
+        // Merge: preloaded tokens first, then user-imported ones not already in preloaded list
+        const preloadedAddresses = new Set(
+          preloaded.map((t) => t.address.toLowerCase()),
+        );
+        const extraUserTokens = userTokens.filter(
+          (t) => !preloadedAddresses.has(t.address.toLowerCase()),
+        );
+        setImportedTokensState([...preloaded, ...extraUserTokens]);
       } else {
         setImportedTokensState([]);
       }
@@ -45,7 +55,7 @@ export const useImportedTokens = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [address, chainId]);
+  }, [address, chainId, preloadedTokens]);
 
   const syncFromSnap = useCallback(async () => {
     if (!address || !chainId) {
@@ -292,12 +302,19 @@ export const useImportedTokens = () => {
     }
 
     try {
-      const tokens = getImportedTokensByAccount(address, chainId);
-      setImportedTokensState(tokens);
+      const userTokens = getImportedTokensByAccount(address, chainId);
+      const preloaded = preloadedTokens ?? PRELOADED_TOKENS[chainId] ?? [];
+      const preloadedAddresses = new Set(
+        preloaded.map((t) => t.address.toLowerCase()),
+      );
+      const extraUserTokens = userTokens.filter(
+        (t) => !preloadedAddresses.has(t.address.toLowerCase()),
+      );
+      setImportedTokensState([...preloaded, ...extraUserTokens]);
     } catch (error) {
       void error;
     }
-  }, [address, chainId]);
+  }, [address, chainId, preloadedTokens]);
 
   const getERC20TokensList = useCallback(() => {
     if (!address || !chainId) {
