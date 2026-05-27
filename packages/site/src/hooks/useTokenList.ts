@@ -5,14 +5,15 @@ import {
   COTI_MAINNET_CHAIN_ID,
   COTI_TESTNET_CHAIN_ID,
 } from '../config/wagmi';
-import { PRELOADED_TOKENS } from '../constants/preloadedTokens';
-import type { PreloadedToken } from '../constants/preloadedTokens';
+import type { ImportedToken } from '../types/token';
+
+export type PreloadedToken = ImportedToken;
 
 const TOKEN_LIST_URLS: Record<number, string> = {
   [COTI_MAINNET_CHAIN_ID]:
-    'https://raw.githubusercontent.com/coti-io/coti-token-list/refs/heads/coti-mainnet/CotiTokenList.json',
+    'https://raw.githubusercontent.com/coti-io/coti-token-list/refs/heads/coti-mainnet/coti_tokens.json',
   [COTI_TESTNET_CHAIN_ID]:
-    'https://raw.githubusercontent.com/coti-io/coti-token-list/refs/heads/coti-testnet/CotiTokenList.json',
+    'https://raw.githubusercontent.com/coti-io/coti-token-list/refs/heads/coti-testnet/coti_tokens.json',
 };
 
 type RemoteToken = {
@@ -22,33 +23,24 @@ type RemoteToken = {
   symbol: string;
   decimals: number;
   logoURI: string;
+  private?: boolean;
 };
 
 type TokenListResponse = {
   tokens: RemoteToken[];
 };
 
-// Symbols we have local SVG icons for (normalised to uppercase, no dots/underscores)
-const LOCAL_ICON_SYMBOLS = new Set([
-  'WETH', 'WBTC', 'USDT', 'USDCE', 'WADA', 'GCOTI', 'COTI',
-]);
-
-function normaliseSymbol(symbol: string): string {
-  return symbol.replace(/^p\./i, '').toUpperCase().replace(/[._]/g, '');
-}
-
 function remoteToPreloaded(token: RemoteToken): PreloadedToken {
-  const isPrivate = token.symbol.toLowerCase().startsWith('p.');
-  const hasLocalIcon = LOCAL_ICON_SYMBOLS.has(normaliseSymbol(token.symbol));
+  const isPrivate = token.private === true;
   return {
     address: token.address,
     name: token.name,
     symbol: token.symbol,
     decimals: token.decimals,
     type: 'ERC20',
+    logoURI: token.logoURI,
     ...(isPrivate && { isPrivate: true }),
-    ...(!hasLocalIcon && { logoURI: token.logoURI }),
-  } as PreloadedToken;
+  };
 }
 
 export const useTokenList = (): PreloadedToken[] => {
@@ -84,7 +76,7 @@ export const useTokenList = (): PreloadedToken[] => {
           setTokens((prev) => ({ ...prev, [chainId]: fetched }));
         }
       } catch {
-        // silently fall back to static list
+        // If fetch fails, tokens remain empty
       }
     };
 
@@ -94,9 +86,5 @@ export const useTokenList = (): PreloadedToken[] => {
     };
   }, [chainId, tokens]);
 
-  if (chainId && tokens[chainId]) {
-    return tokens[chainId];
-  }
-
-  return PRELOADED_TOKENS[chainId ?? 0] ?? [];
+  return (chainId && tokens[chainId]) ? tokens[chainId] : [];
 };

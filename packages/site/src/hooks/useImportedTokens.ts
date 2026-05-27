@@ -20,8 +20,7 @@ import {
   getEnvironmentForChain,
   isSupportedChainId,
 } from '../config/networks';
-import { PRELOADED_TOKENS } from '../constants/preloadedTokens';
-import type { PreloadedToken } from '../constants/preloadedTokens';;
+import type { PreloadedToken } from './useTokenList';
 
 export const useImportedTokens = (preloadedTokens?: PreloadedToken[]) => {
   const { address, chain } = useAccount();
@@ -37,7 +36,7 @@ export const useImportedTokens = (preloadedTokens?: PreloadedToken[]) => {
     try {
       if (address && chainId) {
         const userTokens = getImportedTokensByAccount(address, chainId);
-        const preloaded = preloadedTokens ?? PRELOADED_TOKENS[chainId] ?? [];
+        const preloaded = preloadedTokens ?? [];
         // Merge: preloaded tokens first, then user-imported ones not already in preloaded list
         const preloadedAddresses = new Set(
           preloaded.map((t) => t.address.toLowerCase()),
@@ -303,7 +302,7 @@ export const useImportedTokens = (preloadedTokens?: PreloadedToken[]) => {
 
     try {
       const userTokens = getImportedTokensByAccount(address, chainId);
-      const preloaded = preloadedTokens ?? PRELOADED_TOKENS[chainId] ?? [];
+      const preloaded = preloadedTokens ?? [];
       const preloadedAddresses = new Set(
         preloaded.map((t) => t.address.toLowerCase()),
       );
