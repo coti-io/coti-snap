@@ -1,5 +1,6 @@
 import {
   decrypt,
+  decryptUint,
   decryptUint256,
   encodeKey,
   encrypt,
@@ -120,6 +121,47 @@ describe('onRpcRequest', () => {
           TEST_AES_KEY,
         ),
       ).toBe(100000000n);
+    });
+
+    it('encrypts and decrypts typed uint64 values', async () => {
+      const { request } = await installSnap();
+      await setAesKeyWithConfirmation(request, TEST_AES_KEY);
+
+      const encryptResponse = await request({
+        method: 'encrypt',
+        params: {
+          type: 'uint64',
+          value: '42',
+        },
+      });
+
+      const { result: encrypted } = encryptResponse.response as { result: string };
+      expect(encrypted).toEqual(expect.any(String));
+      expect(decryptUint(BigInt(encrypted), TEST_AES_KEY)).toBe(42n);
+
+      const decryptResponse = await request({
+        method: 'decrypt',
+        params: {
+          type: 'ctUint64',
+          value: encrypted,
+        },
+      });
+
+      expect(decryptResponse).toRespondWith('42');
+    });
+
+    it('returns null for typed encrypt when AES key is missing', async () => {
+      const { request } = await installSnap();
+
+      const response = await request({
+        method: 'encrypt',
+        params: {
+          type: 'uint256',
+          values: ['1', '2'],
+        },
+      });
+
+      expect(response).toRespondWith([null, null]);
     });
 
     it('encrypts typed uint256 arrays', async () => {
@@ -378,6 +420,71 @@ describe('onRpcRequest', () => {
     });
 
     expect(responseWithKey).toRespondWith(true);
+  });
+
+  it('rejects set-aes-key from unauthorized origins', async () => {
+    const { request } = await installSnap();
+
+    const response = request({
+      method: 'set-aes-key',
+      params: { newUserAesKey: TEST_AES_KEY },
+      origin: 'http://localhost:8000',
+    });
+
+    const ui = (await response.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('alert');
+    expect(ui).toRender(
+      <Box>
+        <Heading>Request Not Allowed</Heading>
+        <Text>This app is not authorized to update your AES key.</Text>
+        <Text>
+          Request origin: {'http://localhost:8000'}
+        </Text>
+      </Box>,
+    );
+
+    await ui.ok();
+    const rpcResponse = await response;
+    expect(rpcResponse).toRespondWith(null);
+  });
+
+  it('builds itUint256 after confirmation', async () => {
+    const { request } = await installSnap();
+    await setAesKeyWithConfirmation(request, TEST_AES_KEY);
+
+    const response = request({
+      method: 'build-it-uint256',
+      params: {
+        value: '100000000',
+        tokenAddress: '0xcEF137E96eDF68EE99D4CdEa7085f154d74895cD',
+        functionSelector: '0xa9059cbb',
+      },
+      origin: 'https://example-dapp.io',
+    });
+
+    const ui = (await response.getInterface()) as SnapConfirmationInterface;
+    expect(ui.type).toBe('confirmation');
+    await ui.ok();
+
+    const rpcResponse = await response;
+    const { result } = rpcResponse.response as {
+      result: {
+        value: {
+          ciphertext: {
+            high: { high: string; low: string };
+            low: { high: string; low: string };
+          };
+          signature: [[string, string], [string, string]];
+        };
+      };
+    };
+
+    expect(result.value.ciphertext.high.high).toEqual(expect.any(String));
+    expect(result.value.ciphertext.high.low).toEqual(expect.any(String));
+    expect(result.value.ciphertext.low.high).toEqual(expect.any(String));
+    expect(result.value.ciphertext.low.low).toEqual(expect.any(String));
+    expect(result.value.signature[0][0]).toMatch(/^0x[0-9a-f]+$/u);
+    expect(result.value.signature[1][1]).toMatch(/^0x[0-9a-f]+$/u);
   });
 
   it('deletes AES key with user confirmation', async () => {
