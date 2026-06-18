@@ -1,5 +1,6 @@
 import {
   decrypt,
+  decryptUint256,
   encodeKey,
   encrypt,
   encodeString,
@@ -7,23 +8,22 @@ import {
 import { installSnap } from '@metamask/snaps-jest';
 import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import { normalizeBalancePayload } from '../index';
+import { normalizeCtPayload } from '../index';
 
 const AUTHORIZED_SET_KEY_ORIGIN = 'https://metamask.coti.io';
 const TEST_AES_KEY = '00112233445566778899aabbccddeeff';
-const TESTNET_DECRYPT_BALANCE_FIXTURE = {
-  aesKey: process.env.TESTNET_DECRYPT_BALANCE_AES_KEY,
-  expected: process.env.TESTNET_DECRYPT_BALANCE_EXPECTED,
-  ciphertextHigh: process.env.TESTNET_DECRYPT_BALANCE_HIGH,
-  ciphertextLow: process.env.TESTNET_DECRYPT_BALANCE_LOW,
-  decimals: process.env.TESTNET_DECRYPT_BALANCE_DECIMALS ?? '18',
-  chainId: process.env.TESTNET_DECRYPT_BALANCE_CHAIN_ID,
+const TESTNET_CTUINT256_FIXTURE = {
+  aesKey: process.env.TESTNET_CTUINT256_AES_KEY,
+  expected: process.env.TESTNET_CTUINT256_EXPECTED,
+  ciphertextHigh: process.env.TESTNET_CTUINT256_HIGH,
+  ciphertextLow: process.env.TESTNET_CTUINT256_LOW,
+  chainId: process.env.TESTNET_CTUINT256_CHAIN_ID,
 };
-const hasTestnetDecryptBalanceFixture = Boolean(
-  TESTNET_DECRYPT_BALANCE_FIXTURE.aesKey &&
-    TESTNET_DECRYPT_BALANCE_FIXTURE.expected &&
-    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextHigh &&
-    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextLow,
+const hasTestnetCtUint256Fixture = Boolean(
+  TESTNET_CTUINT256_FIXTURE.aesKey &&
+    TESTNET_CTUINT256_FIXTURE.expected &&
+    TESTNET_CTUINT256_FIXTURE.ciphertextHigh &&
+    TESTNET_CTUINT256_FIXTURE.ciphertextLow,
 );
 
 const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) => {
@@ -40,54 +40,34 @@ const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) =>
 };
 
 describe('onRpcRequest', () => {
-  describe('decrypt-balance', () => {
-    it('normalizes 64-bit, flat 256-bit, and nested 256-bit payloads', () => {
-      expect(normalizeBalancePayload('123', 64)).toBe(123n);
+  describe('typed encrypt/decrypt', () => {
+    it('normalizes ctUint64 and ctUint256 payloads', () => {
+      expect(normalizeCtPayload('123', 'ctUint64')).toBe(123n);
 
       expect(
-        normalizeBalancePayload(
+        normalizeCtPayload(
           { ciphertextHigh: '1', ciphertextLow: '2' },
-          256,
+          'ctUint256',
         ),
       ).toEqual({ ciphertextHigh: 1n, ciphertextLow: 2n });
-
-      expect(
-        normalizeBalancePayload(
-          {
-            high: { high: '1', low: '2' },
-            low: { high: '3', low: '4' },
-          },
-          256,
-        ),
-      ).toEqual({
-        high: { high: 1n, low: 2n },
-        low: { high: 3n, low: 4n },
-      });
     });
 
-    it('rejects malformed 256-bit payloads during normalization', () => {
-      expect(() => normalizeBalancePayload({} as any, 256)).toThrow(
-        'Invalid 256-bit balance payload.',
+    it('rejects malformed ctUint256 payloads during normalization', () => {
+      expect(() => normalizeCtPayload({} as any, 'ctUint256')).toThrow(
+        'Invalid ctUint256 payload.',
       );
     });
 
-    it('returns null for each balance when AES key is missing', async () => {
+    it('returns null for each typed decrypt value when AES key is missing', async () => {
       const { request } = await installSnap();
 
       const response = await request({
-        method: 'decrypt-balance',
+        method: 'decrypt',
         params: {
-          balances: [
-            {
-              balance: { ciphertextHigh: '1', ciphertextLow: '2' },
-              variant: 256,
-              decimals: 18,
-            },
-            {
-              balance: '3',
-              variant: 64,
-              decimals: 18,
-            },
+          type: 'ctUint256',
+          values: [
+            { ciphertextHigh: '1', ciphertextLow: '2' },
+            { ciphertextHigh: '3', ciphertextLow: '4' },
           ],
         },
       });
@@ -95,79 +75,134 @@ describe('onRpcRequest', () => {
       expect(response).toRespondWith([null, null]);
     });
 
-    it('returns null for malformed entries without prompting', async () => {
+    it('returns null for malformed typed decrypt entries without prompting', async () => {
       const { request } = await installSnap();
       await setAesKeyWithConfirmation(request);
 
       const response = await request({
-        method: 'decrypt-balance',
+        method: 'decrypt',
         params: {
-          balances: [
-            {
-              balance: { invalid: 'shape' },
-              variant: 256,
-              decimals: 18,
-            },
-          ],
+          type: 'ctUint256',
+          values: [{ invalid: 'shape' }],
         },
       });
 
       expect(response).toRespondWith([null]);
     });
 
-    it('returns null for invalid balance variants', async () => {
+    it('encrypts a typed uint256 value without exposing the AES key', async () => {
       const { request } = await installSnap();
-      await setAesKeyWithConfirmation(request);
+      await setAesKeyWithConfirmation(request, TEST_AES_KEY);
 
       const response = await request({
-        method: 'decrypt-balance',
+        method: 'encrypt',
         params: {
-          balances: [
-            {
-              balance: '1',
-              variant: 128,
-              decimals: 18,
-            },
-          ],
+          type: 'uint256',
+          value: '100000000',
         },
       });
 
-      expect(response).toRespondWith([null]);
+      const { result } = response.response as {
+        result: {
+          ciphertextHigh: string;
+          ciphertextLow: string;
+        };
+      };
+
+      expect(result.ciphertextHigh).toEqual(expect.any(String));
+      expect(result.ciphertextLow).toEqual(expect.any(String));
+      expect(
+        decryptUint256(
+          {
+            ciphertextHigh: BigInt(result.ciphertextHigh),
+            ciphertextLow: BigInt(result.ciphertextLow),
+          },
+          TEST_AES_KEY,
+        ),
+      ).toBe(100000000n);
     });
 
-    (hasTestnetDecryptBalanceFixture ? it : it.skip)(
-      'decrypts a captured COTI testnet private balance fixture',
+    it('encrypts typed uint256 arrays', async () => {
+      const { request } = await installSnap();
+      await setAesKeyWithConfirmation(request, TEST_AES_KEY);
+
+      const response = await request({
+        method: 'encrypt',
+        params: {
+          type: 'uint256',
+          values: ['1', '2'],
+        },
+      });
+
+      const { result } = response.response as {
+        result: Array<{
+          ciphertextHigh: string;
+          ciphertextLow: string;
+        }>;
+      };
+
+      expect(result).toHaveLength(2);
+      expect(
+        decryptUint256(
+          {
+            ciphertextHigh: BigInt(result[0]!.ciphertextHigh),
+            ciphertextLow: BigInt(result[0]!.ciphertextLow),
+          },
+          TEST_AES_KEY,
+        ),
+      ).toBe(1n);
+      expect(
+        decryptUint256(
+          {
+            ciphertextHigh: BigInt(result[1]!.ciphertextHigh),
+            ciphertextLow: BigInt(result[1]!.ciphertextLow),
+          },
+          TEST_AES_KEY,
+        ),
+      ).toBe(2n);
+    });
+
+    (hasTestnetCtUint256Fixture ? it : it.skip)(
+      'decrypts a captured COTI testnet ctUint256 fixture',
       async () => {
         const { request } = await installSnap();
         await setAesKeyWithConfirmation(
           request,
-          TESTNET_DECRYPT_BALANCE_FIXTURE.aesKey as string,
+          TESTNET_CTUINT256_FIXTURE.aesKey as string,
         );
 
         const response = await request({
-          method: 'decrypt-balance',
+          method: 'decrypt',
           params: {
-            ...(TESTNET_DECRYPT_BALANCE_FIXTURE.chainId
-              ? { chainId: TESTNET_DECRYPT_BALANCE_FIXTURE.chainId }
+            ...(TESTNET_CTUINT256_FIXTURE.chainId
+              ? { chainId: TESTNET_CTUINT256_FIXTURE.chainId }
               : {}),
-            balances: [
+            type: 'ctUint256',
+            values: [
               {
-                balance: {
-                  ciphertextHigh:
-                    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextHigh as string,
-                  ciphertextLow:
-                    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextLow as string,
-                },
-                variant: 256,
-                decimals: TESTNET_DECRYPT_BALANCE_FIXTURE.decimals,
+                ciphertextHigh:
+                  TESTNET_CTUINT256_FIXTURE.ciphertextHigh as string,
+                ciphertextLow:
+                  TESTNET_CTUINT256_FIXTURE.ciphertextLow as string,
               },
             ],
           },
         });
 
-        expect(response).toRespondWith([
-          TESTNET_DECRYPT_BALANCE_FIXTURE.expected,
-        ]);
+        expect(response).toRespondWith([TESTNET_CTUINT256_FIXTURE.expected]);
+
+        const decryptResponse = await request({
+          method: 'decrypt',
+          params: {
+            type: 'ctUint256',
+            value: {
+              ciphertextHigh: TESTNET_CTUINT256_FIXTURE.ciphertextHigh as string,
+              ciphertextLow: TESTNET_CTUINT256_FIXTURE.ciphertextLow as string,
+            },
+          },
+        });
+
+        expect(decryptResponse).toRespondWith(TESTNET_CTUINT256_FIXTURE.expected);
       },
     );
   });
