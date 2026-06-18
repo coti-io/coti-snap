@@ -47,6 +47,7 @@ import {
   checkIfERC20Unique,
   checkIfERC721Unique,
   checkERC721Ownership,
+  decryptBalance,
 } from './utils/token';
 import { buildItUint256, deriveSnapWallet } from './utils/itUint';
 
@@ -95,6 +96,37 @@ type EncryptedPayload = {
   r: Record<string, number>;
 };
 
+type SerializableBalance =
+  | string
+  | number
+  | bigint
+  | {
+      ciphertextHigh?: string | number | bigint;
+      ciphertextLow?: string | number | bigint;
+      high?: {
+        high?: string | number | bigint;
+        low?: string | number | bigint;
+      };
+      low?: {
+        high?: string | number | bigint;
+        low?: string | number | bigint;
+      };
+    };
+
+type NormalizedBalance =
+  | bigint
+  | { ciphertextHigh: bigint; ciphertextLow: bigint }
+  | { high: { high: bigint; low: bigint }; low: { high: bigint; low: bigint } };
+
+type DecryptBalanceParams = {
+  balances?: {
+    balance?: SerializableBalance;
+    variant?: 64 | 256;
+    decimals?: string | number | null;
+  }[];
+  chainId?: string;
+};
+
 const isByteRecord = (value: unknown): value is Record<string, number> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
@@ -125,6 +157,55 @@ const parseEncryptedPayload = (encryptedValue: string): EncryptedPayload => {
       'Invalid encrypted payload. Expected JSON with ciphertext and r byte maps.',
     );
   }
+};
+
+const toBigInt = (value: string | number | bigint | undefined): bigint => {
+  if (value === undefined || value === null) {
+    throw new Error('Missing bigint value.');
+  }
+  return BigInt(value);
+};
+
+const isBalanceVariant = (value: unknown): value is 64 | 256 =>
+  value === 64 || value === 256;
+
+/**
+ * Normalizes a JSON-RPC-safe balance payload into the bigint shapes expected by
+ * decryptBalance. Exported so the parser can be tested without the Snap sandbox.
+ */
+export const normalizeBalancePayload = (
+  balance: SerializableBalance,
+  variant: 64 | 256,
+): NormalizedBalance => {
+  if (variant === 64) {
+    return toBigInt(balance as string | number | bigint);
+  }
+
+  if (!balance || typeof balance !== 'object') {
+    throw new Error('Invalid 256-bit balance payload.');
+  }
+
+  if ('high' in balance && 'low' in balance && balance.high && balance.low) {
+    return {
+      high: {
+        high: toBigInt(balance.high.high),
+        low: toBigInt(balance.high.low),
+      },
+      low: {
+        high: toBigInt(balance.low.high),
+        low: toBigInt(balance.low.low),
+      },
+    };
+  }
+
+  if ('ciphertextHigh' in balance && 'ciphertextLow' in balance) {
+    return {
+      ciphertextHigh: toBigInt(balance.ciphertextHigh),
+      ciphertextLow: toBigInt(balance.ciphertextLow),
+    };
+  }
+
+  throw new Error('Invalid 256-bit balance payload.');
 };
 
 const ALLOWED_RAW_SIGN_FUNCTION_SELECTORS = new Set<string>([
@@ -644,6 +725,49 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         );
       }
       return null;
+
+    case 'decrypt-balance': {
+      const params = request.params as DecryptBalanceParams | undefined;
+      if (!params?.balances || !Array.isArray(params.balances)) {
+        return null;
+      }
+
+      const balanceState =
+        params.chainId === undefined
+          ? getState
+          : await getStateByChainIdAndAddress(params.chainId);
+
+      if (!balanceState.aesKey) {
+        return params.balances.map(() => null);
+      }
+
+      return params.balances.map((entry) => {
+        try {
+          if (
+            entry?.balance === undefined ||
+            entry.balance === null ||
+            !isBalanceVariant(entry.variant)
+          ) {
+            return null;
+          }
+
+          const normalizedBalance = normalizeBalancePayload(
+            entry.balance,
+            entry.variant,
+          );
+          const decrypted = decryptBalance(
+            normalizedBalance,
+            balanceState.aesKey as string,
+            entry.variant,
+            entry.decimals,
+          );
+
+          return decrypted === null ? null : decrypted.toString();
+        } catch {
+          return null;
+        }
+      });
+    }
 
     case 'build-it-uint256': {
       try {

@@ -7,9 +7,24 @@ import {
 import { installSnap } from '@metamask/snaps-jest';
 import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
+import { normalizeBalancePayload } from '../index';
 
 const AUTHORIZED_SET_KEY_ORIGIN = 'https://metamask.coti.io';
 const TEST_AES_KEY = '00112233445566778899aabbccddeeff';
+const TESTNET_DECRYPT_BALANCE_FIXTURE = {
+  aesKey: process.env.TESTNET_DECRYPT_BALANCE_AES_KEY,
+  expected: process.env.TESTNET_DECRYPT_BALANCE_EXPECTED,
+  ciphertextHigh: process.env.TESTNET_DECRYPT_BALANCE_HIGH,
+  ciphertextLow: process.env.TESTNET_DECRYPT_BALANCE_LOW,
+  decimals: process.env.TESTNET_DECRYPT_BALANCE_DECIMALS ?? '18',
+  chainId: process.env.TESTNET_DECRYPT_BALANCE_CHAIN_ID,
+};
+const hasTestnetDecryptBalanceFixture = Boolean(
+  TESTNET_DECRYPT_BALANCE_FIXTURE.aesKey &&
+    TESTNET_DECRYPT_BALANCE_FIXTURE.expected &&
+    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextHigh &&
+    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextLow,
+);
 
 const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) => {
   const response = request({
@@ -25,6 +40,138 @@ const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) =>
 };
 
 describe('onRpcRequest', () => {
+  describe('decrypt-balance', () => {
+    it('normalizes 64-bit, flat 256-bit, and nested 256-bit payloads', () => {
+      expect(normalizeBalancePayload('123', 64)).toBe(123n);
+
+      expect(
+        normalizeBalancePayload(
+          { ciphertextHigh: '1', ciphertextLow: '2' },
+          256,
+        ),
+      ).toEqual({ ciphertextHigh: 1n, ciphertextLow: 2n });
+
+      expect(
+        normalizeBalancePayload(
+          {
+            high: { high: '1', low: '2' },
+            low: { high: '3', low: '4' },
+          },
+          256,
+        ),
+      ).toEqual({
+        high: { high: 1n, low: 2n },
+        low: { high: 3n, low: 4n },
+      });
+    });
+
+    it('rejects malformed 256-bit payloads during normalization', () => {
+      expect(() => normalizeBalancePayload({} as any, 256)).toThrow(
+        'Invalid 256-bit balance payload.',
+      );
+    });
+
+    it('returns null for each balance when AES key is missing', async () => {
+      const { request } = await installSnap();
+
+      const response = await request({
+        method: 'decrypt-balance',
+        params: {
+          balances: [
+            {
+              balance: { ciphertextHigh: '1', ciphertextLow: '2' },
+              variant: 256,
+              decimals: 18,
+            },
+            {
+              balance: '3',
+              variant: 64,
+              decimals: 18,
+            },
+          ],
+        },
+      });
+
+      expect(response).toRespondWith([null, null]);
+    });
+
+    it('returns null for malformed entries without prompting', async () => {
+      const { request } = await installSnap();
+      await setAesKeyWithConfirmation(request);
+
+      const response = await request({
+        method: 'decrypt-balance',
+        params: {
+          balances: [
+            {
+              balance: { invalid: 'shape' },
+              variant: 256,
+              decimals: 18,
+            },
+          ],
+        },
+      });
+
+      expect(response).toRespondWith([null]);
+    });
+
+    it('returns null for invalid balance variants', async () => {
+      const { request } = await installSnap();
+      await setAesKeyWithConfirmation(request);
+
+      const response = await request({
+        method: 'decrypt-balance',
+        params: {
+          balances: [
+            {
+              balance: '1',
+              variant: 128,
+              decimals: 18,
+            },
+          ],
+        },
+      });
+
+      expect(response).toRespondWith([null]);
+    });
+
+    (hasTestnetDecryptBalanceFixture ? it : it.skip)(
+      'decrypts a captured COTI testnet private balance fixture',
+      async () => {
+        const { request } = await installSnap();
+        await setAesKeyWithConfirmation(
+          request,
+          TESTNET_DECRYPT_BALANCE_FIXTURE.aesKey as string,
+        );
+
+        const response = await request({
+          method: 'decrypt-balance',
+          params: {
+            ...(TESTNET_DECRYPT_BALANCE_FIXTURE.chainId
+              ? { chainId: TESTNET_DECRYPT_BALANCE_FIXTURE.chainId }
+              : {}),
+            balances: [
+              {
+                balance: {
+                  ciphertextHigh:
+                    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextHigh as string,
+                  ciphertextLow:
+                    TESTNET_DECRYPT_BALANCE_FIXTURE.ciphertextLow as string,
+                },
+                variant: 256,
+                decimals: TESTNET_DECRYPT_BALANCE_FIXTURE.decimals,
+              },
+            ],
+          },
+        });
+
+        expect(response).toRespondWith([
+          TESTNET_DECRYPT_BALANCE_FIXTURE.expected,
+        ]);
+      },
+    );
+  });
+
   it('handles encryption with a valid AES key', async () => {
     const { request } = await installSnap();
     const aesKey = TEST_AES_KEY;
