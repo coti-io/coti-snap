@@ -3,10 +3,14 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 /* eslint-disable @typescript-eslint/switch-exhaustiveness-check */
 import {
-  encodeString,
-  encrypt,
-  encodeKey,
+  decodeUint,
   decrypt,
+  decryptUint,
+  decryptUint256,
+  encodeKey,
+  encodeString,
+  encodeUint,
+  encrypt,
 } from '@coti-io/coti-sdk-typescript';
 import { UserInputEventType } from '@metamask/snaps-sdk';
 import type {
@@ -47,7 +51,6 @@ import {
   checkIfERC20Unique,
   checkIfERC721Unique,
   checkERC721Ownership,
-  decryptBalance,
 } from './utils/token';
 import { buildItUint256, deriveSnapWallet } from './utils/itUint';
 
@@ -96,34 +99,30 @@ type EncryptedPayload = {
   r: Record<string, number>;
 };
 
-type SerializableBalance =
+type SerializableCt =
   | string
   | number
   | bigint
   | {
       ciphertextHigh?: string | number | bigint;
       ciphertextLow?: string | number | bigint;
-      high?: {
-        high?: string | number | bigint;
-        low?: string | number | bigint;
-      };
-      low?: {
-        high?: string | number | bigint;
-        low?: string | number | bigint;
-      };
     };
 
-type NormalizedBalance =
+type NormalizedCt =
   | bigint
-  | { ciphertextHigh: bigint; ciphertextLow: bigint }
-  | { high: { high: bigint; low: bigint }; low: { high: bigint; low: bigint } };
+  | { ciphertextHigh: bigint; ciphertextLow: bigint };
 
-type DecryptBalanceParams = {
-  balances?: {
-    balance?: SerializableBalance;
-    variant?: 64 | 256;
-    decimals?: string | number | null;
-  }[];
+type TypedDecryptParams = {
+  type?: 'ctUint64' | 'ctUint256';
+  value?: SerializableCt;
+  values?: SerializableCt[];
+  chainId?: string;
+};
+
+type TypedEncryptParams = {
+  type?: 'uint64' | 'uint256';
+  value?: string | number | bigint;
+  values?: Array<string | number | bigint>;
   chainId?: string;
 };
 
@@ -166,46 +165,158 @@ const toBigInt = (value: string | number | bigint | undefined): bigint => {
   return BigInt(value);
 };
 
-const isBalanceVariant = (value: unknown): value is 64 | 256 =>
-  value === 64 || value === 256;
-
 /**
- * Normalizes a JSON-RPC-safe balance payload into the bigint shapes expected by
- * decryptBalance. Exported so the parser can be tested without the Snap sandbox.
+ * Normalizes a JSON-RPC-safe confidential uint payload into the bigint shapes expected by
+ * SDK decrypt helpers. Exported so the parser can be tested without the Snap sandbox.
  */
-export const normalizeBalancePayload = (
-  balance: SerializableBalance,
-  variant: 64 | 256,
-): NormalizedBalance => {
-  if (variant === 64) {
-    return toBigInt(balance as string | number | bigint);
+export const normalizeCtPayload = (
+  value: SerializableCt,
+  type: 'ctUint64' | 'ctUint256',
+): NormalizedCt => {
+  if (type === 'ctUint64') {
+    return toBigInt(value as string | number | bigint);
   }
 
-  if (!balance || typeof balance !== 'object') {
-    throw new Error('Invalid 256-bit balance payload.');
+  if (!value || typeof value !== 'object') {
+    throw new Error('Invalid ctUint256 payload.');
   }
 
-  if ('high' in balance && 'low' in balance && balance.high && balance.low) {
+  if ('ciphertextHigh' in value && 'ciphertextLow' in value) {
     return {
-      high: {
-        high: toBigInt(balance.high.high),
-        low: toBigInt(balance.high.low),
-      },
-      low: {
-        high: toBigInt(balance.low.high),
-        low: toBigInt(balance.low.low),
-      },
+      ciphertextHigh: toBigInt(value.ciphertextHigh),
+      ciphertextLow: toBigInt(value.ciphertextLow),
     };
   }
 
-  if ('ciphertextHigh' in balance && 'ciphertextLow' in balance) {
-    return {
-      ciphertextHigh: toBigInt(balance.ciphertextHigh),
-      ciphertextLow: toBigInt(balance.ciphertextLow),
-    };
+  throw new Error('Invalid ctUint256 payload.');
+};
+
+const getTypedValues = <Value,>(
+  params: { value?: Value; values?: Value[] },
+): Value[] | null => {
+  if (Array.isArray(params.values)) {
+    return params.values;
+  }
+  if (params.value !== undefined && params.value !== null) {
+    return [params.value];
+  }
+  return null;
+};
+
+const isArrayRequest = (params: { values?: unknown[] }): boolean =>
+  Array.isArray(params.values);
+
+const encryptUint64Value = (
+  plaintext: string | number | bigint,
+  aesKey: string,
+): string => {
+  const plaintextBigInt = BigInt(plaintext);
+  if (plaintextBigInt >= 2n ** 64n) {
+    throw new RangeError('Plaintext size must be 64 bits or smaller.');
+  }
+  const { ciphertext, r } = encrypt(
+    encodeKey(aesKey),
+    encodeUint(plaintextBigInt),
+  );
+  return decodeUint(new Uint8Array([...ciphertext, ...r])).toString();
+};
+
+const encryptUint256Value = (
+  plaintext: string | number | bigint,
+  aesKey: string,
+): { ciphertextHigh: string; ciphertextLow: string } => {
+  const plaintextBigInt = BigInt(plaintext);
+  if (plaintextBigInt >= 2n ** 256n) {
+    throw new RangeError('Plaintext size must be 256 bits or smaller.');
   }
 
-  throw new Error('Invalid 256-bit balance payload.');
+  const mask128 = (1n << 128n) - 1n;
+  const highPlaintext = plaintextBigInt >> 128n;
+  const lowPlaintext = plaintextBigInt & mask128;
+  const keyBytes = encodeKey(aesKey);
+  const high = encrypt(keyBytes, encodeUint(highPlaintext));
+  const low = encrypt(keyBytes, encodeUint(lowPlaintext));
+
+  return {
+    ciphertextHigh: decodeUint(
+      new Uint8Array([...high.ciphertext, ...high.r]),
+    ).toString(),
+    ciphertextLow: decodeUint(
+      new Uint8Array([...low.ciphertext, ...low.r]),
+    ).toString(),
+  };
+};
+
+const encryptTypedValues = (
+  params: TypedEncryptParams,
+  aesKey: string | null | undefined,
+):
+  | string
+  | { ciphertextHigh: string; ciphertextLow: string }
+  | Array<string | { ciphertextHigh: string; ciphertextLow: string } | null>
+  | null => {
+  if (params.type !== 'uint64' && params.type !== 'uint256') {
+    return null;
+  }
+
+  if (!aesKey) {
+    const values = getTypedValues(params);
+    return values && isArrayRequest(params) ? values.map(() => null) : null;
+  }
+
+  const values = getTypedValues(params);
+  if (!values) {
+    return null;
+  }
+
+  const encrypted = values.map((value) => {
+    try {
+      return params.type === 'uint64'
+        ? encryptUint64Value(value, aesKey)
+        : encryptUint256Value(value, aesKey);
+    } catch {
+      return null;
+    }
+  });
+
+  return isArrayRequest(params) ? encrypted : encrypted[0] ?? null;
+};
+
+const decryptTypedValues = (
+  params: TypedDecryptParams,
+  aesKey: string | null | undefined,
+): string | null | (string | null)[] => {
+  if (params.type !== 'ctUint64' && params.type !== 'ctUint256') {
+    return null;
+  }
+  const decryptType = params.type;
+
+  const values = getTypedValues(params);
+  if (!values) {
+    return null;
+  }
+
+  if (!aesKey) {
+    return isArrayRequest(params) ? values.map(() => null) : null;
+  }
+
+  const decrypted = values.map((value) => {
+    try {
+      const normalized = normalizeCtPayload(value, decryptType);
+      const result =
+        decryptType === 'ctUint64'
+          ? decryptUint(normalized as bigint, aesKey)
+          : decryptUint256(
+              normalized as { ciphertextHigh: bigint; ciphertextLow: bigint },
+              aesKey,
+            );
+      return result.toString();
+    } catch {
+      return null;
+    }
+  });
+
+  return isArrayRequest(params) ? decrypted : decrypted[0] ?? null;
 };
 
 const ALLOWED_RAW_SIGN_FUNCTION_SELECTORS = new Set<string>([
@@ -626,7 +737,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const { value: textToEncrypt } = request.params as Record<string, string>;
+      const encryptParams = request.params as
+        | (Record<string, string> & TypedEncryptParams)
+        | undefined;
+      if (
+        encryptParams?.type === 'uint64' ||
+        encryptParams?.type === 'uint256'
+      ) {
+        const state = await getStateByChainIdAndAddress(encryptParams.chainId);
+        return encryptTypedValues(encryptParams, state.aesKey);
+      }
+
+      const { value: textToEncrypt } = encryptParams as Record<string, string>;
       if (!textToEncrypt) {
         return null;
       }
@@ -675,10 +797,22 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const { value: encryptedValue } = request.params as Record<
-        string,
-        string
-      >;
+      const decryptParams = request.params as
+        | (Record<string, string> & TypedDecryptParams)
+        | undefined;
+
+      if (
+        decryptParams?.type === 'ctUint64' ||
+        decryptParams?.type === 'ctUint256'
+      ) {
+        const decryptState =
+          decryptParams.chainId === undefined
+            ? getState
+            : await getStateByChainIdAndAddress(decryptParams.chainId);
+        return decryptTypedValues(decryptParams, decryptState.aesKey);
+      }
+
+      const { value: encryptedValue } = decryptParams as Record<string, string>;
 
       if (!encryptedValue) {
         return null;
@@ -725,49 +859,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         );
       }
       return null;
-
-    case 'decrypt-balance': {
-      const params = request.params as DecryptBalanceParams | undefined;
-      if (!params?.balances || !Array.isArray(params.balances)) {
-        return null;
-      }
-
-      const balanceState =
-        params.chainId === undefined
-          ? getState
-          : await getStateByChainIdAndAddress(params.chainId);
-
-      if (!balanceState.aesKey) {
-        return params.balances.map(() => null);
-      }
-
-      return params.balances.map((entry) => {
-        try {
-          if (
-            entry?.balance === undefined ||
-            entry.balance === null ||
-            !isBalanceVariant(entry.variant)
-          ) {
-            return null;
-          }
-
-          const normalizedBalance = normalizeBalancePayload(
-            entry.balance,
-            entry.variant,
-          );
-          const decrypted = decryptBalance(
-            normalizedBalance,
-            balanceState.aesKey as string,
-            entry.variant,
-            entry.decimals,
-          );
-
-          return decrypted === null ? null : decrypted.toString();
-        } catch {
-          return null;
-        }
-      });
-    }
 
     case 'build-it-uint256': {
       try {
