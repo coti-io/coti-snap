@@ -81,6 +81,10 @@ const isAes128HexKey = (value: string): boolean =>
 const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
   'https://metamask.coti.io',
   'https://dev.metamask.coti.io',
+  'https://dev.privacy.coti.io',
+  'https://testnet.privacy.coti.io',
+  'https://staging.privacy.coti.io',
+  'https://privacy.coti.io',
 ]);
 
 const normalizeHex = (value: string): string =>
