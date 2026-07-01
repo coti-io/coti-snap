@@ -91,6 +91,10 @@ const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
   'https://testnet.privacy.coti.io',
   'https://staging.privacy.coti.io',
   'https://privacy.coti.io',
+  'https://dev.privacyportal.app',
+  'https://testnet.privacyportal.app',
+  'https://staging.privacyportal.app',
+  'https://privacyportal.app',
 ]);
 
 const normalizeHex = (value: string): string =>
