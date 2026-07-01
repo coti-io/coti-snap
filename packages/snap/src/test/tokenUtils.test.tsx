@@ -7,8 +7,14 @@ import * as tokenUtils from '../utils/token';
 
 jest.mock('ethers');
 jest.mock('@coti-io/coti-sdk-typescript', () => ({
+  decryptCtUint256: jest.fn(),
   decryptString: jest.fn(),
   decryptUint: jest.fn(),
+  isCtUint256Shape: jest.fn(),
+  isZeroCtUint256: jest.fn(() => false),
+  normalizeAesKey: jest.fn((aesKey: string) =>
+    aesKey.startsWith('0x') ? aesKey.slice(2).toLowerCase() : aesKey.toLowerCase(),
+  ),
 }));
 const {
   getStateByChainIdAndAddress,

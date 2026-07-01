@@ -3,14 +3,19 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 /* eslint-disable @typescript-eslint/switch-exhaustiveness-check */
 import {
-  decodeUint,
   decrypt,
   decryptUint,
   decryptUint256,
   encodeKey,
-  encodeString,
-  encodeUint,
   encrypt,
+  encryptUint,
+  encryptUint256,
+  normalizeAesKey,
+  normalizeCtPayload,
+} from '@coti-io/coti-sdk-typescript';
+import type {
+  SerializableCtUint,
+  SerializableCtUint256,
 } from '@coti-io/coti-sdk-typescript';
 import { UserInputEventType } from '@metamask/snaps-sdk';
 import type {
@@ -79,9 +84,6 @@ const isHex32 = (value: string): boolean =>
 const isBytes4Hex = (value: string): boolean =>
   /^0x[0-9a-fA-F]{8}$/.test(value);
 
-const isAes128HexKey = (value: string): boolean =>
-  /^[0-9a-fA-F]{32}$/.test(value);
-
 const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
   'https://metamask.coti.io',
   'https://dev.metamask.coti.io',
@@ -99,18 +101,7 @@ type EncryptedPayload = {
   r: Record<string, number>;
 };
 
-type SerializableCt =
-  | string
-  | number
-  | bigint
-  | {
-      ciphertextHigh?: string | number | bigint;
-      ciphertextLow?: string | number | bigint;
-    };
-
-type NormalizedCt =
-  | bigint
-  | { ciphertextHigh: bigint; ciphertextLow: bigint };
+type SerializableCt = SerializableCtUint | SerializableCtUint256;
 
 type TypedDecryptParams = {
   type?: 'ctUint64' | 'ctUint256';
@@ -158,39 +149,6 @@ const parseEncryptedPayload = (encryptedValue: string): EncryptedPayload => {
   }
 };
 
-const toBigInt = (value: string | number | bigint | undefined): bigint => {
-  if (value === undefined || value === null) {
-    throw new Error('Missing bigint value.');
-  }
-  return BigInt(value);
-};
-
-/**
- * Normalizes a JSON-RPC-safe confidential uint payload into the bigint shapes expected by
- * SDK decrypt helpers. Exported so the parser can be tested without the Snap sandbox.
- */
-export const normalizeCtPayload = (
-  value: SerializableCt,
-  type: 'ctUint64' | 'ctUint256',
-): NormalizedCt => {
-  if (type === 'ctUint64') {
-    return toBigInt(value as string | number | bigint);
-  }
-
-  if (!value || typeof value !== 'object') {
-    throw new Error('Invalid ctUint256 payload.');
-  }
-
-  if ('ciphertextHigh' in value && 'ciphertextLow' in value) {
-    return {
-      ciphertextHigh: toBigInt(value.ciphertextHigh),
-      ciphertextLow: toBigInt(value.ciphertextLow),
-    };
-  }
-
-  throw new Error('Invalid ctUint256 payload.');
-};
-
 const getTypedValues = <Value,>(
   params: { value?: Value; values?: Value[] },
 ): Value[] | null => {
@@ -206,46 +164,16 @@ const getTypedValues = <Value,>(
 const isArrayRequest = (params: { values?: unknown[] }): boolean =>
   Array.isArray(params.values);
 
-const encryptUint64Value = (
-  plaintext: string | number | bigint,
-  aesKey: string,
-): string => {
-  const plaintextBigInt = BigInt(plaintext);
-  if (plaintextBigInt >= 2n ** 64n) {
-    throw new RangeError('Plaintext size must be 64 bits or smaller.');
-  }
-  const { ciphertext, r } = encrypt(
-    encodeKey(aesKey),
-    encodeUint(plaintextBigInt),
-  );
-  return decodeUint(new Uint8Array([...ciphertext, ...r])).toString();
-};
-
-const encryptUint256Value = (
-  plaintext: string | number | bigint,
-  aesKey: string,
-): { ciphertextHigh: string; ciphertextLow: string } => {
-  const plaintextBigInt = BigInt(plaintext);
-  if (plaintextBigInt >= 2n ** 256n) {
-    throw new RangeError('Plaintext size must be 256 bits or smaller.');
-  }
-
-  const mask128 = (1n << 128n) - 1n;
-  const highPlaintext = plaintextBigInt >> 128n;
-  const lowPlaintext = plaintextBigInt & mask128;
-  const keyBytes = encodeKey(aesKey);
-  const high = encrypt(keyBytes, encodeUint(highPlaintext));
-  const low = encrypt(keyBytes, encodeUint(lowPlaintext));
-
-  return {
-    ciphertextHigh: decodeUint(
-      new Uint8Array([...high.ciphertext, ...high.r]),
-    ).toString(),
-    ciphertextLow: decodeUint(
-      new Uint8Array([...low.ciphertext, ...low.r]),
-    ).toString(),
-  };
-};
+const serializeCtUint256 = ({
+  ciphertextHigh,
+  ciphertextLow,
+}: {
+  ciphertextHigh: bigint;
+  ciphertextLow: bigint;
+}): { ciphertextHigh: string; ciphertextLow: string } => ({
+  ciphertextHigh: ciphertextHigh.toString(),
+  ciphertextLow: ciphertextLow.toString(),
+});
 
 const encryptTypedValues = (
   params: TypedEncryptParams,
@@ -272,8 +200,8 @@ const encryptTypedValues = (
   const encrypted = values.map((value) => {
     try {
       return params.type === 'uint64'
-        ? encryptUint64Value(value, aesKey)
-        : encryptUint256Value(value, aesKey);
+        ? encryptUint(BigInt(value), aesKey).toString()
+        : serializeCtUint256(encryptUint256(BigInt(value), aesKey));
     } catch {
       return null;
     }
@@ -786,7 +714,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
       if (encryptResult) {
         return JSON.stringify(
-          encrypt(encodeKey(getState.aesKey), encodeString(textToEncrypt)),
+          encrypt(encodeKey(getState.aesKey), new TextEncoder().encode(textToEncrypt)),
         );
       }
 
@@ -1171,7 +1099,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      if (!isAes128HexKey(newUserAesKey)) {
+      let normalizedNewUserAesKey: string;
+      try {
+        normalizedNewUserAesKey = normalizeAesKey(newUserAesKey);
+      } catch {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -1219,7 +1150,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       await setStateByChainIdAndAddress(
         {
           ...currentStateForSet,
-          aesKey: newUserAesKey,
+          aesKey: normalizedNewUserAesKey,
         },
         setChainId,
       );
