@@ -23,47 +23,24 @@ import {
   fetchImageAsDataUri,
   fetchJsonWithIpfsFallback,
 } from '../utils/nftMetadata';
-import { useInvokeSnap } from './useInvokeSnap';
 
-const { decryptUint, decryptString, encodeKey, encrypt } = CotiSDK;
-const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 as
-  | ((ciphertext: unknown, userKey: string) => bigint)
-  | undefined;
+const {
+  buildItUint256WithSigner,
+  decryptCtUint256,
+  decryptString,
+  decryptUint,
+  isCtUint256Shape,
+  isZeroCtUint256,
+  normalizeAesKey,
+} = CotiSDK;
 
 const INSANE_BALANCE_BASE = 1000000000000n;
-const BLOCK_SIZE = 16;
-const CT_SIZE = 32;
-const MAX_UINT256 = (1n << 256n) - 1n;
-
 const PRIVATE_ERC20_TRANSFER_64 = 'transfer(address,(uint256,bytes))';
 const PRIVATE_ERC20_TRANSFER_256 = 'transfer(address,((uint256,uint256),bytes))';
 /** Fallback gas limit when estimation fails; MPC precompile chain can exceed default estimates. */
 const CONFIDENTIAL_TRANSFER_GAS_LIMIT = 2_000_000n;
 /** Safety buffer on estimated gas (e.g. 105 = 5% extra). */
 const GAS_ESTIMATE_BUFFER_PERCENT = 105n;
-const ETH_SIGN_DISABLED_MESSAGE =
-  'Raw signing is unavailable for this wallet. Use the COTI Snap or another signer that supports raw signatures.';
-const SNAP_RAW_SIGN_MESSAGE =
-  'Raw signing requires the COTI Snap. Install/enable the Snap and approve the signing permission.';
-
-type ItUint256 = {
-  ciphertext: {
-    ciphertextHigh: bigint;
-    ciphertextLow: bigint;
-  };
-  signature: string;
-};
-
-const normalizeAesKey = (aesKey?: string): string | undefined => {
-  if (!aesKey) {
-    return undefined;
-  }
-  const trimmed = aesKey.startsWith('0x') ? aesKey.slice(2) : aesKey;
-  if (!/^[0-9a-fA-F]{32}$/.test(trimmed)) {
-    throw new Error('AES key must be a 32-hex-character string.');
-  }
-  return trimmed.toLowerCase();
-};
 
 const toBigInt = (value: unknown): bigint => {
   if (typeof value === 'bigint') {
@@ -82,120 +59,6 @@ const toBigInt = (value: unknown): bigint => {
     }
   }
   return 0n;
-};
-
-const isEthSignUnavailable = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-  const err = error as { code?: number; message?: string; data?: unknown };
-  const code =
-    err.code ??
-    (err.data && typeof err.data === 'object'
-      ? (err.data as { code?: number }).code
-      : undefined);
-  const message = err.message ?? '';
-  return (
-    code === -32601 &&
-    typeof message === 'string' &&
-    message.toLowerCase().includes('eth_sign')
-  );
-};
-
-const toFixedBytes = (value: bigint, length: number): Uint8Array => {
-  const bytes = new Uint8Array(length);
-  let remaining = value;
-  for (let i = length - 1; i >= 0; i -= 1) {
-    bytes[i] = Number(remaining & 0xffn);
-    remaining >>= 8n;
-  }
-  return bytes;
-};
-
-const bytesToBigInt = (bytes: Uint8Array): bigint => {
-  let hex = '';
-  for (const byte of bytes) {
-    hex += byte.toString(16).padStart(2, '0');
-  }
-  return BigInt(`0x${hex}`);
-};
-
-const buildCiphertext128 = (plaintext: bigint, aesKey: string): Uint8Array => {
-  const keyBytes = encodeKey(aesKey);
-  const plaintextBytes = toFixedBytes(plaintext, BLOCK_SIZE);
-  const zeroBytes = new Uint8Array(BLOCK_SIZE);
-  const high = encrypt(keyBytes, zeroBytes);
-  const low = encrypt(keyBytes, plaintextBytes);
-  return new Uint8Array([
-    ...high.ciphertext,
-    ...high.r,
-    ...low.ciphertext,
-    ...low.r,
-  ]);
-};
-
-const buildCiphertext256 = (plaintext: bigint, aesKey: string): Uint8Array => {
-  const keyBytes = encodeKey(aesKey);
-  const plaintextBytes = toFixedBytes(plaintext, CT_SIZE);
-  const high = encrypt(keyBytes, plaintextBytes.slice(0, BLOCK_SIZE));
-  const low = encrypt(keyBytes, plaintextBytes.slice(BLOCK_SIZE));
-  return new Uint8Array([
-    ...high.ciphertext,
-    ...high.r,
-    ...low.ciphertext,
-    ...low.r,
-  ]);
-};
-
-const normalizeSignature = (signature: string): string => {
-  const sig = ethers.Signature.from(signature);
-  const vByte = sig.v === 27 ? 0 : sig.v === 28 ? 1 : sig.v;
-  return ethers.hexlify(
-    ethers.concat([sig.r, sig.s, new Uint8Array([vByte])]),
-  );
-};
-
-const buildItUint256 = async ({
-  value,
-  aesKey,
-  tokenAddress,
-  selector,
-  signerAddress,
-  signMessage,
-}: {
-  value: bigint;
-  aesKey: string;
-  tokenAddress: string;
-  selector: string;
-  signerAddress: string;
-  signMessage: (message: Uint8Array) => Promise<string>;
-}): Promise<ItUint256> => {
-  if (value < 0n || value > MAX_UINT256) {
-    throw new RangeError('Amount must fit within 256 bits.');
-  }
-  const bitSize = value === 0n ? 0 : value.toString(2).length;
-  const ciphertextBytes =
-    bitSize <= 128
-      ? buildCiphertext128(value, aesKey)
-      : buildCiphertext256(value, aesKey);
-  const ciphertextHigh = bytesToBigInt(ciphertextBytes.slice(0, CT_SIZE));
-  const ciphertextLow = bytesToBigInt(ciphertextBytes.slice(CT_SIZE));
-
-  // Build raw message matching COTI SDK pattern: solidityPacked(address, address, bytes4, ciphertext)
-  // The MPC precompile expects signMessage() style signatures (with Ethereum prefix)
-  const message = ethers.solidityPacked(
-    ['address', 'address', 'bytes4', 'uint256', 'uint256'],
-    [signerAddress, tokenAddress, selector, ciphertextHigh, ciphertextLow],
-  );
-  const messageBytes = ethers.getBytes(message);
-
-  // Sign with personal_sign via signer.signMessage() - same as COTI SDK
-  const signature = await signMessage(messageBytes);
-
-  return {
-    ciphertext: { ciphertextHigh, ciphertextLow },
-    signature,
-  };
 };
 
 const normalizeDecimals = (decimals?: number): number => {
@@ -246,138 +109,10 @@ const ERC165_ABI = [
 const PRIVATE_ERC20_64_INTERFACE_ID = '0x8409a9cf';
 const PRIVATE_ERC20_256_INTERFACE_ID = '0xdfeb393e';
 
-const splitCt128 = (value: unknown): { high: bigint; low: bigint } | unknown => {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'high' in value &&
-    'low' in value
-  ) {
-    return value as { high: bigint; low: bigint };
-  }
-  if (typeof value === 'bigint') {
-    const mask = (1n << 64n) - 1n;
-    return { high: value >> 64n, low: value & mask };
-  }
-  return value;
-};
-
-const normalizeItUint256ForAbi = (value: any): any => {
-  const cipher = value?.ciphertext ?? value;
-  if (
-    cipher?.high?.high !== undefined &&
-    cipher?.high?.low !== undefined &&
-    cipher?.low?.high !== undefined &&
-    cipher?.low?.low !== undefined
-  ) {
-    return value;
-  }
-
-  const high = splitCt128(cipher?.ciphertextHigh ?? cipher?.high);
-  const low = splitCt128(cipher?.ciphertextLow ?? cipher?.low);
-
-  if (
-    high &&
-    low &&
-    typeof high === 'object' &&
-    typeof low === 'object' &&
-    'high' in high &&
-    'low' in high &&
-    'high' in low &&
-    'low' in low
-  ) {
-    return {
-      ciphertext: { high, low },
-      signature: value?.signature ?? cipher?.signature,
-    };
-  }
-
-  return value;
-};
-
-const decryptCtUint256 = (ciphertext: any, aesKey: string): bigint => {
-  if (
-    ciphertext?.high?.high !== undefined &&
-    ciphertext?.high?.low !== undefined &&
-    ciphertext?.low?.high !== undefined &&
-    ciphertext?.low?.low !== undefined
-  ) {
-    const d1 = decryptUint(toBigInt(ciphertext.high.high), aesKey);
-    const d2 = decryptUint(toBigInt(ciphertext.high.low), aesKey);
-    const d3 = decryptUint(toBigInt(ciphertext.low.high), aesKey);
-    const d4 = decryptUint(toBigInt(ciphertext.low.low), aesKey);
-    return (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
-  }
-
-  // Support named properties (ciphertextHigh/ciphertextLow) or
-  // positional access ([0]/[1]) from ethers.js Result tuples
-  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
-  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
-
-  if (decryptUint256 && high !== undefined && low !== undefined) {
-    return decryptUint256(
-      {
-        ciphertextHigh: toBigInt(high),
-        ciphertextLow: toBigInt(low),
-      },
-      aesKey,
-    );
-  }
-
-  return 0n;
-};
-
-const isZeroCtUint256 = (ciphertext: any): boolean => {
-  if (!ciphertext) {
-    return false;
-  }
-  if (isZeroValue(ciphertext)) {
-    return true;
-  }
-  if (
-    ciphertext?.high?.high !== undefined &&
-    ciphertext?.high?.low !== undefined &&
-    ciphertext?.low?.high !== undefined &&
-    ciphertext?.low?.low !== undefined
-  ) {
-    return (
-      isZeroValue(ciphertext.high.high) &&
-      isZeroValue(ciphertext.high.low) &&
-      isZeroValue(ciphertext.low.high) &&
-      isZeroValue(ciphertext.low.low)
-    );
-  }
-
-  // Support named properties or positional access from ethers.js Result tuples
-  const high = ciphertext?.ciphertextHigh ?? ciphertext?.[0];
-  const low = ciphertext?.ciphertextLow ?? ciphertext?.[1];
-
-  if (high !== undefined && low !== undefined) {
-    return isZeroValue(high) && isZeroValue(low);
-  }
-
-  return false;
-};
-
 const isInsaneDecryptedValue = (value: bigint, decimals?: number): boolean => {
   const safeDecimals = normalizeDecimals(decimals);
   const threshold = INSANE_BALANCE_BASE * 10n ** BigInt(safeDecimals);
   return value > threshold;
-};
-
-const isCtUint256Shape = (value: any): boolean => {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-  const hasNested =
-    value?.high?.high !== undefined &&
-    value?.high?.low !== undefined &&
-    value?.low?.high !== undefined &&
-    value?.low?.low !== undefined;
-  const hasFlat =
-    value?.ciphertextHigh !== undefined &&
-    value?.ciphertextLow !== undefined;
-  return hasNested || hasFlat;
 };
 
 const probeConfidentialVersion256 = async (
@@ -662,7 +397,6 @@ export class TokenOperationError extends Error {
  * @returns An object containing loading state, error state, and functions for token operations.
  */
 export const useTokenOperations = (provider: BrowserProvider) => {
-  const invokeSnap = useInvokeSnap();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -710,76 +444,6 @@ export const useTokenOperations = (provider: BrowserProvider) => {
       return new ethers.Contract(address, abi, contractProvider);
     },
     [getBrowserProvider],
-  );
-
-  const signDigestWithSnap = useCallback(
-    async (digest: string, signerAddress: string): Promise<string | null> => {
-      try {
-        const result = await invokeSnap({
-          method: 'sign-raw-256',
-          params: {
-            messageHex: digest,
-            signerAddress,
-          },
-        });
-        if (result === null) {
-          throw new Error('User rejected signature');
-        }
-        if (typeof result === 'string') {
-          return result;
-        }
-        if (result && typeof result === 'object' && 'signature' in result) {
-          const signature = (result as { signature?: string }).signature;
-          return typeof signature === 'string' ? signature : null;
-        }
-        return null;
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          /user rejected|action_rejected|denied/i.test(error.message)
-        ) {
-          throw error;
-        }
-        throw new Error(SNAP_RAW_SIGN_MESSAGE);
-      }
-    },
-    [invokeSnap],
-  );
-
-  const getRawSignature = useCallback(
-    async ({
-      digest,
-      signerAddress,
-      provider: browserProvider,
-    }: {
-      digest: string;
-      signerAddress: string;
-      provider: BrowserProvider;
-    }): Promise<string> => {
-      const isMetaMask = Boolean(
-        (window.ethereum as any)?.isMetaMask ?? false,
-      );
-      if (isMetaMask) {
-        const snapSignature = await signDigestWithSnap(
-          digest,
-          signerAddress,
-        );
-        if (!snapSignature) {
-          throw new Error(SNAP_RAW_SIGN_MESSAGE);
-        }
-        return snapSignature;
-      }
-
-      try {
-        return await browserProvider.send('eth_sign', [signerAddress, digest]);
-      } catch (error) {
-        if (isEthSignUnavailable(error)) {
-          throw new Error(ETH_SIGN_DISABLED_MESSAGE);
-        }
-        throw error;
-      }
-    },
-    [signDigestWithSnap],
   );
 
   const getTokenConfidentialStatus = useCallback(
@@ -926,7 +590,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
             ethers.toBigInt(amount),
           );
         } else if (confidential) {
-          const normalizedAesKey = normalizeAesKey(aesKey);
+          const normalizedAesKey = aesKey
+            ? normalizeAesKey(aesKey)
+            : undefined;
           if (!normalizedAesKey) {
             throw new Error('AES key is required for private ERC20 transfer');
           }
@@ -946,11 +612,11 @@ export const useTokenOperations = (provider: BrowserProvider) => {
           if (confidentialVersion === 256) {
             const selectorHex = getSelector(PRIVATE_ERC20_TRANSFER_256);
             const amountBigInt = ethers.toBigInt(amount);
-            const itUint256 = await buildItUint256({
+            const itUint256 = await buildItUint256WithSigner({
               value: amountBigInt,
               aesKey: normalizedAesKey,
-              tokenAddress,
-              selector: selectorHex,
+              contractAddress: tokenAddress,
+              functionSelector: selectorHex,
               signerAddress,
               signMessage: (message) => signer.signMessage(message),
             });
@@ -1063,7 +729,9 @@ export const useTokenOperations = (provider: BrowserProvider) => {
         const browserProvider = getBrowserProvider();
         const signer = await browserProvider.getSigner();
         const signerAddress = await signer.getAddress();
-        const normalizedAesKey = normalizeAesKey(aesKey);
+        const normalizedAesKey = aesKey
+          ? normalizeAesKey(aesKey)
+          : undefined;
         console.log(`[decryptERC20Balance] signer=${signerAddress}, hasNormalizedAesKey=${!!normalizedAesKey}`);
 
         if (confidential) {

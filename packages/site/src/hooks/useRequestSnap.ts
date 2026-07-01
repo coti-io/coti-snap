@@ -29,7 +29,7 @@ export const useRequestSnap = (
       const useLocalFallback =
         shouldPreferLocalSnap() && snapId === defaultSnapOrigin;
       const localSnapId = useLocalFallback
-        ? `local:${import.meta.env.VITE_SNAP_LOCAL_URL ?? 'http://localhost:8080'}`
+        ? `local:${process.env.VITE_SNAP_LOCAL_URL || 'http://localhost:8080'}`
         : null;
 
       let snaps: Record<string, Snap> | null = null;

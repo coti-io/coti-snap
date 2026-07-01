@@ -5,6 +5,7 @@
  * @returns True if it's a local Snap, or false otherwise.
  */
 import type { GetSnapsResponse } from '../types';
+import { defaultSnapOrigin } from '../config/snap';
 
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');
 
@@ -17,11 +18,8 @@ const isLocalHost = (): boolean => {
 };
 
 export const shouldPreferLocalSnap = (): boolean => {
-  if (typeof import.meta !== 'undefined') {
-    const env = import.meta.env as { VITE_SNAP_ENV?: string } | undefined;
-    if (env?.VITE_SNAP_ENV === 'local') {
-      return true;
-    }
+  if (defaultSnapOrigin.startsWith('local:')) {
+    return true;
   }
   return isLocalHost();
 };

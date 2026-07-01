@@ -1,5 +1,11 @@
 import type { ctUint } from '@coti-io/coti-sdk-typescript';
 import * as CotiSDK from '@coti-io/coti-sdk-typescript';
+import {
+  decryptCtUint256,
+  isCtUint256Shape,
+  isZeroCtUint256,
+  normalizeAesKey,
+} from '@coti-io/coti-sdk-typescript';
 import { Contract, ethers, formatUnits, ZeroAddress } from 'ethers';
 
 import {
@@ -20,15 +26,6 @@ import erc721Abi from '../abis/ERC721.json';
 import erc721ConfidentialAbi from '../abis/ERC721Confidential.json';
 import type { Tokens } from '../types';
 import { TokenViewSelector } from '../types';
-
-const decryptUint256 = (CotiSDK as { decryptUint256?: unknown }).decryptUint256 as
-  | ((ciphertext: unknown, userKey: string) => bigint)
-  | undefined;
-
-const normalizeAesKey = (aesKey: string): string => {
-  const trimmed = aesKey.startsWith('0x') ? aesKey.slice(2) : aesKey;
-  return trimmed.toLowerCase();
-};
 
 const ERC165_ABI = [
   'function supportsInterface(bytes4 interfaceId) external view returns (bool)',
@@ -457,42 +454,6 @@ const isZeroValue = (value: unknown): boolean => {
   return false;
 };
 
-type CtUint256Like = Record<string, unknown> & Record<number, unknown>;
-
-const isZeroCtUint256 = (ciphertext: unknown): boolean => {
-  if (!ciphertext) {
-    return false;
-  }
-  if (isZeroValue(ciphertext)) {
-    return true;
-  }
-  const c = ciphertext as CtUint256Like;
-  const highObj = c?.high as Record<string, unknown> | undefined;
-  const lowObj = c?.low as Record<string, unknown> | undefined;
-  if (
-    highObj?.high !== undefined &&
-    highObj?.low !== undefined &&
-    lowObj?.high !== undefined &&
-    lowObj?.low !== undefined
-  ) {
-    return (
-      isZeroValue(highObj.high) &&
-      isZeroValue(highObj.low) &&
-      isZeroValue(lowObj.high) &&
-      isZeroValue(lowObj.low)
-    );
-  }
-
-  const high = c?.ciphertextHigh ?? c?.[0];
-  const low = c?.ciphertextLow ?? c?.[1];
-
-  if (high !== undefined && low !== undefined) {
-    return isZeroValue(high) && isZeroValue(low);
-  }
-
-  return false;
-};
-
 const isInsaneDecryptedValue = (
   value: bigint,
   decimals?: string | number | null,
@@ -500,28 +461,6 @@ const isInsaneDecryptedValue = (
   const safeDecimals = normalizeDecimals(decimals);
   const threshold = INSANE_BALANCE_BASE * 10n ** BigInt(safeDecimals);
   return value > threshold;
-};
-
-const isCtUint256Shape = (value: unknown): boolean => {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-  const v = value as Record<string, unknown> & Record<number, unknown>;
-  const hasNested =
-    v?.high !== undefined &&
-    v?.low !== undefined &&
-    typeof v.high === 'object' &&
-    v.high !== null &&
-    typeof v.low === 'object' &&
-    v.low !== null &&
-    (v.high as Record<string, unknown>)?.high !== undefined &&
-    (v.high as Record<string, unknown>)?.low !== undefined &&
-    (v.low as Record<string, unknown>)?.high !== undefined &&
-    (v.low as Record<string, unknown>)?.low !== undefined;
-  const hasFlat =
-    v?.ciphertextHigh !== undefined && v?.ciphertextLow !== undefined;
-  const hasPositional = v?.[0] !== undefined && v?.[1] !== undefined;
-  return hasNested || hasFlat || hasPositional;
 };
 
 /**
@@ -570,67 +509,14 @@ export const decryptBalance = (
   const normalizedKey = normalizeAesKey(aesKey);
   try {
     if (variant === 256) {
-      const nested = balance as {
-        high?: { high?: bigint; low?: bigint };
-        low?: { high?: bigint; low?: bigint };
-      };
-      if (
-        nested?.high?.high !== undefined &&
-        nested?.high?.low !== undefined &&
-        nested?.low?.high !== undefined &&
-        nested?.low?.low !== undefined
-      ) {
-        if (isZeroCtUint256(balance)) {
-          return 0n;
-        }
-        const d1 = CotiSDK.decryptUint(nested.high.high, normalizedKey);
-        const d2 = CotiSDK.decryptUint(nested.high.low, normalizedKey);
-        const d3 = CotiSDK.decryptUint(nested.low.high, normalizedKey);
-        const d4 = CotiSDK.decryptUint(nested.low.low, normalizedKey);
-        const decrypted = (d1 << 192n) + (d2 << 128n) + (d3 << 64n) + d4;
-        if (isInsaneDecryptedValue(decrypted, decimals)) {
-          return null;
-        }
-        return decrypted;
+      if (isZeroCtUint256(balance)) {
+        return 0n;
       }
-
-      // Support named properties (ciphertextHigh/ciphertextLow) or
-      // positional access ([0]/[1]) from ethers.js Result tuples
-      const high = (balance as any)?.ciphertextHigh ?? (balance as any)?.[0];
-      const low = (balance as any)?.ciphertextLow ?? (balance as any)?.[1];
-
-      if (high !== undefined && low !== undefined) {
-        if (isZeroCtUint256(balance)) {
-          return 0n;
-        }
-        if (decryptUint256) {
-          const decrypted = decryptUint256(
-            {
-              ciphertextHigh:
-                typeof high === 'bigint' ? high : BigInt(high),
-              ciphertextLow:
-                typeof low === 'bigint' ? low : BigInt(low),
-            },
-            normalizedKey,
-          );
-          if (isInsaneDecryptedValue(decrypted, decimals)) {
-            return null;
-          }
-          return decrypted;
-        }
+      const decrypted = decryptCtUint256(balance, normalizedKey);
+      if (isInsaneDecryptedValue(decrypted, decimals)) {
+        return null;
       }
-
-      if (decryptUint256) {
-        if (isZeroCtUint256(balance)) {
-          return 0n;
-        }
-        const decrypted = decryptUint256(balance, normalizedKey);
-        if (isInsaneDecryptedValue(decrypted, decimals)) {
-          return null;
-        }
-        return decrypted;
-      }
-      return null;
+      return decrypted;
     }
     if (isZeroValue(balance)) {
       return 0n;

@@ -4,12 +4,11 @@ import {
   decryptUint256,
   encodeKey,
   encrypt,
-  encodeString,
+  normalizeCtPayload,
 } from '@coti-io/coti-sdk-typescript';
 import { installSnap } from '@metamask/snaps-jest';
 import type { SnapConfirmationInterface } from '@metamask/snaps-jest';
 import { Box, Text, Heading } from '@metamask/snaps-sdk/jsx';
-import { normalizeCtPayload } from '../index';
 
 const AUTHORIZED_SET_KEY_ORIGIN = 'https://metamask.coti.io';
 const TEST_AES_KEY = '00112233445566778899aabbccddeeff';
@@ -298,7 +297,7 @@ describe('onRpcRequest', () => {
     const origin = 'https://example-dapp.io';
 
     const encryptedValue = JSON.stringify(
-      encrypt(encodeKey(aesKey), encodeString('Hello, encrypt!')),
+      encrypt(encodeKey(aesKey), new TextEncoder().encode('Hello, encrypt!')),
     );
 
     await setAesKeyWithConfirmation(request, aesKey);
@@ -471,20 +470,26 @@ describe('onRpcRequest', () => {
       result: {
         value: {
           ciphertext: {
-            high: { high: string; low: string };
-            low: { high: string; low: string };
+            ciphertextHigh: string;
+            ciphertextLow: string;
           };
-          signature: [[string, string], [string, string]];
+          signature: string;
         };
       };
     };
 
-    expect(result.value.ciphertext.high.high).toEqual(expect.any(String));
-    expect(result.value.ciphertext.high.low).toEqual(expect.any(String));
-    expect(result.value.ciphertext.low.high).toEqual(expect.any(String));
-    expect(result.value.ciphertext.low.low).toEqual(expect.any(String));
-    expect(result.value.signature[0][0]).toMatch(/^0x[0-9a-f]+$/u);
-    expect(result.value.signature[1][1]).toMatch(/^0x[0-9a-f]+$/u);
+    expect(result.value.ciphertext.ciphertextHigh).toEqual(expect.any(String));
+    expect(result.value.ciphertext.ciphertextLow).toEqual(expect.any(String));
+    expect(result.value.signature).toMatch(/^0x[0-9a-f]{130}$/u);
+    expect(
+      decryptUint256(
+        {
+          ciphertextHigh: BigInt(result.value.ciphertext.ciphertextHigh),
+          ciphertextLow: BigInt(result.value.ciphertext.ciphertextLow),
+        },
+        TEST_AES_KEY,
+      ),
+    ).toBe(100000000n);
   });
 
   it('deletes AES key with user confirmation', async () => {
