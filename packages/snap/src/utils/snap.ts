@@ -131,15 +131,17 @@ function normalizeChainIdForState(
 export const getStateByChainIdAndAddress = async (
   overrideChainId?: string | null,
   requestAccounts = false,
+  overrideAddress?: string | null,
 ): Promise<State> => {
   const identifier = await getStateIdentifier({ requestAccounts });
   const state = (await getStateData<GeneralState>()) || {};
   const rawChainId = overrideChainId ?? identifier.chainId;
   const chainKey = normalizeChainIdForState(rawChainId);
-  const addressKey = identifier.address.toLowerCase();
+  const address = overrideAddress ?? identifier.address;
+  const addressKey = address.toLowerCase();
   const result =
     state[chainKey]?.[addressKey] ??
-    state[chainKey]?.[identifier.address] ??
+    state[chainKey]?.[address] ??
     ({} as State);
   return result;
 };
@@ -148,12 +150,14 @@ export const setStateByChainIdAndAddress = async (
   state: State,
   overrideChainId?: string | null,
   requestAccounts = false,
+  overrideAddress?: string | null,
 ): Promise<void> => {
   const identifier = await getStateIdentifier({ requestAccounts });
   const oldState = (await getStateData<GeneralState>()) || {};
   const rawChainId = overrideChainId ?? identifier.chainId;
   const chainKey = normalizeChainIdForState(rawChainId);
-  const addressKey = identifier.address.toLowerCase();
+  const address = overrideAddress ?? identifier.address;
+  const addressKey = address.toLowerCase();
   const newState = {
     ...oldState,
     [chainKey]: {
