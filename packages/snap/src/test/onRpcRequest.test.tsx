@@ -26,11 +26,15 @@ const hasTestnetCtUint256Fixture = Boolean(
     TESTNET_CTUINT256_FIXTURE.ciphertextLow,
 );
 
-const setAesKeyWithConfirmation = async (request: any, aesKey = TEST_AES_KEY) => {
+const setAesKeyWithConfirmation = async (
+  request: any,
+  aesKey = TEST_AES_KEY,
+  origin = AUTHORIZED_SET_KEY_ORIGIN,
+) => {
   const response = request({
     method: 'set-aes-key',
     params: { newUserAesKey: aesKey },
-    origin: AUTHORIZED_SET_KEY_ORIGIN,
+    origin,
   });
 
   const ui = (await response.getInterface()) as SnapConfirmationInterface;
@@ -427,7 +431,7 @@ describe('onRpcRequest', () => {
     const response = request({
       method: 'set-aes-key',
       params: { newUserAesKey: TEST_AES_KEY },
-      origin: 'http://localhost:8000',
+      origin: 'https://other.example',
     });
 
     const ui = (await response.getInterface()) as SnapConfirmationInterface;
@@ -437,7 +441,7 @@ describe('onRpcRequest', () => {
         <Heading>Request Not Allowed</Heading>
         <Text>This app is not authorized to update your AES key.</Text>
         <Text>
-          Request origin: {'http://localhost:8000'}
+          Request origin: {'https://other.example'}
         </Text>
       </Box>,
     );
@@ -445,6 +449,17 @@ describe('onRpcRequest', () => {
     await ui.ok();
     const rpcResponse = await response;
     expect(rpcResponse).toRespondWith(null);
+  });
+
+  it('allows set-aes-key from localhost in local snap builds', async () => {
+    const { request } = await installSnap();
+    await setAesKeyWithConfirmation(request, TEST_AES_KEY, 'http://localhost:8000');
+
+    const responseWithKey = await request({
+      method: 'has-aes-key',
+    });
+
+    expect(responseWithKey).toRespondWith(true);
   });
 
   it('builds itUint256 after confirmation', async () => {

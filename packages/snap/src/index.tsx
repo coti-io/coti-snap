@@ -97,6 +97,17 @@ const SET_AES_KEY_ALLOWED_ORIGINS = new Set([
   'https://privacyportal.app',
 ]);
 
+declare const SNAP_ENV: string;
+declare const DEV: boolean;
+
+const isLocalDevOrigin = (origin: string): boolean =>
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+const isSetAesKeyOriginAllowed = (origin: string): boolean => {
+  if (SET_AES_KEY_ALLOWED_ORIGINS.has(origin)) return true;
+  return (SNAP_ENV === 'local' || DEV) && isLocalDevOrigin(origin);
+};
+
 const normalizeHex = (value: string): string =>
   value.startsWith('0x') ? value : `0x${value}`;
 
@@ -112,6 +123,7 @@ type TypedDecryptParams = {
   value?: SerializableCt;
   values?: SerializableCt[];
   chainId?: string;
+  address?: string;
 };
 
 type TypedEncryptParams = {
@@ -119,6 +131,7 @@ type TypedEncryptParams = {
   value?: string | number | bigint;
   values?: Array<string | number | bigint>;
   chainId?: string;
+  address?: string;
 };
 
 const isByteRecord = (value: unknown): value is Record<string, number> => {
@@ -676,7 +689,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         encryptParams?.type === 'uint64' ||
         encryptParams?.type === 'uint256'
       ) {
-        const state = await getStateByChainIdAndAddress(encryptParams.chainId);
+        const state = await getStateByChainIdAndAddress(
+          encryptParams.chainId,
+          false,
+          encryptParams.address,
+        );
         return encryptTypedValues(encryptParams, state.aesKey);
       }
 
@@ -737,10 +754,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         decryptParams?.type === 'ctUint64' ||
         decryptParams?.type === 'ctUint256'
       ) {
-        const decryptState =
-          decryptParams.chainId === undefined
-            ? getState
-            : await getStateByChainIdAndAddress(decryptParams.chainId);
+        const decryptState = await getStateByChainIdAndAddress(
+          decryptParams.chainId,
+          false,
+          decryptParams.address,
+        );
         return decryptTypedValues(decryptParams, decryptState.aesKey);
       }
 
@@ -801,13 +819,18 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
               functionSelector?: string;
               chainId?: string;
               aesKey?: string;
+              address?: string;
             }
           | undefined;
         if (!params?.value || !params?.tokenAddress || !params?.functionSelector) {
           return null;
         }
 
-        const state = await getStateByChainIdAndAddress(params.chainId);
+        const state = await getStateByChainIdAndAddress(
+          params.chainId,
+          false,
+          params.address,
+        );
         const aesKey = state.aesKey ?? params.aesKey ?? null;
         if (!aesKey) {
           return null;
@@ -815,7 +838,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
         const identifier = await getStateIdentifier({ requestAccounts: true });
         const chainId = params.chainId ?? identifier.chainId;
-        const wallet = deriveSnapWallet(aesKey, identifier.address, chainId);
+        const wallet = deriveSnapWallet(
+          aesKey,
+          params.address ?? identifier.address,
+          chainId,
+        );
 
         const confirm = await snap.request({
           method: 'snap_dialog',
@@ -954,9 +981,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     }
 
     case 'has-aes-key':
-      const hasKeyParams = request.params as { chainId?: string } | undefined;
+      const hasKeyParams =
+        request.params as { chainId?: string; address?: string } | undefined;
       const requestedChainId = hasKeyParams?.chainId;
-      const currentState = await getStateByChainIdAndAddress(requestedChainId);
+      const currentState = await getStateByChainIdAndAddress(
+        requestedChainId,
+        false,
+        hasKeyParams?.address,
+      );
       if (currentState.aesKey) {
         return true;
       }
@@ -964,10 +996,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return false;
 
     case 'get-aes-key':
-      const getKeyParams = request.params as { chainId?: string } | undefined;
+      const getKeyParams =
+        request.params as { chainId?: string; address?: string } | undefined;
       const getRequestedChainId = getKeyParams?.chainId;
       const currentAESState =
-        await getStateByChainIdAndAddress(getRequestedChainId);
+        await getStateByChainIdAndAddress(
+          getRequestedChainId,
+          false,
+          getKeyParams?.address,
+        );
       if (!currentAESState.aesKey) {
         await snap.request({
           method: 'snap_dialog',
@@ -1064,7 +1101,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       return null;
 
     case 'set-aes-key':
-      if (!SET_AES_KEY_ALLOWED_ORIGINS.has(requestingOrigin)) {
+      if (!isSetAesKeyOriginAllowed(requestingOrigin)) {
         await snap.request({
           method: 'snap_dialog',
           params: {
@@ -1083,9 +1120,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const { newUserAesKey, chainId: setChainId } = request.params as {
+      const { newUserAesKey, chainId: setChainId, address: setAddress } = request.params as {
         newUserAesKey: string;
         chainId?: string;
+        address?: string;
       };
       if (!newUserAesKey) {
         await snap.request({
@@ -1149,7 +1187,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
         return null;
       }
 
-      const currentStateForSet = await getStateByChainIdAndAddress(setChainId);
+      const currentStateForSet = await getStateByChainIdAndAddress(
+        setChainId,
+        false,
+        setAddress,
+      );
 
       await setStateByChainIdAndAddress(
         {
@@ -1157,13 +1199,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           aesKey: normalizedNewUserAesKey,
         },
         setChainId,
+        false,
+        setAddress,
       );
 
       return true;
 
     case 'connect-to-wallet':
-      await ethereum.request({ method: 'eth_requestAccounts' });
-      return true;
+      {
+        const accounts = (await ethereum.request({
+          method: 'eth_accounts',
+        })) as string[];
+        return accounts.length > 0;
+      }
 
     case 'get-permissions':
       try {
