@@ -10,3 +10,5 @@ export { default as CotiLogo } from './cotilogo.svg';
 export { default as SyncIcon } from './sync.svg';
 export { default as FromIcon } from './from.png';
 export { default as ToIcon } from './to.png';
+export { default as EyeIcon } from '../eye.svg';
+export { default as EyeOffIcon } from '../eye-off.svg';

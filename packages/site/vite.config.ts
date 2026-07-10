@@ -42,6 +42,33 @@ const getVersions = () => {
   }
 };
 
+const gtmPlugin = () => ({
+  name: 'vite-plugin-gtm',
+  transformIndexHtml(html: string) {
+    if (process.env.VITE_ENABLE_GTM !== 'true') {
+      return html;
+    }
+
+    const gtmHeadScript = `<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NVHGTMPD');</script>
+<!-- End Google Tag Manager -->`;
+
+    const gtmBodyNoscript = `<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NVHGTMPD"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->`;
+
+    html = html.replace('<head>', `<head>\n    ${gtmHeadScript}`);
+    html = html.replace('<body>', `<body>\n    ${gtmBodyNoscript}`);
+
+    return html;
+  },
+});
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
@@ -72,7 +99,7 @@ export default defineConfig(({ mode }) => {
         "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; media-src 'self'; frame-src 'none'; worker-src 'self'; child-src 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self';",
       'Permissions-Policy':
         'camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=(), interest-cohort=()',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
       'X-DNS-Prefetch-Control': 'off',
@@ -91,7 +118,7 @@ export default defineConfig(({ mode }) => {
         "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; object-src 'none'; media-src 'self'; frame-src 'none'; worker-src 'self'; child-src 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self';",
       'Permissions-Policy':
         'camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), usb=(), interest-cohort=()',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Resource-Policy': 'same-origin',
       'X-DNS-Prefetch-Control': 'off',
@@ -100,6 +127,7 @@ export default defineConfig(({ mode }) => {
     },
   },
   plugins: [
+    gtmPlugin(),
     react({
       include: /.(jsx|tsx)$/,
       babel: {

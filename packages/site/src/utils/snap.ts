@@ -24,6 +24,17 @@ export const shouldPreferLocalSnap = (): boolean => {
   return isLocalHost();
 };
 
+const COTI_SNAP_NPM_PREFIX = 'npm:@coti-io/coti-snap';
+const COTI_SNAP_PACKAGE_NAME = '@coti-io/coti-snap';
+
+const isCotiSnap = (snapId: string): boolean => {
+  return (
+    snapId.startsWith(COTI_SNAP_NPM_PREFIX) ||
+    snapId === COTI_SNAP_PACKAGE_NAME ||
+    isLocalSnap(snapId)
+  );
+};
+
 export const resolveSnapId = (
   snaps: GetSnapsResponse | null | undefined,
   preferredSnapId: string,
@@ -43,6 +54,7 @@ export const resolveSnapId = (
     return preferredSnapId;
   }
 
-  const [fallbackSnapId] = Object.keys(snaps);
-  return fallbackSnapId ?? preferredSnapId;
+  // Only fall back to a COTI snap, never to an unrelated snap
+  const cotiSnapId = Object.keys(snaps).find(isCotiSnap);
+  return cotiSnapId ?? preferredSnapId;
 };

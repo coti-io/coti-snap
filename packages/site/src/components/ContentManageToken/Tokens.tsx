@@ -1,5 +1,6 @@
 import type { BrowserProvider } from '@coti-io/coti-ethers';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 
 import {
   TokensTabContent,
@@ -29,6 +30,7 @@ import { useDropdown } from '../../hooks/useDropdown';
 import { useImportedTokens } from '../../hooks/useImportedTokens';
 import { useTokenBalances } from '../../hooks/useTokenBalances';
 import { useTokenOperations } from '../../hooks/useTokenOperations';
+import { useTokenList } from '../../hooks/useTokenList';
 import type { ImportedToken } from '../../types/token';
 import { sortTokens } from '../../utils/tokenHelpers';
 import { parseNFTAddress } from '../../utils/tokenValidation';
@@ -46,7 +48,7 @@ type TabType = 'tokens' | 'nfts';
 export const Tokens: React.FC<TokensProps> = React.memo(
   ({ balance, provider, aesKey, onSelectNFT, onSelectToken }) => {
     const [activeTab, setActiveTab] = useState<TabType>('tokens');
-    const [sort, setSort] = useState<SortType>('decline');
+    const [sort, setSort] = useState<SortType>('az');
     const [showImportTokenModal, setShowImportTokenModal] = useState(false);
     const [showImportNFTModal, setShowImportNFTModal] = useState(false);
     const [showSyncSnapModal, setShowSyncSnapModal] = useState(false);
@@ -55,13 +57,18 @@ export const Tokens: React.FC<TokensProps> = React.memo(
       null,
     );
     const { userAESKey, userHasAESKey, getAESKey } = useSnap();
+    const { chain } = useAccount();
+    const [showStandardTokens, setShowStandardTokens] = useState(true);
+    const [showPublicTokens, setShowPublicTokens] = useState(true);
+    const [showPrivateTokens, setShowPrivateTokens] = useState(true);
     const [isDecrypted, setIsDecrypted] = useState(
       Boolean(userAESKey) || Boolean(aesKey),
     );
     const [nftImageMap, setNftImageMap] = useState<Record<string, string>>({});
 
+    const tokenList = useTokenList();
     const { importedTokens, isLoading, refreshTokens, removeToken } =
-      useImportedTokens();
+      useImportedTokens(tokenList);
     const menuDropdown = useDropdown();
     const sortDropdown = useDropdown();
     const effectiveAESKey = aesKey || userAESKey;
@@ -108,10 +115,14 @@ export const Tokens: React.FC<TokensProps> = React.memo(
       cotiBalance: balance,
     });
 
-    const sortedTokens = useMemo(
-      () => sortTokens(regularTokens, sort, balances),
-      [regularTokens, sort, balances],
-    );
+    const sortedTokens = useMemo(() => {
+      const filtered = regularTokens.filter((t) => {
+        if (t.symbol === 'COTI') return true;
+        if (t.isPrivate) return showPrivateTokens;
+        return showPublicTokens;
+      });
+      return sortTokens(filtered, sort, balances);
+    }, [regularTokens, sort, balances, showPublicTokens, showPrivateTokens]);
 
     const sortedNFTs = useMemo(
       () => sortTokens(nftTokens, sort),
@@ -165,6 +176,16 @@ export const Tokens: React.FC<TokensProps> = React.memo(
 
     const handleSyncToSnap = useCallback(() => {
       setShowSyncSnapModal(true);
+      menuDropdown.close();
+    }, [menuDropdown]);
+
+    const handleTogglePublicTokens = useCallback(() => {
+      setShowPublicTokens((prev) => !prev);
+      menuDropdown.close();
+    }, [menuDropdown]);
+
+    const handleTogglePrivateTokens = useCallback(() => {
+      setShowPrivateTokens((prev) => !prev);
       menuDropdown.close();
     }, [menuDropdown]);
 
@@ -366,6 +387,14 @@ export const Tokens: React.FC<TokensProps> = React.memo(
                     }
                     onRefreshTokens={handleRefreshTokens}
                     onSyncToSnap={handleSyncToSnap}
+                    onTogglePublicTokens={
+                      activeTab === 'tokens' ? handleTogglePublicTokens : undefined
+                    }
+                    onTogglePrivateTokens={
+                      activeTab === 'tokens' ? handleTogglePrivateTokens : undefined
+                    }
+                    showPublicTokens={showPublicTokens}
+                    showPrivateTokens={showPrivateTokens}
                     dropdownRef={menuDropdown.ref}
                     importLabel={
                       activeTab === 'tokens' ? 'Import tokens' : 'Import NFT'

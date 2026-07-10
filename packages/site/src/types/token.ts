@@ -4,8 +4,10 @@ export type ImportedToken = {
   address: string;
   name: string;
   symbol: string;
-  decimals?: number; // Optional for NFTs (ERC721/ERC1155)
+  decimals?: number;
   type: TokenType;
+  isPrivate?: boolean;
+  logoURI?: string;
 };
 
 export type NFTFormData = {

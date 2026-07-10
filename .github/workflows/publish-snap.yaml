@@ -125,6 +125,13 @@ jobs:
           echo "  snapVersion: $NEW_VERSION"
           echo "  gitCommit: $COMMIT_HASH"
 
+      - name: Build Site
+        run: |
+          cd packages/site
+          yarn build
+        env:
+          VITE_ENABLE_GTM: 'true'
+
       - name: Commit version changes
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"

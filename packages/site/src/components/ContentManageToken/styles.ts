@@ -498,6 +498,9 @@ export const TokenInfo = styled.div`
   display: flex;
   align-items: center;
   gap: ${spacing.xs};
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 
   &:hover {
     cursor: pointer;
@@ -508,6 +511,7 @@ export const TokenLogos = styled.div`
   position: relative;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
 
@@ -563,6 +567,9 @@ export const TokenName = styled.span`
   font-size: ${typography.sizes.lg};
   font-weight: ${typography.weights.bold};
   color: #000000 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   @media (max-width: 600px) {
     font-size: 14px;
